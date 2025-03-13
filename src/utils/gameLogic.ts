@@ -124,7 +124,8 @@ export const updateGameState = (
       player: newPlayer,
       maze: updatedMaze,
       score: newScore,
-      colorPhase: newColorPhase
+      colorPhase: newColorPhase,
+      gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)) // Gradually increase speed
     },
     collision
   };
@@ -132,16 +133,13 @@ export const updateGameState = (
 
 // Start a new game
 export const startGame = (state: GameState): GameState => {
-  if (state.attemptsLeft <= 0) {
-    return state;
-  }
-  
+  console.log("Starting game with state:", state);
   return {
     ...state,
     gameActive: true,
     score: 0,
     maze: [],
-    attemptsLeft: state.attemptsLeft - 1
+    gameSpeed: 2
   };
 };
 

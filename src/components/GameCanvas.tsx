@@ -24,6 +24,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [mouseX, setMouseX] = useState<number>(0);
   const requestRef = useRef<number>();
   const previousTimeRef = useRef<number>();
+  const [previousActive, setPreviousActive] = useState(false);
 
   // Initialize game state
   useEffect(() => {
@@ -60,26 +61,44 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Update game state when active status changes
   useEffect(() => {
-    if (gameState) {
-      if (isActive && !gameState.gameActive) {
-        // Start a new game when isActive changes to true
-        setGameState(prevState => {
-          if (!prevState) return null;
-          return startGame(prevState);
-        });
-      } else {
-        // Update the gameActive status
-        setGameState(prevState => {
-          if (!prevState) return null;
-          return {
-            ...prevState,
-            gameActive: isActive,
-            attemptsLeft
-          };
-        });
+    // Only trigger a state change when isActive status changes
+    if (isActive !== previousActive) {
+      setPreviousActive(isActive);
+      
+      if (gameState) {
+        if (isActive) {
+          console.log("Starting game...");
+          // Start a new game when isActive changes to true
+          setGameState(prevState => {
+            if (!prevState) return null;
+            const newState = startGame(prevState);
+            console.log("New game state:", newState);
+            return newState;
+          });
+        } else {
+          // Update the gameActive status when game becomes inactive
+          setGameState(prevState => {
+            if (!prevState) return null;
+            return {
+              ...prevState,
+              gameActive: false
+            };
+          });
+        }
       }
     }
-  }, [isActive, attemptsLeft]);
+    
+    // Always ensure attemptsLeft is updated
+    if (gameState && gameState.attemptsLeft !== attemptsLeft) {
+      setGameState(prevState => {
+        if (!prevState) return null;
+        return {
+          ...prevState,
+          attemptsLeft
+        };
+      });
+    }
+  }, [isActive, attemptsLeft, gameState, previousActive]);
 
   // Handle mouse movement
   useEffect(() => {

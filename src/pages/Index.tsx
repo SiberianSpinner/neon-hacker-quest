@@ -45,8 +45,12 @@ const Index = () => {
       return;
     }
     
+    // Only deduct an attempt when game is actually starting
+    if (!gameActive) {
+      setAttemptsLeft(prev => prev - 1);
+    }
+    
     setGameActive(true);
-    setAttemptsLeft(prev => prev - 1);
   };
   
   // Watch ad for attempts
