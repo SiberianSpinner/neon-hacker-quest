@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   GameState, 
@@ -8,6 +7,7 @@ import {
   startGame,
   toggleCursorControl
 } from '@/utils/gameLogic';
+import { getGlowColor } from '@/utils/mazeUtils';
 
 interface GameCanvasProps {
   isActive: boolean;
@@ -218,10 +218,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             return;
           }
 
-          // Draw maze blocks
+          // Draw maze blocks with glow effect
           newState.maze.forEach(block => {
-            ctx.fillStyle = getBlockColor(newState.score);
+            const blockColor = getBlockColor(newState.score);
+            const glowColor = getGlowColor(blockColor);
+            
+            // Draw glow effect
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            
+            ctx.fillStyle = blockColor;
             ctx.fillRect(block.x, block.y, block.width, block.height);
+            
+            // Reset shadow for other elements
+            ctx.shadowBlur = 0;
             
             // Add circuit pattern
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';

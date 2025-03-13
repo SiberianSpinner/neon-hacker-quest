@@ -183,3 +183,9 @@ export const getBlockColor = (score: number): string => {
     default: return '#00ff00';
   }
 };
+
+// Get glow color for the blocks based on the block color
+export const getGlowColor = (blockColor: string): string => {
+  // Make glow slightly more transparent than the block color
+  return blockColor + '80'; // Adding 80 hex (128 decimal, 50% opacity)
+};
