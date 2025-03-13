@@ -4,7 +4,8 @@ import {
   GameState, 
   initGameState, 
   updateGameState, 
-  getBlockColor 
+  getBlockColor,
+  startGame
 } from '@/utils/gameLogic';
 
 interface GameCanvasProps {
@@ -60,14 +61,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   // Update game state when active status changes
   useEffect(() => {
     if (gameState) {
-      setGameState(prevState => {
-        if (!prevState) return null;
-        return {
-          ...prevState,
-          gameActive: isActive,
-          attemptsLeft
-        };
-      });
+      if (isActive && !gameState.gameActive) {
+        // Start a new game when isActive changes to true
+        setGameState(prevState => {
+          if (!prevState) return null;
+          return startGame(prevState);
+        });
+      } else {
+        // Update the gameActive status
+        setGameState(prevState => {
+          if (!prevState) return null;
+          return {
+            ...prevState,
+            gameActive: isActive,
+            attemptsLeft
+          };
+        });
+      }
     }
   }, [isActive, attemptsLeft]);
 
@@ -183,7 +193,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   return (
     <canvas 
       ref={canvasRef} 
-      className="absolute inset-0 z-0 opacity-0 transition-opacity duration-500"
+      className="absolute inset-0 z-0 transition-opacity duration-500"
       style={{ opacity: isActive ? 1 : 0 }}
     />
   );
