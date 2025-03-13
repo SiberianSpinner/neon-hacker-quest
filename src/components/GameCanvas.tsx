@@ -21,10 +21,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [mouseX, setMouseX] = useState<number>(0);
   const requestRef = useRef<number>();
   const previousTimeRef = useRef<number>();
   const [previousActive, setPreviousActive] = useState(false);
+  const [keys, setKeys] = useState<{ [key: string]: boolean }>({});
 
   // Initialize game state
   useEffect(() => {
@@ -46,7 +46,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             ...prevState,
             player: {
               ...prevState.player,
-              y: canvas.height - 50
+              y: canvas.height - 100
             }
           };
         });
@@ -100,15 +100,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, [isActive, attemptsLeft, gameState, previousActive]);
 
-  // Handle mouse movement
+  // Handle keyboard input
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMouseX(e.clientX);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      setKeys(prevKeys => ({ ...prevKeys, [e.key]: true }));
     };
-
-    window.addEventListener('mousemove', handleMouseMove);
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      setKeys(prevKeys => ({ ...prevKeys, [e.key]: false }));
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
 
@@ -125,53 +132,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           // Clear canvas
           ctx.fillStyle = '#0a0a0a';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          // Update game state
-          const { newState, collision } = updateGameState(
-            gameState,
-            canvas.width,
-            canvas.height,
-            mouseX
-          );
-
-          // Check for collision
-          if (collision) {
-            onGameOver(newState.score);
-            setGameState({
-              ...newState,
-              gameActive: false
-            });
-            return;
-          }
-
-          // Draw maze blocks
-          newState.maze.forEach(block => {
-            ctx.fillStyle = getBlockColor(newState.score);
-            ctx.fillRect(0, block.y, block.leftWidth, 50);
-            ctx.fillRect(canvas.width - block.rightWidth, block.y, block.rightWidth, 50);
-          });
-
-          // Draw player
-          ctx.fillStyle = '#00ffcc';
-          ctx.beginPath();
-          ctx.arc(newState.player.x, newState.player.y, newState.player.size, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Add glowing effect to player
-          ctx.shadowColor = '#00ffcc';
-          ctx.shadowBlur = 10;
-          ctx.beginPath();
-          ctx.arc(newState.player.x, newState.player.y, newState.player.size - 2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.shadowBlur = 0;
-
-          // Draw score
-          ctx.fillStyle = '#00ffcc';
-          ctx.font = '16px "JetBrains Mono", monospace';
-          ctx.textAlign = 'left';
-          ctx.fillText(`SCORE: ${newState.score}`, 20, 30);
-          ctx.textAlign = 'right';
-          ctx.fillText(`ATTEMPTS: ${newState.attemptsLeft}`, canvas.width - 20, 30);
 
           // Draw grid lines for cyberpunk effect
           ctx.strokeStyle = 'rgba(0, 255, 204, 0.1)';
@@ -193,6 +153,94 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             ctx.stroke();
           }
 
+          // Update game state
+          const { newState, collision } = updateGameState(
+            gameState,
+            canvas.width,
+            canvas.height,
+            keys
+          );
+
+          // Check for collision
+          if (collision) {
+            onGameOver(newState.score);
+            setGameState({
+              ...newState,
+              gameActive: false
+            });
+            return;
+          }
+
+          // Draw maze blocks
+          newState.maze.forEach(block => {
+            ctx.fillStyle = getBlockColor(newState.score);
+            ctx.fillRect(block.x, block.y, block.width, block.height);
+            
+            // Add circuit pattern
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 1;
+            
+            // Horizontal lines inside blocks
+            for (let y = block.y + 5; y < block.y + block.height; y += 10) {
+              ctx.beginPath();
+              ctx.moveTo(block.x, y);
+              ctx.lineTo(block.x + block.width, y);
+              ctx.stroke();
+            }
+            
+            // Random "connection" dots
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            for (let i = 0; i < block.width / 20; i++) {
+              const dotX = block.x + Math.random() * block.width;
+              const dotY = block.y + Math.random() * block.height;
+              ctx.beginPath();
+              ctx.arc(dotX, dotY, 1, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          });
+
+          // Draw player
+          // Glow effect
+          ctx.shadowColor = '#00ffcc';
+          ctx.shadowBlur = 15;
+          ctx.fillStyle = '#00ffcc';
+          ctx.beginPath();
+          ctx.arc(newState.player.x, newState.player.y, newState.player.size, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Core
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(newState.player.x, newState.player.y, newState.player.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // "Data stream" effect behind player
+          ctx.strokeStyle = 'rgba(0, 255, 204, 0.4)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(newState.player.x, newState.player.y);
+          ctx.lineTo(
+            newState.player.x - newState.player.speedX * 5, 
+            newState.player.y - newState.player.speedY * 5
+          );
+          ctx.stroke();
+
+          // Draw score
+          ctx.fillStyle = '#00ffcc';
+          ctx.font = '16px "JetBrains Mono", monospace';
+          ctx.textAlign = 'left';
+          ctx.fillText(`ВЗЛОМ: ${newState.score}`, 20, 30);
+          ctx.textAlign = 'right';
+          ctx.fillText(`ПОПЫТКИ: ${newState.attemptsLeft}`, canvas.width - 20, 30);
+          
+          // Controls hint
+          if (newState.score < 200) {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(0, 255, 204, 0.7)';
+            ctx.fillText('Управление: W,A,S,D или стрелки', canvas.width / 2, canvas.height - 30);
+          }
+
           setGameState(newState);
         }
       }
@@ -207,7 +255,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [gameState, mouseX, onGameOver]);
+  }, [gameState, keys, onGameOver]);
 
   return (
     <canvas 

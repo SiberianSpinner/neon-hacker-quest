@@ -60,8 +60,8 @@ const Index = () => {
     setLastScore(score);
     
     // Show toast with score
-    toast("Game Over", {
-      description: `Your score: ${score}`,
+    toast("Взлом прерван", {
+      description: `Ваш счёт: ${score}`,
       position: 'top-center',
     });
     
@@ -78,8 +78,8 @@ const Index = () => {
   // Start game
   const handleStartGame = () => {
     if (attemptsLeft <= 0) {
-      toast.error("No attempts left!", {
-        description: "Watch an ad or buy unlimited attempts to continue playing.",
+      toast.error("Нет попыток!", {
+        description: "Посмотрите рекламу или купите безлимитные попытки.",
       });
       return;
     }
@@ -98,8 +98,8 @@ const Index = () => {
     if (isTelegramWebApp && window.Telegram?.WebApp) {
       try {
         window.Telegram.WebApp.sendData(JSON.stringify({ action: 'watchAd' }));
-        toast.info("Loading Ad...", {
-          description: "Please wait while the ad loads.",
+        toast.info("Загрузка рекламы...", {
+          description: "Пожалуйста, подождите пока реклама загрузится.",
         });
       } catch (err) {
         console.error('Error sending data to Telegram:', err);
@@ -112,14 +112,14 @@ const Index = () => {
   
   // Simulate ad viewing (fallback for non-Telegram environment)
   const simulateAdView = () => {
-    toast.info("Loading Ad...", {
-      description: "Simulating ad view for demonstration purposes.",
+    toast.info("Загрузка рекламы...", {
+      description: "Симуляция просмотра рекламы.",
     });
     
     setTimeout(() => {
       setAttemptsLeft(prev => prev + 1);
-      toast.success("Ad Completed", {
-        description: "You've earned an extra attempt!"
+      toast.success("Реклама завершена", {
+        description: "Вы получили дополнительную попытку!"
       });
     }, 2000);
   };
@@ -130,8 +130,8 @@ const Index = () => {
     if (isTelegramWebApp && window.Telegram?.WebApp) {
       try {
         window.Telegram.WebApp.sendData(JSON.stringify({ action: 'buyUnlimited' }));
-        toast.info("Processing Payment...", {
-          description: "Please complete the payment in Telegram.",
+        toast.info("Обработка платежа...", {
+          description: "Пожалуйста, завершите оплату в Telegram.",
         });
       } catch (err) {
         console.error('Error sending data to Telegram:', err);
@@ -144,14 +144,14 @@ const Index = () => {
   
   // Simulate purchase (fallback for non-Telegram environment)
   const simulatePurchase = () => {
-    toast.info("Processing Purchase...", {
-      description: "Simulating payment for demonstration purposes.",
+    toast.info("Обработка платежа...", {
+      description: "Симуляция платежа.",
     });
     
     setTimeout(() => {
       setAttemptsLeft(Infinity);
-      toast.success("Purchase Successful", {
-        description: "You now have unlimited attempts!"
+      toast.success("Покупка успешна", {
+        description: "Теперь у вас безлимитные попытки!"
       });
     }, 2000);
   };
@@ -159,16 +159,16 @@ const Index = () => {
   // Add attempts (can be called from Telegram backend)
   const addAttempts = (count: number) => {
     setAttemptsLeft(prev => prev + count);
-    toast.success("Attempts Added", {
-      description: `You've received ${count} new attempts!`
+    toast.success("Попытки добавлены", {
+      description: `Вы получили ${count} новых попыток!`
     });
   };
   
   // Set unlimited attempts (can be called from Telegram backend)
   const activateUnlimited = () => {
     setAttemptsLeft(Infinity);
-    toast.success("Unlimited Mode Activated", {
-      description: "You now have unlimited attempts!"
+    toast.success("Безлимитный режим активирован", {
+      description: "Теперь у вас безлимитные попытки!"
     });
   };
 
@@ -210,7 +210,7 @@ const Index = () => {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="text-sm text-cyber-foreground/70 mt-2"
         >
-          INITIALIZING SYSTEMS...
+          ИНИЦИАЛИЗАЦИЯ ВЗЛОМА...
         </motion.div>
       </div>
     );
@@ -256,7 +256,7 @@ const Index = () => {
       
       {/* Version tag */}
       <div className="absolute bottom-2 right-2 text-xs text-cyber-foreground/30">
-        v1.1.0
+        v1.2.0
       </div>
     </div>
   );

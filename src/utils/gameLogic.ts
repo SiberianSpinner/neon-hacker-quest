@@ -1,14 +1,16 @@
-
 export interface Player {
   x: number;
   y: number;
   size: number;
+  speedX: number;
+  speedY: number;
 }
 
 export interface MazeBlock {
+  x: number;
   y: number;
-  leftWidth: number;
-  rightWidth: number;
+  width: number;
+  height: number;
 }
 
 export interface GameState {
@@ -26,8 +28,10 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
   return {
     player: { 
       x: canvasWidth / 2, 
-      y: canvasHeight - 50, 
-      size: 10 
+      y: canvasHeight - 100, 
+      size: 10,
+      speedX: 0,
+      speedY: 0
     },
     maze: [],
     score: 0,
@@ -41,35 +45,52 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
 // Generate maze blocks
 export const generateMaze = (
   maze: MazeBlock[], 
-  canvasWidth: number
+  canvasWidth: number,
+  canvasHeight: number,
+  gameSpeed: number
 ): MazeBlock[] => {
   const newMaze = [...maze];
   
-  if (Math.random() < 0.1 || maze.length === 0) {
-    // Create a minimum gap width for player to navigate through
-    const minGapWidth = 80; // Enough space for player to navigate
-    const maxBlockWidth = canvasWidth * 0.7; // Maximum width of a block (70% of canvas)
+  // Generate new maze blocks with a certain probability
+  if (Math.random() < 0.05 || maze.length === 0) {
+    // Create a grid-based labyrinth section
+    const gridSize = 80; // Size of grid cells
+    const numCols = Math.floor(canvasWidth / gridSize);
+    const minPathWidth = 40; // Minimum width of paths
     
-    // Random position for the gap
-    const gapPosition = Math.random() * (canvasWidth - minGapWidth);
-    
-    // Calculate left and right widths, ensuring neither exceeds the maximum block width
-    let leftWidth = Math.min(gapPosition, maxBlockWidth);
-    let rightWidth = Math.min(canvasWidth - gapPosition - minGapWidth, maxBlockWidth);
-    
-    // Ensure there's always space on both sides for the player to navigate
-    if (leftWidth + rightWidth > canvasWidth - minGapWidth * 1.5) {
-      // If blocks are too large, reduce them proportionally
-      const reduction = (leftWidth + rightWidth) / (canvasWidth - minGapWidth * 1.5);
-      leftWidth = leftWidth / reduction;
-      rightWidth = rightWidth / reduction;
+    // Generate a random maze pattern
+    for (let col = 0; col < numCols; col++) {
+      // Skip some columns randomly to create paths
+      if (Math.random() < 0.7) {
+        // Determine block width (not full width)
+        const blockWidth = Math.min(gridSize - minPathWidth, gridSize * 0.7 + Math.random() * 20);
+        
+        // Determine x position with some randomness
+        const xOffset = Math.random() * (gridSize - blockWidth);
+        const x = col * gridSize + xOffset;
+        
+        newMaze.push({
+          x,
+          y: -100, // Start above the canvas
+          width: blockWidth,
+          height: 30 + Math.random() * 40 // Varying heights
+        });
+      }
     }
     
-    newMaze.push({
-      y: -50,
-      leftWidth,
-      rightWidth
-    });
+    // Occasionally add horizontal connectors between blocks
+    if (Math.random() < 0.3) {
+      const y = -100 - Math.random() * 50;
+      const width = gridSize * 2 + Math.random() * gridSize;
+      const x = Math.random() * (canvasWidth - width);
+      
+      newMaze.push({
+        x,
+        y,
+        width,
+        height: 15 + Math.random() * 20
+      });
+    }
   }
   
   return newMaze;
@@ -87,22 +108,69 @@ export const getBlockColor = (score: number): string => {
   }
 };
 
+// Update player movement based on keyboard input
+export const updatePlayerMovement = (
+  player: Player,
+  keys: { [key: string]: boolean },
+  canvasWidth: number,
+  canvasHeight: number
+): Player => {
+  const newPlayer = { ...player };
+  const moveSpeed = 5;
+  
+  // Update speeds based on key presses
+  if (keys.ArrowLeft || keys.a) {
+    newPlayer.speedX = -moveSpeed;
+  } else if (keys.ArrowRight || keys.d) {
+    newPlayer.speedX = moveSpeed;
+  } else {
+    // Decelerate X movement when no keys pressed
+    newPlayer.speedX = 0;
+  }
+  
+  if (keys.ArrowUp || keys.w) {
+    newPlayer.speedY = -moveSpeed;
+  } else if (keys.ArrowDown || keys.s) {
+    newPlayer.speedY = moveSpeed;
+  } else {
+    // Decelerate Y movement when no keys pressed
+    newPlayer.speedY = 0;
+  }
+  
+  // Update position
+  newPlayer.x += newPlayer.speedX;
+  newPlayer.y += newPlayer.speedY;
+  
+  // Keep player inside canvas bounds
+  newPlayer.x = Math.max(newPlayer.size, Math.min(canvasWidth - newPlayer.size, newPlayer.x));
+  newPlayer.y = Math.max(newPlayer.size, Math.min(canvasHeight - newPlayer.size, newPlayer.y));
+  
+  return newPlayer;
+};
+
+// Check if player collides with a maze block
+export const checkCollision = (player: Player, block: MazeBlock): boolean => {
+  return (
+    player.x + player.size > block.x &&
+    player.x - player.size < block.x + block.width &&
+    player.y + player.size > block.y &&
+    player.y - player.size < block.y + block.height
+  );
+};
+
 // Update game state for each frame
 export const updateGameState = (
   state: GameState, 
   canvasWidth: number, 
   canvasHeight: number,
-  mouseX: number
+  keys: { [key: string]: boolean }
 ): { newState: GameState; collision: boolean } => {
   if (!state.gameActive) {
     return { newState: state, collision: false };
   }
   
-  // Update player position
-  const newPlayer = {
-    ...state.player,
-    x: mouseX
-  };
+  // Update player position based on keyboard input
+  const newPlayer = updatePlayerMovement(state.player, keys, canvasWidth, canvasHeight);
   
   // Update maze blocks
   let collision = false;
@@ -112,20 +180,16 @@ export const updateGameState = (
       const newBlock = { ...block, y: block.y + state.gameSpeed };
       
       // Check collision
-      if (
-        newBlock.y + 50 > newPlayer.y && 
-        newBlock.y < newPlayer.y &&
-        (newPlayer.x < newBlock.leftWidth || newPlayer.x > canvasWidth - newBlock.rightWidth)
-      ) {
+      if (checkCollision(newPlayer, newBlock)) {
         collision = true;
       }
       
       return newBlock;
     })
-    .filter(block => block.y < canvasHeight);
+    .filter(block => block.y < canvasHeight + 100); // Keep blocks that are still on or near screen
   
   // Generate new blocks
-  const updatedMaze = generateMaze(newMaze, canvasWidth);
+  const updatedMaze = generateMaze(newMaze, canvasWidth, canvasHeight, state.gameSpeed);
   
   // Update score and color phase
   const newScore = state.score + 1;
