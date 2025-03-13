@@ -48,14 +48,27 @@ export const generateMaze = (
   if (Math.random() < 0.1 || maze.length === 0) {
     // Create a minimum gap width for player to navigate through
     const minGapWidth = 80; // Enough space for player to navigate
+    const maxBlockWidth = canvasWidth * 0.7; // Maximum width of a block (70% of canvas)
     
     // Random position for the gap
     const gapPosition = Math.random() * (canvasWidth - minGapWidth);
     
+    // Calculate left and right widths, ensuring neither exceeds the maximum block width
+    let leftWidth = Math.min(gapPosition, maxBlockWidth);
+    let rightWidth = Math.min(canvasWidth - gapPosition - minGapWidth, maxBlockWidth);
+    
+    // Ensure there's always space on both sides for the player to navigate
+    if (leftWidth + rightWidth > canvasWidth - minGapWidth * 1.5) {
+      // If blocks are too large, reduce them proportionally
+      const reduction = (leftWidth + rightWidth) / (canvasWidth - minGapWidth * 1.5);
+      leftWidth = leftWidth / reduction;
+      rightWidth = rightWidth / reduction;
+    }
+    
     newMaze.push({
       y: -50,
-      leftWidth: gapPosition,
-      rightWidth: canvasWidth - gapPosition - minGapWidth
+      leftWidth,
+      rightWidth
     });
   }
   
