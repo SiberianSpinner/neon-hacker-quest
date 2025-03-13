@@ -20,3 +20,12 @@ export const checkSideBarrierCollision = (player: Player, barrier: SideBarrier):
   }
 };
 
+// Calculate responsive barrier width based on screen size
+export const calculateBarrierWidth = (screenWidth: number): number => {
+  // For mobile (smaller screens)
+  if (screenWidth < 768) {
+    return Math.max(15, Math.floor(screenWidth * 0.05)); // 5% of screen width, minimum 15px
+  }
+  // For desktop
+  return 20; // original width
+};

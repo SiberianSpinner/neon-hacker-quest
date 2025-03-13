@@ -2,12 +2,12 @@
 import { GameState, Player, MazeBlock, SideBarrier } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor } from './mazeUtils';
-import { checkCollision, checkSideBarrierCollision } from './collisionUtils';
+import { checkCollision, checkSideBarrierCollision, calculateBarrierWidth } from './collisionUtils';
 import { saveScore, getScores } from './storageUtils';
 
 // Initialize game state
 export const initGameState = (canvasWidth: number, canvasHeight: number): GameState => {
-  const barrierWidth = 20; // Width of the side barriers
+  const barrierWidth = calculateBarrierWidth(canvasWidth); // Now responsive
   
   return {
     player: { 
