@@ -63,12 +63,13 @@ export const updateGameState = (
     })
     .filter(block => block.y < canvasHeight + 100); // Keep blocks that are still on or near screen
   
-  // Generate new blocks
-  const updatedMaze = generateMaze(newMaze, canvasWidth, canvasHeight, state.gameSpeed);
+  // Generate new blocks - now passing the score to adjust spawn rate
+  const updatedMaze = generateMaze(newMaze, canvasWidth, canvasHeight, state.gameSpeed, state.score);
   
   // Update score and color phase
   const newScore = state.score + 1;
-  const newColorPhase = Math.floor(newScore / 1000);
+  // Update color phase every 5000 points instead of 1000
+  const newColorPhase = Math.floor(newScore / 5000);
   
   return {
     newState: {

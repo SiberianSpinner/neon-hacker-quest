@@ -1,3 +1,4 @@
+
 import { MazeBlock, ShapeType } from './types';
 
 // Generate maze blocks with Tetris-like shapes
@@ -5,12 +6,18 @@ export const generateMaze = (
   maze: MazeBlock[], 
   canvasWidth: number,
   canvasHeight: number,
-  gameSpeed: number
+  gameSpeed: number,
+  score: number
 ): MazeBlock[] => {
   const newMaze = [...maze];
   
-  // Generate new maze blocks with a reduced probability
-  if (Math.random() < 0.0125 || maze.length === 0) {
+  // Calculate spawn rate increase based on score (5% per 1000 points)
+  const baseSpawnRate = 0.0125;
+  const spawnRateIncrease = Math.floor(score / 1000) * 0.000625; // 5% of 0.0125 = 0.000625
+  const currentSpawnRate = baseSpawnRate + spawnRateIncrease;
+  
+  // Generate new maze blocks with adjusted probability
+  if (Math.random() < currentSpawnRate || maze.length === 0) {
     const gridSize = 50; // Base size for each block cube
     
     // Calculate how many potential columns we have
@@ -163,14 +170,16 @@ export const checkBlockOverlap = (
   return false; // No overlap and not too close
 };
 
-// Get block color based on score
+// Get block color based on score - changing every 5000 points with new color sequence
 export const getBlockColor = (score: number): string => {
-  const colorPhase = Math.floor(score / 1000);
-  switch(colorPhase % 4) {
-    case 0: return '#00ffcc'; // Cyan
-    case 1: return '#ff00ff'; // Magenta
-    case 2: return '#ff3300'; // Orange
-    case 3: return '#00ff00'; // Green
-    default: return '#00ffcc';
+  // Change color every 5000 points instead of 1000
+  const colorPhase = Math.floor(score / 5000);
+  switch(colorPhase % 5) {
+    case 0: return '#00ff00'; // Неоново-зеленый
+    case 1: return '#00ccff'; // Неоново-синий
+    case 2: return '#ff0000'; // Неоново-красный
+    case 3: return '#ffffff'; // Неоново-белый
+    case 4: return '#cc00ff'; // Неоново-фиолетовый
+    default: return '#00ff00';
   }
 };
