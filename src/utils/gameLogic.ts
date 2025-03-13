@@ -1,4 +1,3 @@
-
 export interface Player {
   x: number;
   y: number;
@@ -64,6 +63,9 @@ export const generateMaze = (
     // Calculate maximum allowed block width (prevent full-width blocks)
     const maxBlockWidth = canvasWidth * 0.8; // Maximum 80% of screen width
     
+    // Keep track of newly created blocks to check for overlaps
+    const newBlocks: MazeBlock[] = [];
+    
     // Generate a random maze pattern
     for (let col = 0; col < numCols; col++) {
       // Skip some columns randomly to create paths
@@ -75,16 +77,31 @@ export const generateMaze = (
           maxBlockWidth
         );
         
+        // Determine block height (limiting height to not be more than twice the width)
+        const maxHeight = blockWidth * 2;
+        const blockHeight = Math.min(30 + Math.random() * 40, maxHeight);
+        
         // Determine x position with some randomness
         const xOffset = Math.random() * (gridSize - blockWidth);
         const x = col * gridSize + xOffset;
+        const y = -100; // Start above the canvas
         
-        newMaze.push({
+        // Create the potential new block
+        const newBlock = {
           x,
-          y: -100, // Start above the canvas
+          y,
           width: blockWidth,
-          height: 30 + Math.random() * 40 // Varying heights
-        });
+          height: blockHeight
+        };
+        
+        // Check if this block overlaps with any of the newly created blocks
+        const overlaps = checkBlockOverlap(newBlock, newBlocks);
+        
+        // Only add the block if it doesn't overlap with other new blocks
+        if (!overlaps) {
+          newBlocks.push(newBlock);
+          newMaze.push(newBlock);
+        }
       }
     }
     
@@ -95,18 +112,54 @@ export const generateMaze = (
         gridSize * 2 + Math.random() * gridSize,
         canvasWidth * 0.8
       );
-      const x = Math.random() * (canvasWidth - width);
       
-      newMaze.push({
+      // Height limited to not be more than twice the width
+      const maxHeight = width * 0.5; // Even more restrictive for connectors
+      const height = Math.min(15 + Math.random() * 20, maxHeight);
+      
+      const x = Math.random() * (canvasWidth - width);
+      const y = -100 - Math.random() * 50;
+      
+      // Create the potential new connector block
+      const newConnector = {
         x,
-        y: -100 - Math.random() * 50,
+        y,
         width,
-        height: 15 + Math.random() * 20
-      });
+        height
+      };
+      
+      // Check if this connector overlaps with any of the newly created blocks
+      const overlaps = checkBlockOverlap(newConnector, newBlocks);
+      
+      // Only add the connector if it doesn't overlap
+      if (!overlaps) {
+        newBlocks.push(newConnector);
+        newMaze.push(newConnector);
+      }
     }
   }
   
   return newMaze;
+};
+
+// Helper function to check if a block overlaps with any block in a given array
+const checkBlockOverlap = (block: MazeBlock, blocks: MazeBlock[]): boolean => {
+  // Add a small buffer to prevent blocks from being too close
+  const buffer = 5;
+  
+  for (const existingBlock of blocks) {
+    // Check if blocks overlap using their coordinates and dimensions with buffer
+    if (
+      block.x - buffer < existingBlock.x + existingBlock.width &&
+      block.x + block.width + buffer > existingBlock.x &&
+      block.y - buffer < existingBlock.y + existingBlock.height &&
+      block.y + block.height + buffer > existingBlock.y
+    ) {
+      return true; // Overlap detected
+    }
+  }
+  
+  return false; // No overlap
 };
 
 // Get block color based on score
