@@ -7,6 +7,8 @@ export interface Player {
   size: number;
   speedX: number;
   speedY: number;
+  invulnerable: boolean;
+  invulnerableTimer: number;
 }
 
 export interface MazeBlock {
@@ -16,9 +18,22 @@ export interface MazeBlock {
   height: number;
 }
 
+export enum BoosterType {
+  SAFETY_KEY = 'SAFETY_KEY'
+}
+
+export interface Booster {
+  x: number;
+  y: number;
+  size: number;
+  type: BoosterType;
+  active: boolean;
+}
+
 export interface GameState {
   player: Player;
   maze: MazeBlock[];
+  boosters: Booster[];
   score: number;
   gameSpeed: number;
   attemptsLeft: number;

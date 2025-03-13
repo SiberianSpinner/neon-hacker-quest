@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   GameState, 
@@ -8,6 +9,8 @@ import {
   toggleCursorControl
 } from '@/utils/gameLogic';
 import { getGlowColor } from '@/utils/mazeUtils';
+import { Key } from 'lucide-react';
+import { BoosterType } from '@/utils/types';
 
 interface GameCanvasProps {
   isActive: boolean;
@@ -27,6 +30,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [previousActive, setPreviousActive] = useState(false);
   const [keys, setKeys] = useState<{ [key: string]: boolean }>({});
   const [cursorPosition, setCursorPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: null });
+  const pulseRef = useRef<number>(0);
 
   // Initialize game state
   useEffect(() => {
@@ -218,22 +222,62 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             return;
           }
 
-          // Draw maze blocks with glow effect
+          // Draw boosters
+          newState.boosters.forEach(booster => {
+            if (booster.active) {
+              if (booster.type === BoosterType.SAFETY_KEY) {
+                // Draw key booster with glow effect
+                ctx.save();
+                
+                // Glow effect
+                ctx.shadowColor = '#00ccff';
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Draw key icon
+                ctx.fillStyle = '#00ccff';
+                ctx.beginPath();
+                ctx.arc(booster.x + booster.size / 2, booster.y + booster.size / 2, booster.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw key symbol
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `${booster.size * 0.6}px "JetBrains Mono", monospace`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🔑', booster.x + booster.size / 2, booster.y + booster.size / 2);
+                
+                ctx.restore();
+              }
+            }
+          });
+
+          // Draw maze blocks with enhanced glow effect
           newState.maze.forEach(block => {
             const blockColor = getBlockColor(newState.score);
             const glowColor = getGlowColor(blockColor);
             
-            // Draw glow effect
+            ctx.save();
+            
+            // Enhanced glow effect with multiple layers
+            // First layer - wider glow
             ctx.shadowColor = glowColor;
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 25;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
             
+            // Draw the block with glow
             ctx.fillStyle = blockColor;
             ctx.fillRect(block.x, block.y, block.width, block.height);
             
-            // Reset shadow for other elements
-            ctx.shadowBlur = 0;
+            // Second layer - internal glow
+            ctx.shadowBlur = 8;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(block.x + 2, block.y + 2, block.width - 4, block.height - 4);
+            
+            ctx.restore();
             
             // Add circuit pattern
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
@@ -258,7 +302,30 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             }
           });
 
-          // Draw player
+          // Update pulse effect
+          pulseRef.current = (pulseRef.current + 1) % 30; // 0.5 sec at 60 FPS
+          const pulseFactor = newState.player.invulnerable ? 
+            1 + 0.3 * Math.sin(pulseRef.current * 0.2 * Math.PI) : 1;
+
+          // Draw player with invulnerability effect if active
+          ctx.save();
+          
+          // Invulnerability aura
+          if (newState.player.invulnerable) {
+            const auraSize = newState.player.size * 2.5 * pulseFactor;
+            const gradient = ctx.createRadialGradient(
+              newState.player.x, newState.player.y, newState.player.size,
+              newState.player.x, newState.player.y, auraSize
+            );
+            gradient.addColorStop(0, 'rgba(0, 204, 255, 0.8)');
+            gradient.addColorStop(1, 'rgba(0, 204, 255, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(newState.player.x, newState.player.y, auraSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
           // Glow effect
           ctx.shadowColor = '#00ffcc';
           ctx.shadowBlur = 15;
@@ -284,8 +351,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             newState.player.y - newState.player.speedY * 5
           );
           ctx.stroke();
+          
+          ctx.restore();
 
-          // Draw score
+          // Draw score and game information
           ctx.fillStyle = '#00ffcc';
           ctx.font = '16px "JetBrains Mono", monospace';
           ctx.textAlign = 'left';
@@ -293,11 +362,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.textAlign = 'right';
           ctx.fillText(`ПОПЫТКИ: ${newState.attemptsLeft}`, canvas.width - 20, 30);
           
-          // Show cursor control status
+          // Show cursor control status and invulnerability status if active
           ctx.textAlign = 'center';
           ctx.fillStyle = 'rgba(0, 255, 204, 0.7)';
+          
+          let statusText = `Управление: ${newState.cursorControl ? 'Курсор' : 'Клавиатура'} (C для переключения)`;
+          if (newState.player.invulnerable) {
+            statusText += ' | НЕУЯЗВИМОСТЬ АКТИВНА';
+          }
+          
           ctx.fillText(
-            `Управление: ${newState.cursorControl ? 'Курсор' : 'Клавиатура'} (C для переключения)`, 
+            statusText, 
             canvas.width / 2, 
             canvas.height - 30
           );

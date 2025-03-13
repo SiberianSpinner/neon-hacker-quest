@@ -1,7 +1,7 @@
 
-import { GameState, Player, MazeBlock } from './types';
+import { GameState, Player, MazeBlock, Booster, BoosterType } from './types';
 import { updatePlayerMovement } from './playerUtils';
-import { generateMaze, getBlockColor } from './mazeUtils';
+import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
 import { checkCollision } from './collisionUtils';
 import { saveScore, getScores } from './storageUtils';
 
@@ -13,9 +13,12 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
       y: canvasHeight - 100, 
       size: 10,
       speedX: 0,
-      speedY: 0
+      speedY: 0,
+      invulnerable: false,
+      invulnerableTimer: 0
     },
     maze: [],
+    boosters: [],
     score: 0,
     gameSpeed: 2,
     attemptsLeft: 3,
@@ -47,6 +50,14 @@ export const updateGameState = (
     cursorPosition
   );
   
+  // Decrease invulnerable timer if active
+  if (newPlayer.invulnerable) {
+    newPlayer.invulnerableTimer -= 1;
+    if (newPlayer.invulnerableTimer <= 0) {
+      newPlayer.invulnerable = false;
+    }
+  }
+  
   // Update maze blocks
   let collision = false;
   const newMaze = state.maze
@@ -54,8 +65,8 @@ export const updateGameState = (
       // Move block down
       const newBlock = { ...block, y: block.y + state.gameSpeed };
       
-      // Check collision
-      if (checkCollision(newPlayer, newBlock)) {
+      // Check collision (only if player is not invulnerable)
+      if (!newPlayer.invulnerable && checkCollision(newPlayer, newBlock)) {
         collision = true;
       }
       
@@ -63,12 +74,41 @@ export const updateGameState = (
     })
     .filter(block => block.y < canvasHeight + 100); // Keep blocks that are still on or near screen
   
-  // Generate new blocks - now passing the score to adjust spawn rate
-  const updatedMaze = generateMaze(newMaze, canvasWidth, canvasHeight, state.gameSpeed, state.score);
+  // Update boosters
+  const newBoosters = state.boosters
+    .map(booster => {
+      // Move booster down
+      const newBooster = { ...booster, y: booster.y + state.gameSpeed };
+      return newBooster;
+    })
+    .filter(booster => booster.y < canvasHeight + 100 && booster.active); // Keep active boosters on screen
+    
+  // Check for booster collisions
+  let collectedBooster = false;
+  newBoosters.forEach(booster => {
+    if (booster.active && checkBoosterCollision(newPlayer.x, newPlayer.y, newPlayer.size, booster)) {
+      booster.active = false; // Deactivate collected booster
+      collectedBooster = true;
+      
+      if (booster.type === BoosterType.SAFETY_KEY) {
+        newPlayer.invulnerable = true;
+        newPlayer.invulnerableTimer = 180; // About 3 seconds at 60 FPS
+      }
+    }
+  });
+  
+  // Generate new blocks and potentially boosters
+  const { maze: updatedMaze, boosters: newGeneratedBoosters } = generateMaze(
+    newMaze, 
+    canvasWidth, 
+    canvasHeight, 
+    state.gameSpeed, 
+    state.score
+  );
   
   // Update score and color phase
   const newScore = state.score + 1;
-  // Update color phase every 5000 points instead of 1000
+  // Update color phase every 5000 points
   const newColorPhase = Math.floor(newScore / 5000);
   
   return {
@@ -76,6 +116,7 @@ export const updateGameState = (
       ...state,
       player: newPlayer,
       maze: updatedMaze,
+      boosters: [...newBoosters.filter(b => b.active), ...newGeneratedBoosters],
       score: newScore,
       colorPhase: newColorPhase,
       gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)) // Gradually increase speed
@@ -100,7 +141,13 @@ export const startGame = (state: GameState): GameState => {
     gameActive: true,
     score: 0,
     maze: [],
-    gameSpeed: 2
+    boosters: [],
+    gameSpeed: 2,
+    player: {
+      ...state.player,
+      invulnerable: false,
+      invulnerableTimer: 0
+    }
   };
 };
 
