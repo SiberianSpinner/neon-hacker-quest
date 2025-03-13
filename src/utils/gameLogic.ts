@@ -92,7 +92,7 @@ export const updateGameState = (
       
       if (booster.type === BoosterType.SAFETY_KEY) {
         newPlayer.invulnerable = true;
-        newPlayer.invulnerableTimer = 180; // About 3 seconds at 60 FPS
+        newPlayer.invulnerableTimer = 1800; // Changed: 30 seconds at 60 FPS (60 * 30 = 1800)
       }
     }
   });

@@ -1,4 +1,3 @@
-
 import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
 // Generate maze blocks with Tetris-like shapes
@@ -64,8 +63,8 @@ export const generateMaze = (
     }
   }
   
-  // Check if we should spawn a booster (80% chance every 1000 points - increased from 20%)
-  if (score > 0 && score % 1000 < 20 && Math.random() < 0.8) {
+  // Changed: Spawn booster every 1500 points with 80% chance
+  if (score > 0 && score % 1500 === 0 && Math.random() < 0.8) {
     const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score);
     if (booster) {
       boosters.push(booster);
