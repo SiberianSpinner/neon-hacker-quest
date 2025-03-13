@@ -1,3 +1,4 @@
+
 export interface Player {
   x: number;
   y: number;
@@ -53,19 +54,26 @@ export const generateMaze = (
 ): MazeBlock[] => {
   const newMaze = [...maze];
   
-  // Generate new maze blocks with a reduced probability (half of the original)
-  if (Math.random() < 0.025 || maze.length === 0) { // Changed from 0.05 to 0.025
+  // Generate new maze blocks with a further reduced probability (quarter of the original)
+  if (Math.random() < 0.0125 || maze.length === 0) { // Changed from 0.025 to 0.0125
     // Create a grid-based labyrinth section
-    const gridSize = 160; // Doubled from 80 to increase distance between blocks
+    const gridSize = 160; // Keep distance between blocks large
     const numCols = Math.floor(canvasWidth / gridSize);
-    const minPathWidth = 80; // Doubled from 40 to make wider paths
+    const minPathWidth = 80; // Keep wider paths
+    
+    // Calculate maximum allowed block width (prevent full-width blocks)
+    const maxBlockWidth = canvasWidth * 0.8; // Maximum 80% of screen width
     
     // Generate a random maze pattern
     for (let col = 0; col < numCols; col++) {
       // Skip some columns randomly to create paths
       if (Math.random() < 0.7) {
         // Determine block width (not full width)
-        const blockWidth = Math.min(gridSize - minPathWidth, gridSize * 0.7 + Math.random() * 20);
+        const blockWidth = Math.min(
+          gridSize - minPathWidth, 
+          gridSize * 0.7 + Math.random() * 20,
+          maxBlockWidth
+        );
         
         // Determine x position with some randomness
         const xOffset = Math.random() * (gridSize - blockWidth);
@@ -80,15 +88,18 @@ export const generateMaze = (
       }
     }
     
-    // Occasionally add horizontal connectors between blocks
+    // Occasionally add horizontal connectors between blocks (but not full width)
     if (Math.random() < 0.3) {
-      const y = -100 - Math.random() * 50;
-      const width = gridSize * 2 + Math.random() * gridSize;
+      // Width limited to 80% of screen width to ensure there's always a path
+      const width = Math.min(
+        gridSize * 2 + Math.random() * gridSize,
+        canvasWidth * 0.8
+      );
       const x = Math.random() * (canvasWidth - width);
       
       newMaze.push({
         x,
-        y,
+        y: -100 - Math.random() * 50,
         width,
         height: 15 + Math.random() * 20
       });
