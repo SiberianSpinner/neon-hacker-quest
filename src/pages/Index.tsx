@@ -30,7 +30,7 @@ const Index = () => {
     setLastScore(score);
     
     // Show toast with score
-    toast(`Game Over`, {
+    toast("Game Over", {
       description: `Your score: ${score}`,
       position: 'top-center',
     });
@@ -125,7 +125,8 @@ const Index = () => {
       <GameCanvas 
         isActive={gameActive} 
         onGameOver={handleGameOver}
-        attemptsLeft={attemptsLeft}
+        attemptsLeft={att
+empsLeft}
       />
       
       {/* Start Screen */}
