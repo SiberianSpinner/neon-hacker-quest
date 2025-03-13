@@ -12,6 +12,7 @@ interface StartScreenProps {
   onBuyUnlimited: () => void;
   attemptsLeft: number;
   lastScore?: number;
+  isTelegramWebApp?: boolean;
 }
 
 const StartScreen: React.FC<StartScreenProps> = ({
@@ -21,7 +22,8 @@ const StartScreen: React.FC<StartScreenProps> = ({
   onWatchAd,
   onBuyUnlimited,
   attemptsLeft,
-  lastScore
+  lastScore,
+  isTelegramWebApp = false
 }) => {
   const [menuLoaded, setMenuLoaded] = useState(false);
   
@@ -84,7 +86,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               onClick={onStartGame}
               disabled={attemptsLeft <= 0}
             >
-              PLAY
+              {isTelegramWebApp ? 'ИГРАТЬ' : 'PLAY'}
             </CustomButton>
           </motion.div>
           
@@ -98,7 +100,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               variant="ghost" 
               onClick={onShowLeaderboard}
             >
-              LEADERBOARD
+              {isTelegramWebApp ? 'ЛИДЕРБОРД' : 'LEADERBOARD'}
             </CustomButton>
           </motion.div>
           
@@ -112,7 +114,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               variant="secondary"
               onClick={onWatchAd}
             >
-              WATCH AD FOR ATTEMPTS
+              {isTelegramWebApp ? 'ДОП ПОПЫТКИ' : 'WATCH AD FOR ATTEMPTS'}
             </CustomButton>
           </motion.div>
           
@@ -126,7 +128,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               variant="tertiary"
               onClick={onBuyUnlimited}
             >
-              UNLIMITED ATTEMPTS
+              {isTelegramWebApp ? 'БЕЗЛИМИТ' : 'UNLIMITED ATTEMPTS'}
             </CustomButton>
           </motion.div>
         </div>
@@ -137,7 +139,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           transition={{ delay: 0.8, duration: 0.5 }}
           className="text-xs text-cyber-foreground/50 text-center mt-4"
         >
-          NAVIGATE THE CYBER MAZE AND SURVIVE
+          {isTelegramWebApp ? 'ИЗБЕГАЙ СТЕН И ВЫЖИВАЙ' : 'NAVIGATE THE CYBER MAZE AND SURVIVE'}
         </motion.div>
       </div>
     </div>
