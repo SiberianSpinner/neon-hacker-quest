@@ -125,8 +125,7 @@ const Index = () => {
       <GameCanvas 
         isActive={gameActive} 
         onGameOver={handleGameOver}
-        attemptsLeft={att
-empsLeft}
+        attemptsLeft={attemptsLeft}
       />
       
       {/* Start Screen */}
