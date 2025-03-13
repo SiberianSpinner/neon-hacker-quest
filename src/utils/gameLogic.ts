@@ -46,11 +46,16 @@ export const generateMaze = (
   const newMaze = [...maze];
   
   if (Math.random() < 0.1 || maze.length === 0) {
-    const gap = Math.random() * (canvasWidth - 100) + 50;
+    // Create a minimum gap width for player to navigate through
+    const minGapWidth = 80; // Enough space for player to navigate
+    
+    // Random position for the gap
+    const gapPosition = Math.random() * (canvasWidth - minGapWidth);
+    
     newMaze.push({
       y: -50,
-      leftWidth: gap,
-      rightWidth: canvasWidth - gap - 100
+      leftWidth: gapPosition,
+      rightWidth: canvasWidth - gapPosition - minGapWidth
     });
   }
   
