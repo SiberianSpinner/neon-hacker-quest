@@ -5,7 +5,8 @@ import {
   initGameState, 
   updateGameState, 
   getBlockColor,
-  startGame
+  startGame,
+  toggleCursorControl
 } from '@/utils/gameLogic';
 
 interface GameCanvasProps {
@@ -25,6 +26,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const previousTimeRef = useRef<number>();
   const [previousActive, setPreviousActive] = useState(false);
   const [keys, setKeys] = useState<{ [key: string]: boolean }>({});
+  const [cursorPosition, setCursorPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: null });
 
   // Initialize game state
   useEffect(() => {
@@ -104,6 +106,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       setKeys(prevKeys => ({ ...prevKeys, [e.key]: true }));
+      
+      // Toggle cursor control with 'c' key
+      if (e.key === 'c' && gameState) {
+        setGameState(prevState => {
+          if (!prevState) return null;
+          return toggleCursorControl(prevState);
+        });
+      }
     };
     
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -116,6 +126,42 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [gameState]);
+
+  // Handle mouse/touch movement
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        setCursorPosition({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        });
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (canvasRef.current && e.touches.length > 0) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        setCursorPosition({
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top
+        });
+        e.preventDefault(); // Prevent scrolling on touch devices
+      }
+    };
+
+    if (canvasRef.current) {
+      canvasRef.current.addEventListener('mousemove', handleMouseMove);
+      canvasRef.current.addEventListener('touchmove', handleTouchMove, { passive: false });
+    }
+
+    return () => {
+      if (canvasRef.current) {
+        canvasRef.current.removeEventListener('mousemove', handleMouseMove);
+        canvasRef.current.removeEventListener('touchmove', handleTouchMove);
+      }
     };
   }, []);
 
@@ -158,7 +204,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             gameState,
             canvas.width,
             canvas.height,
-            keys
+            keys,
+            cursorPosition
           );
 
           // Check for collision
@@ -234,11 +281,33 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.textAlign = 'right';
           ctx.fillText(`ПОПЫТКИ: ${newState.attemptsLeft}`, canvas.width - 20, 30);
           
-          // Controls hint
-          if (newState.score < 200) {
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'rgba(0, 255, 204, 0.7)';
-            ctx.fillText('Управление: W,A,S,D или стрелки', canvas.width / 2, canvas.height - 30);
+          // Show cursor control status
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(0, 255, 204, 0.7)';
+          ctx.fillText(
+            `Управление: ${newState.cursorControl ? 'Курсор' : 'Клавиатура'} (C для переключения)`, 
+            canvas.width / 2, 
+            canvas.height - 30
+          );
+
+          // Draw cursor target if cursor control is active
+          if (newState.cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
+            ctx.strokeStyle = 'rgba(0, 255, 204, 0.6)';
+            ctx.lineWidth = 1;
+            
+            // Draw crosshair
+            const crossSize = 10;
+            ctx.beginPath();
+            ctx.moveTo(cursorPosition.x - crossSize, cursorPosition.y);
+            ctx.lineTo(cursorPosition.x + crossSize, cursorPosition.y);
+            ctx.moveTo(cursorPosition.x, cursorPosition.y - crossSize);
+            ctx.lineTo(cursorPosition.x, cursorPosition.y + crossSize);
+            ctx.stroke();
+            
+            // Draw circle
+            ctx.beginPath();
+            ctx.arc(cursorPosition.x, cursorPosition.y, crossSize, 0, Math.PI * 2);
+            ctx.stroke();
           }
 
           setGameState(newState);
@@ -255,7 +324,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [gameState, keys, onGameOver]);
+  }, [gameState, keys, onGameOver, cursorPosition]);
 
   return (
     <canvas 

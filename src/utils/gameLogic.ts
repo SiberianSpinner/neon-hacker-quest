@@ -21,6 +21,7 @@ export interface GameState {
   attemptsLeft: number;
   gameActive: boolean;
   colorPhase: number;
+  cursorControl: boolean; // Track if cursor control is active
 }
 
 // Initialize game state
@@ -38,7 +39,8 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     gameSpeed: 2,
     attemptsLeft: 3,
     gameActive: false,
-    colorPhase: 0
+    colorPhase: 0,
+    cursorControl: false
   };
 };
 
@@ -51,12 +53,12 @@ export const generateMaze = (
 ): MazeBlock[] => {
   const newMaze = [...maze];
   
-  // Generate new maze blocks with a certain probability
-  if (Math.random() < 0.05 || maze.length === 0) {
+  // Generate new maze blocks with a reduced probability (half of the original)
+  if (Math.random() < 0.025 || maze.length === 0) { // Changed from 0.05 to 0.025
     // Create a grid-based labyrinth section
-    const gridSize = 80; // Size of grid cells
+    const gridSize = 160; // Doubled from 80 to increase distance between blocks
     const numCols = Math.floor(canvasWidth / gridSize);
-    const minPathWidth = 40; // Minimum width of paths
+    const minPathWidth = 80; // Doubled from 40 to make wider paths
     
     // Generate a random maze pattern
     for (let col = 0; col < numCols; col++) {
@@ -108,33 +110,58 @@ export const getBlockColor = (score: number): string => {
   }
 };
 
-// Update player movement based on keyboard input
+// Update player movement based on keyboard input and cursor position if enabled
 export const updatePlayerMovement = (
   player: Player,
   keys: { [key: string]: boolean },
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  cursorControl: boolean,
+  cursorPosition: { x: number | null, y: number | null }
 ): Player => {
   const newPlayer = { ...player };
   const moveSpeed = 5;
   
-  // Update speeds based on key presses
-  if (keys.ArrowLeft || keys.a) {
-    newPlayer.speedX = -moveSpeed;
-  } else if (keys.ArrowRight || keys.d) {
-    newPlayer.speedX = moveSpeed;
+  if (cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
+    // Calculate direction vector towards cursor
+    const dx = cursorPosition.x - player.x;
+    const dy = cursorPosition.y - player.y;
+    
+    // Calculate distance to cursor
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > 5) {  // Only move if cursor is not too close
+      // Normalize direction vector and multiply by move speed
+      const normalizedDx = dx / distance;
+      const normalizedDy = dy / distance;
+      
+      newPlayer.speedX = normalizedDx * moveSpeed;
+      newPlayer.speedY = normalizedDy * moveSpeed;
+    } else {
+      // If cursor is very close, stop movement
+      newPlayer.speedX = 0;
+      newPlayer.speedY = 0;
+    }
   } else {
-    // Decelerate X movement when no keys pressed
-    newPlayer.speedX = 0;
-  }
-  
-  if (keys.ArrowUp || keys.w) {
-    newPlayer.speedY = -moveSpeed;
-  } else if (keys.ArrowDown || keys.s) {
-    newPlayer.speedY = moveSpeed;
-  } else {
-    // Decelerate Y movement when no keys pressed
-    newPlayer.speedY = 0;
+    // Keyboard controls (when cursor control is disabled)
+    // Update speeds based on key presses
+    if (keys.ArrowLeft || keys.a) {
+      newPlayer.speedX = -moveSpeed;
+    } else if (keys.ArrowRight || keys.d) {
+      newPlayer.speedX = moveSpeed;
+    } else {
+      // Decelerate X movement when no keys pressed
+      newPlayer.speedX = 0;
+    }
+    
+    if (keys.ArrowUp || keys.w) {
+      newPlayer.speedY = -moveSpeed;
+    } else if (keys.ArrowDown || keys.s) {
+      newPlayer.speedY = moveSpeed;
+    } else {
+      // Decelerate Y movement when no keys pressed
+      newPlayer.speedY = 0;
+    }
   }
   
   // Update position
@@ -163,14 +190,22 @@ export const updateGameState = (
   state: GameState, 
   canvasWidth: number, 
   canvasHeight: number,
-  keys: { [key: string]: boolean }
+  keys: { [key: string]: boolean },
+  cursorPosition: { x: number | null, y: number | null }
 ): { newState: GameState; collision: boolean } => {
   if (!state.gameActive) {
     return { newState: state, collision: false };
   }
   
-  // Update player position based on keyboard input
-  const newPlayer = updatePlayerMovement(state.player, keys, canvasWidth, canvasHeight);
+  // Update player position based on keyboard input and cursor position
+  const newPlayer = updatePlayerMovement(
+    state.player, 
+    keys, 
+    canvasWidth, 
+    canvasHeight, 
+    state.cursorControl,
+    cursorPosition
+  );
   
   // Update maze blocks
   let collision = false;
@@ -205,6 +240,14 @@ export const updateGameState = (
       gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)) // Gradually increase speed
     },
     collision
+  };
+};
+
+// Toggle cursor control
+export const toggleCursorControl = (state: GameState): GameState => {
+  return {
+    ...state,
+    cursorControl: !state.cursorControl
   };
 };
 
