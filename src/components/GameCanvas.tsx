@@ -1,16 +1,15 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { 
-  GameState, 
   initGameState, 
   updateGameState, 
   getBlockColor,
   startGame,
   toggleCursorControl
 } from '@/utils/gameLogic';
-import { getGlowColor } from '@/utils/mazeUtils';
+import { getGlowColor, getOppositeColor } from '@/utils/mazeUtils';
 import { Key } from 'lucide-react';
-import { BoosterType } from '@/utils/types';
+import { BoosterType, GameState } from '@/utils/types';
 
 interface GameCanvasProps {
   isActive: boolean;
@@ -229,14 +228,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                 // Draw key booster with glow effect
                 ctx.save();
                 
+                // Use opposite color for the booster based on current score
+                const oppositeColor = getOppositeColor(newState.score);
+                
                 // Glow effect
-                ctx.shadowColor = '#00ccff';
+                ctx.shadowColor = oppositeColor;
                 ctx.shadowBlur = 15;
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 0;
                 
                 // Draw key icon
-                ctx.fillStyle = '#00ccff';
+                ctx.fillStyle = oppositeColor;
                 ctx.beginPath();
                 ctx.arc(booster.x + booster.size / 2, booster.y + booster.size / 2, booster.size / 2, 0, Math.PI * 2);
                 ctx.fill();

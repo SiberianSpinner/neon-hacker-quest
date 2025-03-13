@@ -1,3 +1,4 @@
+
 import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
 // Generate maze blocks with Tetris-like shapes
@@ -63,9 +64,9 @@ export const generateMaze = (
     }
   }
   
-  // Check if we should spawn a booster (20% chance every 1000 points)
-  if (score > 0 && score % 1000 < 20 && Math.random() < 0.2) {
-    const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze]);
+  // Check if we should spawn a booster (80% chance every 1000 points - increased from 20%)
+  if (score > 0 && score % 1000 < 20 && Math.random() < 0.8) {
+    const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score);
     if (booster) {
       boosters.push(booster);
     }
@@ -78,7 +79,8 @@ export const generateMaze = (
 const generateBooster = (
   canvasWidth: number,
   canvasHeight: number,
-  existingBlocks: MazeBlock[]
+  existingBlocks: MazeBlock[],
+  score: number
 ): Booster | null => {
   const size = 30; // Size of the booster
   const padding = 50; // Padding from edges
@@ -230,6 +232,19 @@ export const getBlockColor = (score: number): string => {
     case 3: return '#ffffff'; // Неоново-белый
     case 4: return '#cc00ff'; // Неоново-фиолетовый
     default: return '#00ff00';
+  }
+};
+
+// Get the opposite color of the current block color
+export const getOppositeColor = (score: number): string => {
+  const colorPhase = Math.floor(score / 5000);
+  switch(colorPhase % 5) {
+    case 0: return '#ff00ff'; // Opposite of green (magenta)
+    case 1: return '#ff3300'; // Opposite of blue (orange/red)
+    case 2: return '#00ffff'; // Opposite of red (cyan)
+    case 3: return '#000000'; // Opposite of white (black)
+    case 4: return '#33ff00'; // Opposite of purple (lime green)
+    default: return '#ff00ff';
   }
 };
 
