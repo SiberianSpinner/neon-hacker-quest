@@ -53,15 +53,11 @@ export const generateMaze = (
 ): MazeBlock[] => {
   const newMaze = [...maze];
   
-  // Generate new maze blocks with a further reduced probability (quarter of the original)
-  if (Math.random() < 0.0125 || maze.length === 0) { // Changed from 0.025 to 0.0125
+  // Generate new maze blocks with a reduced probability
+  if (Math.random() < 0.0125 || maze.length === 0) {
     // Create a grid-based labyrinth section
-    const gridSize = 160; // Keep distance between blocks large
+    const gridSize = 50; // Match the background grid size
     const numCols = Math.floor(canvasWidth / gridSize);
-    const minPathWidth = 80; // Keep wider paths
-    
-    // Calculate maximum allowed block width (prevent full-width blocks)
-    const maxBlockWidth = canvasWidth * 0.8; // Maximum 80% of screen width
     
     // Keep track of newly created blocks to check for overlaps
     const newBlocks: MazeBlock[] = [];
@@ -70,28 +66,19 @@ export const generateMaze = (
     for (let col = 0; col < numCols; col++) {
       // Skip some columns randomly to create paths
       if (Math.random() < 0.7) {
-        // Determine block width (not full width)
-        const blockWidth = Math.min(
-          gridSize - minPathWidth, 
-          gridSize * 0.7 + Math.random() * 20,
-          maxBlockWidth
-        );
+        // Each block is now a perfect square matching the grid size
+        const blockSize = gridSize;
         
-        // Determine block height (limiting height to not be more than twice the width)
-        const maxHeight = blockWidth * 2;
-        const blockHeight = Math.min(30 + Math.random() * 40, maxHeight);
+        // Align to grid by using multiples of gridSize
+        const x = col * gridSize;
+        const y = -gridSize; // Start above the canvas, aligned to grid
         
-        // Determine x position with some randomness
-        const xOffset = Math.random() * (gridSize - blockWidth);
-        const x = col * gridSize + xOffset;
-        const y = -100; // Start above the canvas
-        
-        // Create the potential new block
+        // Create the potential new block (perfectly square)
         const newBlock = {
           x,
           y,
-          width: blockWidth,
-          height: blockHeight
+          width: blockSize,
+          height: blockSize
         };
         
         // Check if this block overlaps with any of the newly created blocks
@@ -105,36 +92,35 @@ export const generateMaze = (
       }
     }
     
-    // Occasionally add horizontal connectors between blocks (but not full width)
+    // Occasionally add horizontal connectors that are also grid-aligned and square
     if (Math.random() < 0.3) {
-      // Width limited to 80% of screen width to ensure there's always a path
-      const width = Math.min(
-        gridSize * 2 + Math.random() * gridSize,
-        canvasWidth * 0.8
-      );
+      // Choose a random number of connected squares (1-3)
+      const numSquares = 1 + Math.floor(Math.random() * 3);
+      const blockSize = gridSize;
       
-      // Height limited to not be more than twice the width
-      const maxHeight = width * 0.5; // Even more restrictive for connectors
-      const height = Math.min(15 + Math.random() * 20, maxHeight);
+      // Choose a random starting column
+      const startCol = Math.floor(Math.random() * (numCols - numSquares));
+      const y = -gridSize * 2; // Start two rows above the canvas
       
-      const x = Math.random() * (canvasWidth - width);
-      const y = -100 - Math.random() * 50;
-      
-      // Create the potential new connector block
-      const newConnector = {
-        x,
-        y,
-        width,
-        height
-      };
-      
-      // Check if this connector overlaps with any of the newly created blocks
-      const overlaps = checkBlockOverlap(newConnector, newBlocks);
-      
-      // Only add the connector if it doesn't overlap
-      if (!overlaps) {
-        newBlocks.push(newConnector);
-        newMaze.push(newConnector);
+      for (let i = 0; i < numSquares; i++) {
+        const x = (startCol + i) * gridSize;
+        
+        // Create a square block
+        const newConnector = {
+          x,
+          y,
+          width: blockSize,
+          height: blockSize
+        };
+        
+        // Check if this connector overlaps with any of the newly created blocks
+        const overlaps = checkBlockOverlap(newConnector, newBlocks);
+        
+        // Only add the connector if it doesn't overlap
+        if (!overlaps) {
+          newBlocks.push(newConnector);
+          newMaze.push(newConnector);
+        }
       }
     }
   }
