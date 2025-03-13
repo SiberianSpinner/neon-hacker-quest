@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   GameState, 
@@ -7,8 +8,6 @@ import {
   startGame,
   toggleCursorControl
 } from '@/utils/gameLogic';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { calculateBarrierWidth } from '@/utils/collisionUtils';
 
 interface GameCanvasProps {
   isActive: boolean;
@@ -28,7 +27,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [previousActive, setPreviousActive] = useState(false);
   const [keys, setKeys] = useState<{ [key: string]: boolean }>({});
   const [cursorPosition, setCursorPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: null });
-  const isMobile = useIsMobile();
 
   // Initialize game state
   useEffect(() => {
@@ -42,36 +40,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       );
 
       const handleResize = () => {
-        if (canvas) {
-          canvas.width = window.innerWidth;
-          canvas.height = window.innerHeight;
-          
-          // Update game state with new dimensions
-          setGameState(prevState => {
-            if (!prevState) return null;
-            
-            const barrierWidth = calculateBarrierWidth(canvas.width);
-            
-            return {
-              ...prevState,
-              player: {
-                ...prevState.player,
-                y: canvas.height - 100
-              },
-              sideBarriers: [
-                {
-                  ...prevState.sideBarriers[0],
-                  width: barrierWidth,
-                },
-                {
-                  ...prevState.sideBarriers[1],
-                  x: canvas.width - barrierWidth,
-                  width: barrierWidth,
-                }
-              ]
-            };
-          });
-        }
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        setGameState(prevState => {
+          if (!prevState) return null;
+          return {
+            ...prevState,
+            player: {
+              ...prevState.player,
+              y: canvas.height - 100
+            }
+          };
+        });
       };
 
       window.addEventListener('resize', handleResize);
