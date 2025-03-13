@@ -1,14 +1,12 @@
 
-import { GameState, Player, MazeBlock, SideBarrier } from './types';
+import { GameState, Player, MazeBlock } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor } from './mazeUtils';
-import { checkCollision, checkSideBarrierCollision } from './collisionUtils';
+import { checkCollision } from './collisionUtils';
 import { saveScore, getScores } from './storageUtils';
 
 // Initialize game state
 export const initGameState = (canvasWidth: number, canvasHeight: number): GameState => {
-  const barrierWidth = 20; // Width of the side barriers
-  
   return {
     player: { 
       x: canvasWidth / 2, 
@@ -18,20 +16,6 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
       speedY: 0
     },
     maze: [],
-    sideBarriers: [
-      {
-        side: 'left',
-        x: 0,
-        width: barrierWidth,
-        color: getBlockColor(0)
-      },
-      {
-        side: 'right',
-        x: canvasWidth - barrierWidth,
-        width: barrierWidth,
-        color: getBlockColor(0)
-      }
-    ],
     score: 0,
     gameSpeed: 2,
     attemptsLeft: 3,
@@ -86,27 +70,11 @@ export const updateGameState = (
   const newScore = state.score + 1;
   const newColorPhase = Math.floor(newScore / 1000);
   
-  // Update side barriers color
-  const newBarrierColor = getBlockColor(newScore);
-  const updatedBarriers = state.sideBarriers.map(barrier => ({
-    ...barrier,
-    color: newBarrierColor
-  }));
-  
-  // Check collision with side barriers
-  for (const barrier of updatedBarriers) {
-    if (checkSideBarrierCollision(newPlayer, barrier)) {
-      collision = true;
-      break;
-    }
-  }
-  
   return {
     newState: {
       ...state,
       player: newPlayer,
       maze: updatedMaze,
-      sideBarriers: updatedBarriers,
       score: newScore,
       colorPhase: newColorPhase,
       gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)) // Gradually increase speed
@@ -164,7 +132,5 @@ export const setUnlimitedAttempts = (state: GameState): GameState => {
 // Re-export everything from the separate modules for backward compatibility
 export { updatePlayerMovement } from './playerUtils';
 export { generateMaze, getBlockColor } from './mazeUtils';
-export { checkCollision, checkSideBarrierCollision } from './collisionUtils';
+export { checkCollision } from './collisionUtils';
 export { saveScore, getScores } from './storageUtils';
-export type { GameState, Player, MazeBlock, SideBarrier } from './types';
-

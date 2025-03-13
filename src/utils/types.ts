@@ -16,17 +16,9 @@ export interface MazeBlock {
   height: number;
 }
 
-export interface SideBarrier {
-  side: 'left' | 'right';
-  x: number;
-  width: number;
-  color: string;
-}
-
 export interface GameState {
   player: Player;
   maze: MazeBlock[];
-  sideBarriers: SideBarrier[];
   score: number;
   gameSpeed: number;
   attemptsLeft: number;
@@ -42,4 +34,3 @@ export enum ShapeType {
   HORIZONTAL_DOUBLE = 'HORIZONTAL_DOUBLE',
   L_SHAPE = 'L_SHAPE'
 }
-

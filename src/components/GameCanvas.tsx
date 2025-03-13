@@ -218,42 +218,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             return;
           }
 
-          // Draw side barriers
-          newState.sideBarriers.forEach(barrier => {
-            ctx.fillStyle = barrier.color;
-            if (barrier.side === 'left') {
-              ctx.fillRect(0, 0, barrier.width, canvas.height);
-            } else {
-              ctx.fillRect(barrier.x, 0, barrier.width, canvas.height);
-            }
-            
-            // Add circuit pattern to barriers
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.lineWidth = 1;
-            
-            // Vertical lines inside barriers
-            const startX = barrier.side === 'left' ? 5 : barrier.x + 5;
-            const endX = barrier.side === 'left' ? barrier.width - 5 : barrier.x + barrier.width - 5;
-            
-            for (let x = startX; x < endX; x += 10) {
-              ctx.beginPath();
-              ctx.moveTo(x, 0);
-              ctx.lineTo(x, canvas.height);
-              ctx.stroke();
-            }
-            
-            // Random "connection" dots
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            const barrierX = barrier.side === 'left' ? 0 : barrier.x;
-            for (let i = 0; i < canvas.height / 20; i++) {
-              const dotX = barrierX + Math.random() * barrier.width;
-              const dotY = Math.random() * canvas.height;
-              ctx.beginPath();
-              ctx.arc(dotX, dotY, 1, 0, Math.PI * 2);
-              ctx.fill();
-            }
-          });
-          
           // Draw maze blocks
           newState.maze.forEach(block => {
             ctx.fillStyle = getBlockColor(newState.score);
