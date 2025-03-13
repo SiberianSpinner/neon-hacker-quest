@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import GameCanvas from '@/components/GameCanvas';
 import StartScreen from '@/components/StartScreen';
 import Leaderboard from '@/components/Leaderboard';
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { saveScore, getScores } from '@/utils/gameLogic';
 
 const Index = () => {
