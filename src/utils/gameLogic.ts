@@ -24,6 +24,14 @@ export interface GameState {
   cursorControl: boolean; // Track if cursor control is active
 }
 
+// Shape type enum
+enum ShapeType {
+  SINGLE = 'SINGLE',
+  VERTICAL_DOUBLE = 'VERTICAL_DOUBLE',
+  HORIZONTAL_DOUBLE = 'HORIZONTAL_DOUBLE',
+  L_SHAPE = 'L_SHAPE'
+}
+
 // Initialize game state
 export const initGameState = (canvasWidth: number, canvasHeight: number): GameState => {
   return {
@@ -44,7 +52,7 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
   };
 };
 
-// Generate maze blocks
+// Generate maze blocks with Tetris-like shapes
 export const generateMaze = (
   maze: MazeBlock[], 
   canvasWidth: number,
@@ -55,97 +63,156 @@ export const generateMaze = (
   
   // Generate new maze blocks with a reduced probability
   if (Math.random() < 0.0125 || maze.length === 0) {
-    // Create a grid-based labyrinth section
-    const gridSize = 50; // Match the background grid size
+    const gridSize = 50; // Base size for each block cube
+    
+    // Calculate how many potential columns we have
     const numCols = Math.floor(canvasWidth / gridSize);
     
-    // Keep track of newly created blocks to check for overlaps
+    // Keep track of all newly created blocks to check for overlaps
     const newBlocks: MazeBlock[] = [];
     
-    // Generate a random maze pattern
-    for (let col = 0; col < numCols; col++) {
-      // Skip some columns randomly to create paths
-      if (Math.random() < 0.7) {
-        // Each block is now a perfect square matching the grid size
-        const blockSize = gridSize;
-        
-        // Align to grid by using multiples of gridSize
-        const x = col * gridSize;
-        const y = -gridSize; // Start above the canvas, aligned to grid
-        
-        // Create the potential new block (perfectly square)
-        const newBlock = {
-          x,
-          y,
-          width: blockSize,
-          height: blockSize
-        };
-        
-        // Check if this block overlaps with any of the newly created blocks
-        const overlaps = checkBlockOverlap(newBlock, newBlocks);
-        
-        // Only add the block if it doesn't overlap with other new blocks
-        if (!overlaps) {
-          newBlocks.push(newBlock);
-          newMaze.push(newBlock);
-        }
-      }
-    }
+    // Choose a random starting position that's not strictly aligned to the grid
+    // but still ensures the shape stays within canvas boundaries
+    const randomOffset = Math.random() * (gridSize / 2); // 0 to half a grid cell offset
+    const col = Math.floor(Math.random() * (numCols - 2)); // Leave space for larger shapes
+    const x = col * gridSize + randomOffset;
+    const y = -gridSize * 2; // Start above the canvas
     
-    // Occasionally add horizontal connectors that are also grid-aligned and square
-    if (Math.random() < 0.3) {
-      // Choose a random number of connected squares (1-3)
-      const numSquares = 1 + Math.floor(Math.random() * 3);
-      const blockSize = gridSize;
-      
-      // Choose a random starting column
-      const startCol = Math.floor(Math.random() * (numCols - numSquares));
-      const y = -gridSize * 2; // Start two rows above the canvas
-      
-      for (let i = 0; i < numSquares; i++) {
-        const x = (startCol + i) * gridSize;
-        
-        // Create a square block
-        const newConnector = {
-          x,
-          y,
-          width: blockSize,
-          height: blockSize
-        };
-        
-        // Check if this connector overlaps with any of the newly created blocks
-        const overlaps = checkBlockOverlap(newConnector, newBlocks);
-        
-        // Only add the connector if it doesn't overlap
-        if (!overlaps) {
-          newBlocks.push(newConnector);
-          newMaze.push(newConnector);
-        }
-      }
+    // Randomly select one of the four shape types
+    const shapeType = getRandomShapeType();
+    
+    // Create the selected shape
+    const shapeBlocks = createShape(shapeType, x, y, gridSize);
+    
+    // Check if the entire shape can be placed without overlapping existing blocks
+    const existingBlocks = [...maze]; // All currently existing blocks
+    const canPlaceShape = !shapeBlocks.some(block => 
+      checkBlockOverlap(block, existingBlocks, gridSize) || 
+      checkBlockOverlap(block, newBlocks, gridSize)
+    );
+    
+    // Only add the shape if it can be placed without overlaps
+    if (canPlaceShape) {
+      // Add all blocks of the shape
+      shapeBlocks.forEach(block => {
+        newBlocks.push(block);
+        newMaze.push(block);
+      });
     }
   }
   
   return newMaze;
 };
 
-// Helper function to check if a block overlaps with any block in a given array
-const checkBlockOverlap = (block: MazeBlock, blocks: MazeBlock[]): boolean => {
-  // Add a small buffer to prevent blocks from being too close
-  const buffer = 5;
+// Get a random shape type
+const getRandomShapeType = (): ShapeType => {
+  const shapes = [
+    ShapeType.SINGLE, 
+    ShapeType.VERTICAL_DOUBLE, 
+    ShapeType.HORIZONTAL_DOUBLE, 
+    ShapeType.L_SHAPE
+  ];
+  const randomIndex = Math.floor(Math.random() * shapes.length);
+  return shapes[randomIndex];
+};
+
+// Create a shape based on the given type, position and grid size
+const createShape = (
+  type: ShapeType, 
+  startX: number, 
+  startY: number, 
+  gridSize: number
+): MazeBlock[] => {
+  const blocks: MazeBlock[] = [];
   
+  switch(type) {
+    case ShapeType.SINGLE:
+      // Single square block
+      blocks.push({
+        x: startX,
+        y: startY,
+        width: gridSize,
+        height: gridSize
+      });
+      break;
+      
+    case ShapeType.VERTICAL_DOUBLE:
+      // Two squares stacked vertically
+      blocks.push({
+        x: startX,
+        y: startY,
+        width: gridSize,
+        height: gridSize
+      });
+      blocks.push({
+        x: startX,
+        y: startY + gridSize,
+        width: gridSize,
+        height: gridSize
+      });
+      break;
+      
+    case ShapeType.HORIZONTAL_DOUBLE:
+      // Two squares side by side horizontally
+      blocks.push({
+        x: startX,
+        y: startY,
+        width: gridSize,
+        height: gridSize
+      });
+      blocks.push({
+        x: startX + gridSize,
+        y: startY,
+        width: gridSize,
+        height: gridSize
+      });
+      break;
+      
+    case ShapeType.L_SHAPE:
+      // L-shape made of 3 squares
+      blocks.push({
+        x: startX,
+        y: startY,
+        width: gridSize,
+        height: gridSize
+      });
+      blocks.push({
+        x: startX,
+        y: startY + gridSize,
+        width: gridSize,
+        height: gridSize
+      });
+      blocks.push({
+        x: startX + gridSize,
+        y: startY + gridSize,
+        width: gridSize,
+        height: gridSize
+      });
+      break;
+  }
+  
+  return blocks;
+};
+
+// Helper function to check if a block overlaps with any block in a given array
+const checkBlockOverlap = (
+  block: MazeBlock, 
+  blocks: MazeBlock[],
+  minimumGap: number = 0
+): boolean => {
   for (const existingBlock of blocks) {
-    // Check if blocks overlap using their coordinates and dimensions with buffer
+    // Check if blocks overlap or are too close (within minimum gap)
     if (
-      block.x - buffer < existingBlock.x + existingBlock.width &&
-      block.x + block.width + buffer > existingBlock.x &&
-      block.y - buffer < existingBlock.y + existingBlock.height &&
-      block.y + block.height + buffer > existingBlock.y
+      block.x - minimumGap < existingBlock.x + existingBlock.width &&
+      block.x + block.width + minimumGap > existingBlock.x &&
+      block.y - minimumGap < existingBlock.y + existingBlock.height &&
+      block.y + block.height + minimumGap > existingBlock.y
     ) {
-      return true; // Overlap detected
+      return true; // Overlap or too close
     }
   }
   
-  return false; // No overlap
+  return false; // No overlap and not too close
 };
 
 // Get block color based on score
