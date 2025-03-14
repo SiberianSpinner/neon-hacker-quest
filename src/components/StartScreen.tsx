@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
-import { Trophy, Microchip, VirtualReality } from 'lucide-react';
+import { Trophy, Microchip, Gamepad } from 'lucide-react';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -100,8 +99,8 @@ const StartScreen: React.FC<StartScreenProps> = ({
                 glowEffect
                 onClick={onStartGame}
                 disabled={attemptsLeft <= 0}
+                leftIcon={<Gamepad className="w-12 h-12 mb-1" />}
               >
-                <VirtualReality className="w-12 h-12 mb-1" />
                 <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ВЗЛОМ' : 'HACK'}</span>
               </CustomButton>
             </div>
