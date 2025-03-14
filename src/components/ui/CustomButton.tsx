@@ -33,10 +33,11 @@ export interface ButtonProps
   children: React.ReactNode;
   glowEffect?: boolean;
   hoverSound?: boolean;
+  leftIcon?: React.ReactNode; // Add the leftIcon prop
 }
 
 const CustomButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, glowEffect = false, children, ...props }, ref) => {
+  ({ className, variant, size, glowEffect = false, leftIcon, children, ...props }, ref) => {
     const [isHovering, setIsHovering] = React.useState(false);
     
     // Sound effect for hover
@@ -61,6 +62,7 @@ const CustomButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
         onMouseLeave={() => setIsHovering(false)}
         {...props}
       >
+        {leftIcon && <span className="mr-2 inline-flex items-center">{leftIcon}</span>}
         <span className="z-10 relative">{children}</span>
         {isHovering && (
           <span className="absolute inset-0 bg-gradient-to-r from-cyber-primary/0 via-cyber-primary/10 to-cyber-primary/0 animate-pulse rounded-md" />
