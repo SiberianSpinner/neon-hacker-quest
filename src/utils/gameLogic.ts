@@ -4,6 +4,7 @@ import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
 import { checkCollision } from './collisionUtils';
 import { saveScore, getScores } from './storageUtils';
+import { updateAchievements } from './achievementsUtils';
 
 // Initialize game state
 export const initGameState = (canvasWidth: number, canvasHeight: number): GameState => {
@@ -25,7 +26,8 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     gameActive: false,
     colorPhase: 0,
     cursorControl: false,
-    gameWon: false
+    gameWon: false,
+    collectedSafetyKeys: 0
   };
 };
 
@@ -86,6 +88,8 @@ export const updateGameState = (
     
   // Check for booster collisions
   let collectedBooster = false;
+  let newCollectedSafetyKeys = state.collectedSafetyKeys;
+  
   newBoosters.forEach(booster => {
     if (booster.active && checkBoosterCollision(newPlayer.x, newPlayer.y, newPlayer.size, booster)) {
       booster.active = false; // Deactivate collected booster
@@ -94,6 +98,7 @@ export const updateGameState = (
       if (booster.type === BoosterType.SAFETY_KEY) {
         newPlayer.invulnerable = true;
         newPlayer.invulnerableTimer = 1800; // Changed: 30 seconds at 60 FPS (60 * 30 = 1800)
+        newCollectedSafetyKeys += 1; // Increment collected safety keys count
       }
     }
   });
@@ -115,17 +120,20 @@ export const updateGameState = (
   // Check if player has won (reached 100,000 points - 100% hack completion)
   const gameWon = newScore >= 100000;
   
+  const newState = {
+    ...state,
+    player: newPlayer,
+    maze: updatedMaze,
+    boosters: [...newBoosters.filter(b => b.active), ...newGeneratedBoosters],
+    score: newScore,
+    colorPhase: newColorPhase,
+    gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)), // Gradually increase speed
+    gameWon,
+    collectedSafetyKeys: newCollectedSafetyKeys
+  };
+  
   return {
-    newState: {
-      ...state,
-      player: newPlayer,
-      maze: updatedMaze,
-      boosters: [...newBoosters.filter(b => b.active), ...newGeneratedBoosters],
-      score: newScore,
-      colorPhase: newColorPhase,
-      gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)), // Gradually increase speed
-      gameWon
-    },
+    newState,
     collision,
     gameWon
   };
@@ -159,6 +167,7 @@ export const startGame = (state: GameState): GameState => {
     boosters: [],
     gameSpeed: 2,
     gameWon: false,
+    collectedSafetyKeys: 0,
     player: {
       ...state.player,
       invulnerable: false,
@@ -170,6 +179,9 @@ export const startGame = (state: GameState): GameState => {
 // End game and save score
 export const endGame = (state: GameState): GameState => {
   saveScore(state.score);
+  
+  // Update achievements
+  updateAchievements(state);
   
   return {
     ...state,

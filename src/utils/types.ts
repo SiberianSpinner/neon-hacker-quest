@@ -46,4 +46,15 @@ export interface GameState {
   colorPhase: number;
   cursorControl: boolean;
   gameWon?: boolean;
+  collectedSafetyKeys: number;
+}
+
+// New achievement-related types
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  imageSrc: string;
+  unlocked: boolean;
+  unlockCondition: () => boolean;
 }

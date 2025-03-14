@@ -4,8 +4,10 @@ import { motion } from 'framer-motion';
 import GameCanvas from '@/components/GameCanvas';
 import StartScreen from '@/components/StartScreen';
 import Leaderboard from '@/components/Leaderboard';
+import Achievements from '@/components/Achievements';
 import { toast } from "sonner";
 import { saveScore, getScores, setUnlimitedAttempts } from '@/utils/gameLogic';
+import { Trophy } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -30,6 +32,7 @@ declare global {
 const Index = () => {
   const [gameActive, setGameActive] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
   const [attemptsLeft, setAttemptsLeft] = useState(3);
   const [lastScore, setLastScore] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
@@ -276,9 +279,25 @@ const Index = () => {
         onClose={() => setShowLeaderboard(false)}
       />
       
+      {/* Achievements */}
+      <Achievements
+        isVisible={showAchievements}
+        onClose={() => setShowAchievements(false)}
+        isTelegramWebApp={isTelegramWebApp}
+      />
+      
+      {/* Achievements button */}
+      <button
+        onClick={() => setShowAchievements(true)}
+        className="absolute bottom-14 right-4 bg-black/40 border border-cyber-primary/30 p-2 rounded-lg hover:bg-cyber-primary/10 transition-colors"
+        title={isTelegramWebApp ? "Чипы" : "Chips"}
+      >
+        <Trophy className="text-cyber-primary w-6 h-6" />
+      </button>
+      
       {/* Version tag */}
       <div className="absolute bottom-2 right-2 text-xs text-cyber-foreground/30">
-        v1.2.0
+        v1.3.0
       </div>
     </div>
   );
