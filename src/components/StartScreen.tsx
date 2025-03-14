@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './ui/CustomButton';
+import MatrixRain from './MatrixRain';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -42,7 +43,10 @@ const StartScreen: React.FC<StartScreenProps> = ({
         isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
     >
-      <div className="max-w-md w-full p-8 flex flex-col gap-8 items-center">
+      {/* Matrix rain effect in the background */}
+      {isVisible && <MatrixRain className="z-5" />}
+      
+      <div className="max-w-md w-full p-8 flex flex-col gap-8 items-center z-20">
         <div className="text-center space-y-4">
           <motion.h1 
             initial={{ opacity: 0, y: -20 }}
@@ -64,11 +68,12 @@ const StartScreen: React.FC<StartScreenProps> = ({
             </motion.p>
           )}
           
+          {/* Make attempts counter more prominent */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-sm text-cyber-foreground/70"
+            className="text-lg text-cyber-primary font-bold"
           >
             ATTEMPTS LEFT: {attemptsLeft === Infinity ? '∞' : attemptsLeft}
           </motion.p>

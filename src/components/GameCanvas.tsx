@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
@@ -11,6 +10,7 @@ import {
 import { getGlowColor, getOppositeColor } from '@/utils/mazeUtils';
 import { Key } from 'lucide-react';
 import { BoosterType, GameState } from '@/utils/types';
+import MatrixRain from './MatrixRain';
 
 interface GameCanvasProps {
   isActive: boolean;
@@ -234,7 +234,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             return;
           }
 
-          // Draw boosters
+          // Draw boosters with reduced size (-30%)
           newState.boosters.forEach(booster => {
             if (booster.active) {
               if (booster.type === BoosterType.SAFETY_KEY) {
@@ -250,15 +250,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 0;
                 
-                // Draw key icon
+                // Draw key icon with reduced size (70% of original)
+                const reducedSize = booster.size * 0.7;
                 ctx.fillStyle = oppositeColor;
                 ctx.beginPath();
-                ctx.arc(booster.x + booster.size / 2, booster.y + booster.size / 2, booster.size / 2, 0, Math.PI * 2);
+                ctx.arc(
+                  booster.x + booster.size / 2, 
+                  booster.y + booster.size / 2, 
+                  reducedSize / 2, 
+                  0, 
+                  Math.PI * 2
+                );
                 ctx.fill();
                 
                 // Draw key symbol
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `${booster.size * 0.6}px "JetBrains Mono", monospace`;
+                ctx.font = `${reducedSize * 0.6}px "JetBrains Mono", monospace`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('🔑', booster.x + booster.size / 2, booster.y + booster.size / 2);
@@ -369,17 +376,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           
           ctx.restore();
 
-          // Draw score and game information
+          // Draw score centered with increased size (+10%)
           ctx.fillStyle = '#00ffcc';
-          ctx.font = '16px "JetBrains Mono", monospace';
-          ctx.textAlign = 'left';
+          ctx.font = '17.6px "JetBrains Mono", monospace'; // 16px + 10%
           
           // Format score as hack percentage (1000 points = 1%)
           const formattedScore = formatScoreAsPercentage(newState.score);
-          ctx.fillText(`ВЗЛОМ: ${formattedScore}`, 20, 30);
           
-          ctx.textAlign = 'right';
-          ctx.fillText(`ПОПЫТКИ: ${newState.attemptsLeft}`, canvas.width - 20, 30);
+          // Center the score text
+          ctx.textAlign = 'center';
+          ctx.fillText(`ВЗЛОМ: ${formattedScore}`, canvas.width / 2, 30);
+          
+          // Remove attempt counter from game screen, it will only be on main screen
           
           // Show cursor control status and invulnerability status if active
           ctx.textAlign = 'center';
@@ -433,11 +441,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   }, [gameState, keys, onGameOver, onGameWin, cursorPosition]);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      className="absolute inset-0 z-0 transition-opacity duration-500"
-      style={{ opacity: isActive ? 1 : 0 }}
-    />
+    <>
+      <canvas 
+        ref={canvasRef} 
+        className="absolute inset-0 z-0 transition-opacity duration-500"
+        style={{ opacity: isActive ? 1 : 0 }}
+      />
+      
+      {/* Matrix Rain overlay (always visible) */}
+      <MatrixRain className="z-10" />
+    </>
   );
 };
 
