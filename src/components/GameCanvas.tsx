@@ -5,10 +5,10 @@ import {
   getBlockColor,
   startGame,
   toggleCursorControl,
-  formatScoreAsPercentage,
-  getHackCounterColor
+  formatScoreAsPercentage
 } from '@/utils/gameLogic';
 import { getGlowColor, getOppositeColor } from '@/utils/mazeUtils';
+import { Key } from 'lucide-react';
 import { BoosterType, GameState } from '@/utils/types';
 import MatrixRain from './MatrixRain';
 
@@ -234,6 +234,47 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             return;
           }
 
+          // Draw boosters with reduced size (-30%)
+          newState.boosters.forEach(booster => {
+            if (booster.active) {
+              if (booster.type === BoosterType.SAFETY_KEY) {
+                // Draw key booster with glow effect
+                ctx.save();
+                
+                // Use opposite color for the booster based on current score
+                const oppositeColor = getOppositeColor(newState.score);
+                
+                // Glow effect
+                ctx.shadowColor = oppositeColor;
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Draw key icon with reduced size (70% of original)
+                const reducedSize = booster.size * 0.7;
+                ctx.fillStyle = oppositeColor;
+                ctx.beginPath();
+                ctx.arc(
+                  booster.x + booster.size / 2, 
+                  booster.y + booster.size / 2, 
+                  reducedSize / 2, 
+                  0, 
+                  Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Draw key symbol
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `${reducedSize * 0.6}px "JetBrains Mono", monospace`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🔑', booster.x + booster.size / 2, booster.y + booster.size / 2);
+                
+                ctx.restore();
+              }
+            }
+          });
+
           // Draw maze blocks with enhanced glow effect
           newState.maze.forEach(block => {
             const blockColor = getBlockColor(newState.score);
@@ -280,47 +321,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               ctx.beginPath();
               ctx.arc(dotX, dotY, 1, 0, Math.PI * 2);
               ctx.fill();
-            }
-          });
-
-          // Draw boosters with reduced size (-30%)
-          newState.boosters.forEach(booster => {
-            if (booster.active) {
-              if (booster.type === BoosterType.SAFETY_KEY) {
-                // Draw key booster with glow effect
-                ctx.save();
-                
-                // Use opposite color for the booster based on current score
-                const oppositeColor = getOppositeColor(newState.score);
-                
-                // Glow effect
-                ctx.shadowColor = oppositeColor;
-                ctx.shadowBlur = 15;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-                
-                // Draw key icon with reduced size (70% of original)
-                const reducedSize = booster.size * 0.7;
-                ctx.fillStyle = oppositeColor;
-                ctx.beginPath();
-                ctx.arc(
-                  booster.x + booster.size / 2, 
-                  booster.y + booster.size / 2, 
-                  reducedSize / 2, 
-                  0, 
-                  Math.PI * 2
-                );
-                ctx.fill();
-                
-                // Draw key symbol
-                ctx.fillStyle = '#ffffff';
-                ctx.font = `${reducedSize * 0.6}px "JetBrains Mono", monospace`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🔑', booster.x + booster.size / 2, booster.y + booster.size / 2);
-                
-                ctx.restore();
-              }
             }
           });
 
@@ -376,14 +376,33 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           
           ctx.restore();
 
-          // Draw score centered with increased size (+10%) and updated colors based on percentage
-          const formattedScore = formatScoreAsPercentage(newState.score);
-          const scoreColor = getHackCounterColor(newState.score);
-          
-          ctx.fillStyle = scoreColor;
+          // Draw score centered with increased size (+10%)
+          ctx.fillStyle = '#00ffcc';
           ctx.font = '17.6px "JetBrains Mono", monospace'; // 16px + 10%
+          
+          // Format score as hack percentage (1000 points = 1%)
+          const formattedScore = formatScoreAsPercentage(newState.score);
+          
+          // Center the score text
           ctx.textAlign = 'center';
           ctx.fillText(`ВЗЛОМ: ${formattedScore}`, canvas.width / 2, 30);
+          
+          // Remove attempt counter from game screen, it will only be on main screen
+          
+          // Show cursor control status and invulnerability status if active
+          // ctx.textAlign = 'center';
+          // ctx.fillStyle = 'rgba(0, 255, 204, 0.7)';
+          
+          // let statusText = `Управление: ${newState.cursorControl ? 'Курсор' : 'Клавиатура'} (C для переключения)`;
+          // if (newState.player.invulnerable) {
+          //   statusText += ' | НЕУЯЗВИМОСТЬ АКТИВНА';
+          // }
+          
+          // ctx.fillText(
+          //   statusText, 
+          //   canvas.width / 2, 
+          //   canvas.height - 30
+          // );
 
           // Draw cursor target if cursor control is active
           if (newState.cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
@@ -423,20 +442,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   return (
     <>
-      {/* Grid Canvas */}
       <canvas 
         ref={canvasRef} 
-        className="absolute inset-0 z-10 transition-opacity duration-500"
+        className="absolute inset-0 z-0 transition-opacity duration-500"
         style={{ opacity: isActive ? 1 : 0 }}
       />
       
-      {/* Matrix Rain effect that appears above the grid but below the blocks */}
-      <div className="absolute inset-0 z-20 pointer-events-none">
-        <MatrixRain className="z-20" />
-      </div>
-      
-      {/* This is a transparent overlay for the blocks and player that will be drawn on top of the Matrix */}
-      <div className="absolute inset-0 z-30 pointer-events-none" id="blocks-overlay" />
+      {/* Matrix Rain overlay (always visible) */}
+      <MatrixRain className="z-10" />
     </>
   );
 };

@@ -131,23 +131,6 @@ export const updateGameState = (
   };
 };
 
-// Get hack counter color based on percentage complete
-export const getHackCounterColor = (score: number): string => {
-  const percentage = score / 1000; // 1000 points = 1%
-  
-  if (percentage < 25) {
-    return '#ff0000'; // Red (0-25%)
-  } else if (percentage < 50) {
-    return '#ff8800'; // Orange (25-50%)
-  } else if (percentage < 75) {
-    return '#cc00ff'; // Purple (50-75%)
-  } else if (percentage < 90) {
-    return '#00ff00'; // Green (75-90%)
-  } else {
-    return '#ffffff'; // White (90-100%)
-  }
-};
-
 // Format score as hack percentage
 export const formatScoreAsPercentage = (score: number): string => {
   // 1000 points = 1% hack completion

@@ -224,74 +224,28 @@ export const checkBlockOverlap = (
 
 // Get block color based on score - changing every 5000 points with new color sequence
 export const getBlockColor = (score: number): string => {
-  // Change color every 5000 points
+  // Change color every 5000 points instead of 1000
   const colorPhase = Math.floor(score / 5000);
-  
-  // First sequence: Solid neon colors (0-34999 points)
-  if (colorPhase < 7) {
-    switch(colorPhase) {
-      case 0: return '#00ff00'; // Neon Green
-      case 1: return '#ffff00'; // Neon Yellow
-      case 2: return '#00ccff'; // Neon Blue
-      case 3: return '#ff8800'; // Neon Orange
-      case 4: return '#cc00ff'; // Neon Purple
-      case 5: return '#ff0000'; // Neon Red
-      case 6: return '#ffffff'; // Neon White
-    }
-  }
-  
-  // Second sequence: Gradient blocks (35000+ points)
-  // For simplicity, we'll return a single color here
-  // In a real implementation, you'd need to modify the block drawing code to support gradients
-  switch(colorPhase % 12) {
-    case 7: return '#88ff44';  // Green-Yellow
-    case 8: return '#00ff88';  // Green-Blue
-    case 9: return '#88ffff';  // Yellow-Blue
-    case 10: return '#ffcc00'; // Yellow-Orange
-    case 11: return '#00ccff'; // Blue-Orange
-    case 0: return '#8844ff';  // Blue-Purple
-    case 1: return '#ff88ff';  // Orange-Purple
-    case 2: return '#ff4400';  // Orange-Red
-    case 3: return '#ff00ff';  // Purple-Red
-    case 4: return '#ffccff';  // Purple-White
-    case 5: return '#ff8888';  // Red-White
-    case 6: return '#000000';  // Black-White
-    default: return '#ffffff';
+  switch(colorPhase % 5) {
+    case 0: return '#00ff00'; // Неоново-зеленый
+    case 1: return '#00ccff'; // Неоново-синий
+    case 2: return '#ff0000'; // Неоново-красный
+    case 3: return '#ffffff'; // Неоново-белый
+    case 4: return '#cc00ff'; // Неоново-фиолетовый
+    default: return '#00ff00';
   }
 };
 
 // Get the opposite color of the current block color
 export const getOppositeColor = (score: number): string => {
   const colorPhase = Math.floor(score / 5000);
-  
-  // First sequence (0-34999 points)
-  if (colorPhase < 7) {
-    switch(colorPhase) {
-      case 0: return '#ff00ff'; // Opposite of green (magenta)
-      case 1: return '#0000ff'; // Opposite of yellow (blue)
-      case 2: return '#ff6600'; // Opposite of blue (orange)
-      case 3: return '#00ccff'; // Opposite of orange (cyan)
-      case 4: return '#00ff00'; // Opposite of purple (green)
-      case 5: return '#00ffff'; // Opposite of red (cyan)
-      case 6: return '#000000'; // Opposite of white (black)
-    }
-  }
-  
-  // Second sequence (35000+ points)
-  switch(colorPhase % 12) {
-    case 7: return '#ff00bb';  // Opposite of Green-Yellow
-    case 8: return '#ff0077';  // Opposite of Green-Blue
-    case 9: return '#ff0000';  // Opposite of Yellow-Blue
-    case 10: return '#0066ff'; // Opposite of Yellow-Orange
-    case 11: return '#ff6600'; // Opposite of Blue-Orange
-    case 0: return '#ff8800';  // Opposite of Blue-Purple
-    case 1: return '#00ff88';  // Opposite of Orange-Purple
-    case 2: return '#00ffff';  // Opposite of Orange-Red
-    case 3: return '#00ff00';  // Opposite of Purple-Red
-    case 4: return '#0000ff';  // Opposite of Purple-White
-    case 5: return '#00ffff';  // Opposite of Red-White
-    case 6: return '#ffffff';  // Opposite of Black-White
-    default: return '#000000'; // Default opposite
+  switch(colorPhase % 5) {
+    case 0: return '#ff00ff'; // Opposite of green (magenta)
+    case 1: return '#ff3300'; // Opposite of blue (orange/red)
+    case 2: return '#00ffff'; // Opposite of red (cyan)
+    case 3: return '#000000'; // Opposite of white (black)
+    case 4: return '#33ff00'; // Opposite of purple (lime green)
+    default: return '#ff00ff';
   }
 };
 
