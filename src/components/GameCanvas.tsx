@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
@@ -234,47 +235,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             return;
           }
 
-          // Draw boosters with reduced size (-30%)
-          newState.boosters.forEach(booster => {
-            if (booster.active) {
-              if (booster.type === BoosterType.SAFETY_KEY) {
-                // Draw key booster with glow effect
-                ctx.save();
-                
-                // Use opposite color for the booster based on current score
-                const oppositeColor = getOppositeColor(newState.score);
-                
-                // Glow effect
-                ctx.shadowColor = oppositeColor;
-                ctx.shadowBlur = 15;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-                
-                // Draw key icon with reduced size (70% of original)
-                const reducedSize = booster.size * 0.7;
-                ctx.fillStyle = oppositeColor;
-                ctx.beginPath();
-                ctx.arc(
-                  booster.x + booster.size / 2, 
-                  booster.y + booster.size / 2, 
-                  reducedSize / 2, 
-                  0, 
-                  Math.PI * 2
-                );
-                ctx.fill();
-                
-                // Draw key symbol
-                ctx.fillStyle = '#ffffff';
-                ctx.font = `${reducedSize * 0.6}px "JetBrains Mono", monospace`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🔑', booster.x + booster.size / 2, booster.y + booster.size / 2);
-                
-                ctx.restore();
-              }
-            }
-          });
-
           // Draw maze blocks with enhanced glow effect
           newState.maze.forEach(block => {
             const blockColor = getBlockColor(newState.score);
@@ -321,6 +281,47 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               ctx.beginPath();
               ctx.arc(dotX, dotY, 1, 0, Math.PI * 2);
               ctx.fill();
+            }
+          });
+
+          // Draw boosters with reduced size (-30%)
+          newState.boosters.forEach(booster => {
+            if (booster.active) {
+              if (booster.type === BoosterType.SAFETY_KEY) {
+                // Draw key booster with glow effect
+                ctx.save();
+                
+                // Use opposite color for the booster based on current score
+                const oppositeColor = getOppositeColor(newState.score);
+                
+                // Glow effect
+                ctx.shadowColor = oppositeColor;
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Draw key icon with reduced size (70% of original)
+                const reducedSize = booster.size * 0.7;
+                ctx.fillStyle = oppositeColor;
+                ctx.beginPath();
+                ctx.arc(
+                  booster.x + booster.size / 2, 
+                  booster.y + booster.size / 2, 
+                  reducedSize / 2, 
+                  0, 
+                  Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Draw key symbol
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `${reducedSize * 0.6}px "JetBrains Mono", monospace`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🔑', booster.x + booster.size / 2, booster.y + booster.size / 2);
+                
+                ctx.restore();
+              }
             }
           });
 
@@ -423,8 +424,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   return (
     <>
-      {/* Matrix Rain effect that is visible during gameplay */}
-      <MatrixRain className="z-0" />
+      {/* Matrix Rain effect that appears between the grid and blocks */}
+      <div className="absolute inset-0 z-5 pointer-events-none">
+        <MatrixRain className="z-5" />
+      </div>
       
       <canvas 
         ref={canvasRef} 
