@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import GameCanvas from '@/components/GameCanvas';
@@ -7,7 +6,6 @@ import Leaderboard from '@/components/Leaderboard';
 import Achievements from '@/components/Achievements';
 import { toast } from "sonner";
 import { saveScore, getScores, setUnlimitedAttempts } from '@/utils/gameLogic';
-import { Trophy } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -266,6 +264,7 @@ const Index = () => {
         isVisible={!gameActive}
         onStartGame={handleStartGame}
         onShowLeaderboard={() => setShowLeaderboard(true)}
+        onShowAchievements={() => setShowAchievements(true)}
         onWatchAd={handleWatchAd}
         onBuyUnlimited={handleBuyUnlimited}
         attemptsLeft={attemptsLeft}
@@ -285,15 +284,6 @@ const Index = () => {
         onClose={() => setShowAchievements(false)}
         isTelegramWebApp={isTelegramWebApp}
       />
-      
-      {/* Achievements button */}
-      <button
-        onClick={() => setShowAchievements(true)}
-        className="absolute bottom-14 right-4 bg-black/40 border border-cyber-primary/30 p-2 rounded-lg hover:bg-cyber-primary/10 transition-colors"
-        title={isTelegramWebApp ? "Чипы" : "Chips"}
-      >
-        <Trophy className="text-cyber-primary w-6 h-6" />
-      </button>
       
       {/* Version tag */}
       <div className="absolute bottom-2 right-2 text-xs text-cyber-foreground/30">

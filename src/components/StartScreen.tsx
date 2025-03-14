@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
+import { Trophy } from 'lucide-react';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -11,6 +12,7 @@ interface StartScreenProps {
   onShowLeaderboard: () => void;
   onWatchAd: () => void;
   onBuyUnlimited: () => void;
+  onShowAchievements: () => void;
   attemptsLeft: number;
   lastScore?: number;
   isTelegramWebApp?: boolean;
@@ -22,6 +24,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
   onShowLeaderboard,
   onWatchAd,
   onBuyUnlimited,
+  onShowAchievements,
   attemptsLeft,
   lastScore,
   isTelegramWebApp = false
@@ -116,6 +119,21 @@ const StartScreen: React.FC<StartScreenProps> = ({
           >
             <CustomButton 
               className="w-full uppercase"
+              variant="ghost"
+              onClick={onShowAchievements}
+              leftIcon={<Trophy className="w-5 h-5" />}
+            >
+              {isTelegramWebApp ? 'ЧИПЫ' : 'CHIPS'}
+            </CustomButton>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
+            transition={{ delay: 0.7, duration: 0.3 }}
+          >
+            <CustomButton 
+              className="w-full uppercase"
               variant="secondary"
               onClick={onWatchAd}
             >
@@ -126,7 +144,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-            transition={{ delay: 0.7, duration: 0.3 }}
+            transition={{ delay: 0.8, duration: 0.3 }}
           >
             <CustomButton 
               className="w-full uppercase"
@@ -141,7 +159,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: menuLoaded ? 0.7 : 0 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
+          transition={{ delay: 0.9, duration: 0.5 }}
           className="text-xs text-cyber-foreground/50 text-center mt-4"
         >
           {isTelegramWebApp ? 'ИЗБЕГАЙ СТЕН И ВЫЖИВАЙ' : 'NAVIGATE THE CYBER MAZE AND SURVIVE'}
