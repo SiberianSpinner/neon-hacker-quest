@@ -26,50 +26,35 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ className }) => {
     // Character set (binary, hex, and cyber-related symbols)
     const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
     
-    // Rain drops (only at top and bottom of screen)
+    // Rain drops (fill entire screen)
     class Drop {
       x: number;
       y: number; 
       speed: number;
       value: string;
-      isTop: boolean;
       fontSize: number;
       opacity: number;
       
-      constructor(isTop: boolean) {
-        this.isTop = isTop;
+      constructor() {
         this.reset();
       }
       
       reset() {
         this.fontSize = Math.random() * 8 + 8; // 8-16px
         this.x = Math.floor(Math.random() * canvas.width);
-        
-        // Position at top edge or bottom edge based on isTop
-        if (this.isTop) {
-          this.y = Math.random() * (canvas.height * 0.15); // Top 15% of screen
-        } else {
-          // Bottom 15% of screen
-          this.y = canvas.height - Math.random() * (canvas.height * 0.15);
-        }
-        
+        this.y = canvas.height + this.fontSize;
         this.speed = 0.5 + Math.random() * 2;
         this.value = chars.charAt(Math.floor(Math.random() * chars.length));
         this.opacity = 0.5 + Math.random() * 0.5;
       }
       
       update() {
-        // Top rain drops move down, bottom rain drops move up
-        if (this.isTop) {
-          this.y += this.speed;
-          if (this.y > canvas.height * 0.15) {
-            this.reset();
-          }
-        } else {
-          this.y -= this.speed;
-          if (this.y < canvas.height * 0.85) {
-            this.reset();
-          }
+        // Move from bottom to top (opposite direction of blocks)
+        this.y -= this.speed;
+        
+        // Reset when it goes off the top
+        if (this.y < -this.fontSize) {
+          this.reset();
         }
         
         // Randomly change the character
@@ -85,12 +70,12 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ className }) => {
       }
     }
     
-    // Create drops (50% at top, 50% at bottom)
+    // Create drops (more dense to fill the screen)
     const drops: Drop[] = [];
-    const dropCount = Math.floor(canvas.width / 15); // Density of drops
+    const dropCount = Math.floor(canvas.width / 10); // Increased density
     
     for (let i = 0; i < dropCount; i++) {
-      drops.push(new Drop(i % 2 === 0)); // Alternate between top and bottom
+      drops.push(new Drop());
     }
     
     // Animation frame

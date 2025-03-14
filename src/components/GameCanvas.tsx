@@ -390,19 +390,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           // Remove attempt counter from game screen, it will only be on main screen
           
           // Show cursor control status and invulnerability status if active
-          ctx.textAlign = 'center';
-          ctx.fillStyle = 'rgba(0, 255, 204, 0.7)';
+          // ctx.textAlign = 'center';
+          // ctx.fillStyle = 'rgba(0, 255, 204, 0.7)';
           
-          let statusText = `Управление: ${newState.cursorControl ? 'Курсор' : 'Клавиатура'} (C для переключения)`;
-          if (newState.player.invulnerable) {
-            statusText += ' | НЕУЯЗВИМОСТЬ АКТИВНА';
-          }
+          // let statusText = `Управление: ${newState.cursorControl ? 'Курсор' : 'Клавиатура'} (C для переключения)`;
+          // if (newState.player.invulnerable) {
+          //   statusText += ' | НЕУЯЗВИМОСТЬ АКТИВНА';
+          // }
           
-          ctx.fillText(
-            statusText, 
-            canvas.width / 2, 
-            canvas.height - 30
-          );
+          // ctx.fillText(
+          //   statusText, 
+          //   canvas.width / 2, 
+          //   canvas.height - 30
+          // );
 
           // Draw cursor target if cursor control is active
           if (newState.cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
