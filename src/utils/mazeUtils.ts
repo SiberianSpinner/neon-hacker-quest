@@ -1,3 +1,4 @@
+
 import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
 // Generate maze blocks with Tetris-like shapes
@@ -81,7 +82,8 @@ const generateBooster = (
   existingBlocks: MazeBlock[],
   score: number
 ): Booster | null => {
-  const size = 30; // Size of the booster
+  // Increased booster size from 30 to 60 (doubled)
+  const size = 60; // Size of the booster (doubled from 30)
   const padding = 50; // Padding from edges
   
   // Try up to 10 times to find a valid position

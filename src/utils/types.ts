@@ -1,6 +1,4 @@
 
-// Common type definitions used across game modules
-
 export interface Player {
   x: number;
   y: number;
@@ -18,8 +16,15 @@ export interface MazeBlock {
   height: number;
 }
 
+export enum ShapeType {
+  SINGLE = 'single',
+  VERTICAL_DOUBLE = 'vertical_double',
+  HORIZONTAL_DOUBLE = 'horizontal_double',
+  L_SHAPE = 'l_shape'
+}
+
 export enum BoosterType {
-  SAFETY_KEY = 'SAFETY_KEY'
+  SAFETY_KEY = 'safety_key'
 }
 
 export interface Booster {
@@ -39,13 +44,6 @@ export interface GameState {
   attemptsLeft: number;
   gameActive: boolean;
   colorPhase: number;
-  cursorControl: boolean; // Track if cursor control is active
-}
-
-// Shape type enum
-export enum ShapeType {
-  SINGLE = 'SINGLE',
-  VERTICAL_DOUBLE = 'VERTICAL_DOUBLE',
-  HORIZONTAL_DOUBLE = 'HORIZONTAL_DOUBLE',
-  L_SHAPE = 'L_SHAPE'
+  cursorControl: boolean;
+  gameWon?: boolean;
 }

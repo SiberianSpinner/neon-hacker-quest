@@ -75,6 +75,27 @@ const Index = () => {
     }
   };
   
+  // Handle game win
+  const handleGameWin = (score: number) => {
+    setGameActive(false);
+    setLastScore(score);
+    
+    // Show toast with winning message
+    toast.success("Взлом успешно завершен!", {
+      description: `Поздравляем! Вы достигли 100% взлома!`,
+      position: 'top-center',
+    });
+    
+    // Send win event to Telegram if in WebApp
+    if (isTelegramWebApp && window.Telegram?.WebApp) {
+      try {
+        window.Telegram.WebApp.sendData(JSON.stringify({ action: 'gameWin', score }));
+      } catch (err) {
+        console.error('Error sending data to Telegram:', err);
+      }
+    }
+  };
+  
   // Start game
   const handleStartGame = () => {
     if (attemptsLeft <= 0) {
@@ -233,6 +254,7 @@ const Index = () => {
       <GameCanvas 
         isActive={gameActive} 
         onGameOver={handleGameOver}
+        onGameWin={handleGameWin}
         attemptsLeft={attemptsLeft}
       />
       

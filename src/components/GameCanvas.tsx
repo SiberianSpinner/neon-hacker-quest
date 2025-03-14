@@ -5,7 +5,8 @@ import {
   updateGameState, 
   getBlockColor,
   startGame,
-  toggleCursorControl
+  toggleCursorControl,
+  formatScoreAsPercentage
 } from '@/utils/gameLogic';
 import { getGlowColor, getOppositeColor } from '@/utils/mazeUtils';
 import { Key } from 'lucide-react';
@@ -14,12 +15,14 @@ import { BoosterType, GameState } from '@/utils/types';
 interface GameCanvasProps {
   isActive: boolean;
   onGameOver: (score: number) => void;
+  onGameWin: (score: number) => void;
   attemptsLeft: number;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
   isActive, 
-  onGameOver, 
+  onGameOver,
+  onGameWin,
   attemptsLeft 
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -203,13 +206,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           }
 
           // Update game state
-          const { newState, collision } = updateGameState(
+          const { newState, collision, gameWon } = updateGameState(
             gameState,
             canvas.width,
             canvas.height,
             keys,
             cursorPosition
           );
+
+          // Check for game win condition
+          if (gameWon) {
+            onGameWin(newState.score);
+            setGameState({
+              ...newState,
+              gameActive: false
+            });
+            return;
+          }
 
           // Check for collision
           if (collision) {
@@ -360,7 +373,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.fillStyle = '#00ffcc';
           ctx.font = '16px "JetBrains Mono", monospace';
           ctx.textAlign = 'left';
-          ctx.fillText(`ВЗЛОМ: ${newState.score}`, 20, 30);
+          
+          // Format score as hack percentage (1000 points = 1%)
+          const formattedScore = formatScoreAsPercentage(newState.score);
+          ctx.fillText(`ВЗЛОМ: ${formattedScore}`, 20, 30);
+          
           ctx.textAlign = 'right';
           ctx.fillText(`ПОПЫТКИ: ${newState.attemptsLeft}`, canvas.width - 20, 30);
           
@@ -413,7 +430,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [gameState, keys, onGameOver, cursorPosition]);
+  }, [gameState, keys, onGameOver, onGameWin, cursorPosition]);
 
   return (
     <canvas 

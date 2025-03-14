@@ -24,7 +24,8 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     attemptsLeft: 3,
     gameActive: false,
     colorPhase: 0,
-    cursorControl: false
+    cursorControl: false,
+    gameWon: false
   };
 };
 
@@ -35,9 +36,9 @@ export const updateGameState = (
   canvasHeight: number,
   keys: { [key: string]: boolean },
   cursorPosition: { x: number | null, y: number | null }
-): { newState: GameState; collision: boolean } => {
+): { newState: GameState; collision: boolean; gameWon: boolean } => {
   if (!state.gameActive) {
-    return { newState: state, collision: false };
+    return { newState: state, collision: false, gameWon: false };
   }
   
   // Update player position based on keyboard input and cursor position
@@ -111,6 +112,9 @@ export const updateGameState = (
   // Update color phase every 5000 points
   const newColorPhase = Math.floor(newScore / 5000);
   
+  // Check if player has won (reached 100,000 points - 100% hack completion)
+  const gameWon = newScore >= 100000;
+  
   return {
     newState: {
       ...state,
@@ -119,10 +123,21 @@ export const updateGameState = (
       boosters: [...newBoosters.filter(b => b.active), ...newGeneratedBoosters],
       score: newScore,
       colorPhase: newColorPhase,
-      gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)) // Gradually increase speed
+      gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)), // Gradually increase speed
+      gameWon
     },
-    collision
+    collision,
+    gameWon
   };
+};
+
+// Format score as hack percentage
+export const formatScoreAsPercentage = (score: number): string => {
+  // 1000 points = 1% hack completion
+  const percentage = score / 1000;
+  
+  // Format with 3 decimal places
+  return percentage.toFixed(3) + '%';
 };
 
 // Toggle cursor control
@@ -143,6 +158,7 @@ export const startGame = (state: GameState): GameState => {
     maze: [],
     boosters: [],
     gameSpeed: 2,
+    gameWon: false,
     player: {
       ...state.player,
       invulnerable: false,
