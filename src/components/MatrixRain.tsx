@@ -140,7 +140,7 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ className }) => {
     <canvas 
       ref={canvasRef} 
       className={`absolute inset-0 pointer-events-none ${className || ''}`}
-      style={{ opacity: 0.3, zIndex: 0 }} // Set z-index to 0 to ensure matrix appears below game elements
+      style={{ opacity: 0.3, zIndex: 0 }} // Matrix will be displayed behind game elements
     />
   );
 };

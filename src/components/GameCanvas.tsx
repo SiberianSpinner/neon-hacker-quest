@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
@@ -10,7 +9,6 @@ import {
   getHackCounterColor
 } from '@/utils/gameLogic';
 import { getGlowColor, getOppositeColor } from '@/utils/mazeUtils';
-import { Key } from 'lucide-react';
 import { BoosterType, GameState } from '@/utils/types';
 import MatrixRain from './MatrixRain';
 
@@ -425,7 +423,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   return (
     <>
-      {/* Matrix Rain overlay (lower z-index to be under game elements) */}
+      {/* Matrix Rain effect that is visible during gameplay */}
       <MatrixRain className="z-0" />
       
       <canvas 
