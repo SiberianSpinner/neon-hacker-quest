@@ -1,3 +1,4 @@
+
 import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
 // Generate maze blocks with Tetris-like shapes
@@ -242,21 +243,23 @@ export const getBlockColor = (score: number): string => {
   } 
   // After 35000 points (7 phases), use dual-color gradients
   else {
+    // For matrix symbol blocks, we'll use solid colors instead of gradients
+    // as gradients don't work well with text rendering
     const gradientPhase = colorPhase - 7;
     switch(gradientPhase % 13) {
-      case 0: return 'linear-gradient(to right, #00ff00, #ffff00)'; // Green-Yellow
-      case 1: return 'linear-gradient(to right, #00ff00, #00ccff)'; // Green-Blue
-      case 2: return 'linear-gradient(to right, #ffff00, #00ccff)'; // Yellow-Blue
-      case 3: return 'linear-gradient(to right, #ffff00, #ff9900)'; // Yellow-Orange
-      case 4: return 'linear-gradient(to right, #00ccff, #ff9900)'; // Blue-Orange
-      case 5: return 'linear-gradient(to right, #00ccff, #cc00ff)'; // Blue-Purple
-      case 6: return 'linear-gradient(to right, #ff9900, #cc00ff)'; // Orange-Purple
-      case 7: return 'linear-gradient(to right, #ff9900, #ff0000)'; // Orange-Red
-      case 8: return 'linear-gradient(to right, #cc00ff, #ff0000)'; // Purple-Red
-      case 9: return 'linear-gradient(to right, #cc00ff, #ffffff)'; // Purple-White
-      case 10: return 'linear-gradient(to right, #ff0000, #ffffff)'; // Red-White
+      case 0: return '#7fff00'; // Chartreuse (Green-Yellow)
+      case 1: return '#00ffcc'; // Aqua (Green-Blue)
+      case 2: return '#66ccff'; // Light Blue (Yellow-Blue)
+      case 3: return '#ffcc00'; // Gold (Yellow-Orange)
+      case 4: return '#00ccff'; // Sky Blue (Blue-Orange)
+      case 5: return '#cc66ff'; // Amethyst (Blue-Purple)
+      case 6: return '#ff9966'; // Peach (Orange-Purple)
+      case 7: return '#ff6600'; // Dark Orange (Orange-Red)
+      case 8: return '#ff66cc'; // Pink (Purple-Red)
+      case 9: return '#cc99ff'; // Lavender (Purple-White)
+      case 10: return '#ff9999'; // Light Pink (Red-White)
       case 11: return '#ffffff'; // White
-      case 12: return 'linear-gradient(to right, #ffffff, #000000)'; // White-Black
+      case 12: return '#cccccc'; // Light Gray (White-Black)
       default: return '#00ff00';
     }
   }
@@ -284,12 +287,9 @@ export const getOppositeColor = (score: number): string => {
 
 // Get enhanced glow color for the blocks based on the block color
 export const getGlowColor = (blockColor: string): string => {
-  // For gradients, use a default glow color
-  if (blockColor.includes('linear-gradient')) {
-    return '#ffffffCC'; // White glow for gradients
-  }
-  // Make glow more intense for neon effect
-  return blockColor + 'CC'; // Adding CC hex (204 decimal, 80% opacity)
+  // For matrix symbol blocks, simplify the glow
+  // Use a higher opacity
+  return blockColor + 'FF'; // Adding FF hex (255 decimal, 100% opacity)
 };
 
 // Check if player collides with a booster

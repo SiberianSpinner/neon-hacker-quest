@@ -33,6 +33,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [keys, setKeys] = useState<{ [key: string]: boolean }>({});
   const [cursorPosition, setCursorPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: null });
   const pulseRef = useRef<number>(0);
+  
+  // Matrix symbols pool to use for blocks
+  const matrixSymbols = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンабвгдеёжзийклмнопрстуфхцчшщъыьэюя';
 
   // Initialize game state
   useEffect(() => {
@@ -181,6 +184,56 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (percentage < 90) return '#00ff00'; // Green (75-90%)
     return '#ffffff'; // White (90-100%)
   };
+  
+  // Function to generate a random matrix symbol
+  const getRandomMatrixSymbol = () => {
+    return matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
+  };
+  
+  // Function to render a block as matrix symbols
+  const renderBlockAsMatrixSymbols = (
+    ctx: CanvasRenderingContext2D, 
+    block: { x: number; y: number; width: number; height: number; }, 
+    blockColor: string,
+    glowColor: string
+  ) => {
+    const symbolSize = 16; // Double the size of background matrix (which is typically 8px)
+    const symbolsPerRow = 3; // 3x3 matrix of symbols per block
+    const symbolsPerCol = 3;
+    
+    // Calculate the width and height of each grid cell within the block
+    const cellWidth = block.width / symbolsPerRow;
+    const cellHeight = block.height / symbolsPerCol;
+    
+    // Save the current context state
+    ctx.save();
+    
+    // Glow effect for the entire block area
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 15;
+    
+    // Set font properties
+    ctx.font = `bold ${symbolSize}px "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Use block color for text
+    ctx.fillStyle = blockColor;
+    
+    // Fill the block with random matrix symbols
+    for (let row = 0; row < symbolsPerRow; row++) {
+      for (let col = 0; col < symbolsPerCol; col++) {
+        const symbol = getRandomMatrixSymbol();
+        const x = block.x + (col + 0.5) * cellWidth;
+        const y = block.y + (row + 0.5) * cellHeight;
+        
+        // Draw the matrix symbol
+        ctx.fillText(symbol, x, y);
+      }
+    }
+    
+    ctx.restore();
+  };
 
   // Game animation loop
   useEffect(() => {
@@ -286,77 +339,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             }
           });
 
-          // Draw maze blocks with enhanced glow effect
+          // Draw maze blocks as matrix symbols instead of geometric shapes
           newState.maze.forEach(block => {
             const blockColor = getBlockColor(newState.score);
             const glowColor = getGlowColor(blockColor);
             
-            ctx.save();
-            
-            // Enhanced glow effect with multiple layers
-            // First layer - wider glow
-            ctx.shadowColor = glowColor;
-            ctx.shadowBlur = 25;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-            
-            // Check if the block color is a gradient
-            if (blockColor.includes('linear-gradient')) {
-              // Extract gradient colors
-              const colors = blockColor.match(/#[0-9a-f]{6}/gi);
-              
-              if (colors && colors.length >= 2) {
-                // Create gradient for the block
-                const gradient = ctx.createLinearGradient(
-                  block.x, block.y, 
-                  block.x + block.width, block.y
-                );
-                
-                gradient.addColorStop(0, colors[0]);
-                gradient.addColorStop(1, colors[1]);
-                
-                ctx.fillStyle = gradient;
-              } else {
-                // Fallback if gradient parsing fails
-                ctx.fillStyle = '#00ff00';
-              }
-            } else {
-              // Use solid color
-              ctx.fillStyle = blockColor;
-            }
-            
-            // Draw the block with glow
-            ctx.fillRect(block.x, block.y, block.width, block.height);
-            
-            // Second layer - internal glow
-            ctx.shadowBlur = 8;
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(block.x + 2, block.y + 2, block.width - 4, block.height - 4);
-            
-            ctx.restore();
-            
-            // Add circuit pattern
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.lineWidth = 1;
-            
-            // Horizontal lines inside blocks
-            for (let y = block.y + 5; y < block.y + block.height; y += 10) {
-              ctx.beginPath();
-              ctx.moveTo(block.x, y);
-              ctx.lineTo(block.x + block.width, y);
-              ctx.stroke();
-            }
-            
-            // Random "connection" dots
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            for (let i = 0; i < block.width / 20; i++) {
-              const dotX = block.x + Math.random() * block.width;
-              const dotY = block.y + Math.random() * block.height;
-              ctx.beginPath();
-              ctx.arc(dotX, dotY, 1, 0, Math.PI * 2);
-              ctx.fill();
-            }
+            // Render the block using matrix symbols
+            renderBlockAsMatrixSymbols(ctx, block, blockColor, glowColor);
           });
 
           // Update pulse effect
