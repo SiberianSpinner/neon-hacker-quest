@@ -1,4 +1,3 @@
-
 import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
 // Generate maze blocks with Tetris-like shapes
@@ -222,35 +221,73 @@ export const checkBlockOverlap = (
   return false; // No overlap and not too close
 };
 
-// Get block color based on score - changing every 5000 points with new color sequence
+// Get block color based on score - new sequence of colors
 export const getBlockColor = (score: number): string => {
-  // Change color every 5000 points instead of 1000
+  // First sequence (single colors): every 5000 points
+  const totalPhases = 20; // Total number of color phases (7 single + 13 gradient)
   const colorPhase = Math.floor(score / 5000);
-  switch(colorPhase % 5) {
-    case 0: return '#00ff00'; // Неоново-зеленый
-    case 1: return '#00ccff'; // Неоново-синий
-    case 2: return '#ff0000'; // Неоново-красный
-    case 3: return '#ffffff'; // Неоново-белый
-    case 4: return '#cc00ff'; // Неоново-фиолетовый
-    default: return '#00ff00';
+  
+  // First 7 phases are single colors
+  if (colorPhase < 7) {
+    switch(colorPhase % 7) {
+      case 0: return '#00ff00'; // Neon Green
+      case 1: return '#ffff00'; // Neon Yellow
+      case 2: return '#00ccff'; // Neon Blue
+      case 3: return '#ff9900'; // Neon Orange
+      case 4: return '#cc00ff'; // Neon Purple
+      case 5: return '#ff0000'; // Neon Red
+      case 6: return '#ffffff'; // Neon White
+      default: return '#00ff00';
+    }
+  } 
+  // After 35000 points (7 phases), use dual-color gradients
+  else {
+    const gradientPhase = colorPhase - 7;
+    switch(gradientPhase % 13) {
+      case 0: return 'linear-gradient(to right, #00ff00, #ffff00)'; // Green-Yellow
+      case 1: return 'linear-gradient(to right, #00ff00, #00ccff)'; // Green-Blue
+      case 2: return 'linear-gradient(to right, #ffff00, #00ccff)'; // Yellow-Blue
+      case 3: return 'linear-gradient(to right, #ffff00, #ff9900)'; // Yellow-Orange
+      case 4: return 'linear-gradient(to right, #00ccff, #ff9900)'; // Blue-Orange
+      case 5: return 'linear-gradient(to right, #00ccff, #cc00ff)'; // Blue-Purple
+      case 6: return 'linear-gradient(to right, #ff9900, #cc00ff)'; // Orange-Purple
+      case 7: return 'linear-gradient(to right, #ff9900, #ff0000)'; // Orange-Red
+      case 8: return 'linear-gradient(to right, #cc00ff, #ff0000)'; // Purple-Red
+      case 9: return 'linear-gradient(to right, #cc00ff, #ffffff)'; // Purple-White
+      case 10: return 'linear-gradient(to right, #ff0000, #ffffff)'; // Red-White
+      case 11: return '#ffffff'; // White
+      case 12: return 'linear-gradient(to right, #ffffff, #000000)'; // White-Black
+      default: return '#00ff00';
+    }
   }
 };
 
 // Get the opposite color of the current block color
 export const getOppositeColor = (score: number): string => {
   const colorPhase = Math.floor(score / 5000);
-  switch(colorPhase % 5) {
-    case 0: return '#ff00ff'; // Opposite of green (magenta)
-    case 1: return '#ff3300'; // Opposite of blue (orange/red)
-    case 2: return '#00ffff'; // Opposite of red (cyan)
-    case 3: return '#000000'; // Opposite of white (black)
-    case 4: return '#33ff00'; // Opposite of purple (lime green)
-    default: return '#ff00ff';
+  if (colorPhase < 7) {
+    switch(colorPhase % 7) {
+      case 0: return '#ff00ff'; // Opposite of green (magenta)
+      case 1: return '#0000ff'; // Opposite of yellow (blue)
+      case 2: return '#ff6600'; // Opposite of blue (orange)
+      case 3: return '#0066ff'; // Opposite of orange (blue)
+      case 4: return '#33ff00'; // Opposite of purple (lime green)
+      case 5: return '#00ffff'; // Opposite of red (cyan)
+      case 6: return '#000000'; // Opposite of white (black)
+      default: return '#ff00ff';
+    }
+  } else {
+    // For gradient phases, use a contrasting single color
+    return '#00ffcc';
   }
 };
 
 // Get enhanced glow color for the blocks based on the block color
 export const getGlowColor = (blockColor: string): string => {
+  // For gradients, use a default glow color
+  if (blockColor.includes('linear-gradient')) {
+    return '#ffffffCC'; // White glow for gradients
+  }
   // Make glow more intense for neon effect
   return blockColor + 'CC'; // Adding CC hex (204 decimal, 80% opacity)
 };

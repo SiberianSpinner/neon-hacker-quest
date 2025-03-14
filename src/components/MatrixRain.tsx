@@ -34,6 +34,7 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ className }) => {
       value: string;
       fontSize: number;
       opacity: number;
+      chars: string[]; // Array to hold multiple characters in a column
       
       constructor() {
         this.reset();
@@ -44,7 +45,15 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ className }) => {
         this.x = Math.floor(Math.random() * canvas.width);
         this.y = canvas.height + this.fontSize;
         this.speed = 0.5 + Math.random() * 2;
-        this.value = chars.charAt(Math.floor(Math.random() * chars.length));
+        
+        // Generate 3-5 characters per column
+        const charCount = Math.floor(Math.random() * 3) + 3; // 3-5 characters
+        this.chars = [];
+        for (let i = 0; i < charCount; i++) {
+          this.chars.push(chars.charAt(Math.floor(Math.random() * chars.length)));
+        }
+        
+        this.value = this.chars[0]; // The first character (for compatibility)
         this.opacity = 0.5 + Math.random() * 0.5;
       }
       
@@ -53,20 +62,29 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ className }) => {
         this.y -= this.speed;
         
         // Reset when it goes off the top
-        if (this.y < -this.fontSize) {
+        if (this.y < -this.fontSize * this.chars.length) {
           this.reset();
         }
         
-        // Randomly change the character
+        // Randomly change one of the characters
         if (Math.random() > 0.95) {
-          this.value = chars.charAt(Math.floor(Math.random() * chars.length));
+          const charIndex = Math.floor(Math.random() * this.chars.length);
+          this.chars[charIndex] = chars.charAt(Math.floor(Math.random() * chars.length));
         }
       }
       
       draw() {
         ctx.fillStyle = `rgba(0, 255, 204, ${this.opacity})`;
         ctx.font = `${this.fontSize}px monospace`;
-        ctx.fillText(this.value, this.x, this.y);
+        
+        // Draw all characters in the column
+        for (let i = 0; i < this.chars.length; i++) {
+          const charY = this.y - (i * this.fontSize);
+          // Only draw if in view
+          if (charY > -this.fontSize && charY < canvas.height + this.fontSize) {
+            ctx.fillText(this.chars[i], this.x, charY);
+          }
+        }
       }
     }
     
@@ -102,7 +120,7 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ className }) => {
     <canvas 
       ref={canvasRef} 
       className={`absolute inset-0 pointer-events-none ${className || ''}`}
-      style={{ opacity: 0.3 }}
+      style={{ opacity: 0.35 }} // Slightly increased opacity
     />
   );
 };

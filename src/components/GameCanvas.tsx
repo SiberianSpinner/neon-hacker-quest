@@ -171,6 +171,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, []);
 
+  // Function to get score color based on completion percentage
+  const getScoreColor = (score: number): string => {
+    const percentage = score / 1000; // 1000 points = 1%
+    
+    if (percentage < 25) return '#ff0000'; // Red (0-25%)
+    if (percentage < 50) return '#ff9900'; // Orange (25-50%)
+    if (percentage < 75) return '#cc00ff'; // Purple (50-75%)
+    if (percentage < 90) return '#00ff00'; // Green (75-90%)
+    return '#ffffff'; // White (90-100%)
+  };
+
   // Game animation loop
   useEffect(() => {
     if (!gameState || !canvasRef.current) return;
@@ -289,8 +300,32 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
             
+            // Check if the block color is a gradient
+            if (blockColor.includes('linear-gradient')) {
+              // Extract gradient colors
+              const colors = blockColor.match(/#[0-9a-f]{6}/gi);
+              
+              if (colors && colors.length >= 2) {
+                // Create gradient for the block
+                const gradient = ctx.createLinearGradient(
+                  block.x, block.y, 
+                  block.x + block.width, block.y
+                );
+                
+                gradient.addColorStop(0, colors[0]);
+                gradient.addColorStop(1, colors[1]);
+                
+                ctx.fillStyle = gradient;
+              } else {
+                // Fallback if gradient parsing fails
+                ctx.fillStyle = '#00ff00';
+              }
+            } else {
+              // Use solid color
+              ctx.fillStyle = blockColor;
+            }
+            
             // Draw the block with glow
-            ctx.fillStyle = blockColor;
             ctx.fillRect(block.x, block.y, block.width, block.height);
             
             // Second layer - internal glow
@@ -376,8 +411,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           
           ctx.restore();
 
-          // Draw score centered with increased size (+10%)
-          ctx.fillStyle = '#00ffcc';
+          // Draw score centered with increased size and dynamic color based on percentage
+          const scoreColor = getScoreColor(newState.score);
+          ctx.fillStyle = scoreColor;
           ctx.font = '17.6px "JetBrains Mono", monospace'; // 16px + 10%
           
           // Format score as hack percentage (1000 points = 1%)
@@ -387,23 +423,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.textAlign = 'center';
           ctx.fillText(`ВЗЛОМ: ${formattedScore}`, canvas.width / 2, 30);
           
-          // Remove attempt counter from game screen, it will only be on main screen
-          
-          // Show cursor control status and invulnerability status if active
-          // ctx.textAlign = 'center';
-          // ctx.fillStyle = 'rgba(0, 255, 204, 0.7)';
-          
-          // let statusText = `Управление: ${newState.cursorControl ? 'Курсор' : 'Клавиатура'} (C для переключения)`;
-          // if (newState.player.invulnerable) {
-          //   statusText += ' | НЕУЯЗВИМОСТЬ АКТИВНА';
-          // }
-          
-          // ctx.fillText(
-          //   statusText, 
-          //   canvas.width / 2, 
-          //   canvas.height - 30
-          // );
-
           // Draw cursor target if cursor control is active
           if (newState.cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
             ctx.strokeStyle = 'rgba(0, 255, 204, 0.6)';

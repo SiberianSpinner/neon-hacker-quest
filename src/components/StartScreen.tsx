@@ -64,7 +64,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               transition={{ delay: 0.2, duration: 0.5 }}
               className="text-xl text-cyber-primary"
             >
-              LAST SCORE: {lastScore}
+              {isTelegramWebApp ? 'ПОСЛЕДНИЙ ВЗЛОМ: ' : 'LAST HACK: '}{lastScore}
             </motion.p>
           )}
           
@@ -75,7 +75,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
             transition={{ delay: 0.3, duration: 0.5 }}
             className="text-lg text-cyber-primary font-bold"
           >
-            ATTEMPTS LEFT: {attemptsLeft === Infinity ? '∞' : attemptsLeft}
+            {isTelegramWebApp ? 'НАЙДЕНО УЯЗВИМОСТЕЙ: ' : 'VULNERABILITIES FOUND: '}{attemptsLeft === Infinity ? '∞' : attemptsLeft}
           </motion.p>
         </div>
         
