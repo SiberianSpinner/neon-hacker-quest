@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
@@ -5,7 +6,8 @@ import {
   getBlockColor,
   startGame,
   toggleCursorControl,
-  formatScoreAsPercentage
+  formatScoreAsPercentage,
+  getHackCounterColor
 } from '@/utils/gameLogic';
 import { getGlowColor, getOppositeColor } from '@/utils/mazeUtils';
 import { Key } from 'lucide-react';
@@ -376,33 +378,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           
           ctx.restore();
 
-          // Draw score centered with increased size (+10%)
-          ctx.fillStyle = '#00ffcc';
-          ctx.font = '17.6px "JetBrains Mono", monospace'; // 16px + 10%
-          
-          // Format score as hack percentage (1000 points = 1%)
+          // Draw score centered with increased size (+10%) and updated colors based on percentage
           const formattedScore = formatScoreAsPercentage(newState.score);
+          const scoreColor = getHackCounterColor(newState.score);
           
-          // Center the score text
+          ctx.fillStyle = scoreColor;
+          ctx.font = '17.6px "JetBrains Mono", monospace'; // 16px + 10%
           ctx.textAlign = 'center';
           ctx.fillText(`ВЗЛОМ: ${formattedScore}`, canvas.width / 2, 30);
-          
-          // Remove attempt counter from game screen, it will only be on main screen
-          
-          // Show cursor control status and invulnerability status if active
-          // ctx.textAlign = 'center';
-          // ctx.fillStyle = 'rgba(0, 255, 204, 0.7)';
-          
-          // let statusText = `Управление: ${newState.cursorControl ? 'Курсор' : 'Клавиатура'} (C для переключения)`;
-          // if (newState.player.invulnerable) {
-          //   statusText += ' | НЕУЯЗВИМОСТЬ АКТИВНА';
-          // }
-          
-          // ctx.fillText(
-          //   statusText, 
-          //   canvas.width / 2, 
-          //   canvas.height - 30
-          // );
 
           // Draw cursor target if cursor control is active
           if (newState.cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
@@ -442,14 +425,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   return (
     <>
+      {/* Matrix Rain overlay (lower z-index to be under game elements) */}
+      <MatrixRain className="z-0" />
+      
       <canvas 
         ref={canvasRef} 
-        className="absolute inset-0 z-0 transition-opacity duration-500"
+        className="absolute inset-0 z-10 transition-opacity duration-500"
         style={{ opacity: isActive ? 1 : 0 }}
       />
-      
-      {/* Matrix Rain overlay (always visible) */}
-      <MatrixRain className="z-10" />
     </>
   );
 };

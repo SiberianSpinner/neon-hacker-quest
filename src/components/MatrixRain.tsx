@@ -71,8 +71,8 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ className }) => {
         for (let i = 0; i < this.chars.length; i++) {
           this.chars[i].y -= this.speed;
           
-          // Randomly change characters as they move
-          if (Math.random() > 0.95) {
+          // Randomly change characters as they move (reduced frequency by 50%)
+          if (Math.random() > 0.975) { // Changed from 0.95 to 0.975
             this.chars[i].value = this.getRandomChar();
           }
         }
@@ -140,7 +140,7 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ className }) => {
     <canvas 
       ref={canvasRef} 
       className={`absolute inset-0 pointer-events-none ${className || ''}`}
-      style={{ opacity: 0.3 }}
+      style={{ opacity: 0.3, zIndex: 0 }} // Set z-index to 0 to ensure matrix appears below game elements
     />
   );
 };
