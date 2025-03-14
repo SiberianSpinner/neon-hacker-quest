@@ -1,4 +1,22 @@
 
+// Generic storage utility functions
+export const getItem = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.error('Error getting item from storage:', error);
+    return null;
+  }
+};
+
+export const setItem = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.error('Error saving item to storage:', error);
+  }
+};
+
 // Save score to local storage
 export const saveScore = (score: number): void => {
   try {
