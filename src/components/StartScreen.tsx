@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
-import { Trophy } from 'lucide-react';
+import { Trophy, Microchip, VirtualReality } from 'lucide-react';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -38,6 +39,10 @@ const StartScreen: React.FC<StartScreenProps> = ({
     return () => clearTimeout(timer);
   }, []);
   
+  // Format score as percentage with three decimal places
+  const formattedScore = lastScore !== undefined ? 
+    `${lastScore.toFixed(3)}%` : undefined;
+  
   return (
     <div
       className={cn(
@@ -66,7 +71,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               transition={{ delay: 0.2, duration: 0.5 }}
               className="text-xl text-cyber-primary"
             >
-              {isTelegramWebApp ? 'ПОСЛЕДНИЙ ВЗЛОМ: ' : 'LAST HACK: '}{lastScore}
+              {isTelegramWebApp ? 'ПОСЛЕДНИЙ ВЗЛОМ: ' : 'LAST HACK: '}{formattedScore}
             </motion.p>
           )}
           
@@ -82,35 +87,46 @@ const StartScreen: React.FC<StartScreenProps> = ({
         </div>
         
         <div className="w-full space-y-3">
+          {/* Play button styled as a desktop shortcut with VR headset icon */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
             transition={{ delay: 0.4, duration: 0.3 }}
+            className="w-full"
           >
-            <CustomButton 
-              className="w-full text-lg uppercase"
-              glowEffect
-              onClick={onStartGame}
-              disabled={attemptsLeft <= 0}
-            >
-              {isTelegramWebApp ? 'ИГРАТЬ' : 'PLAY'}
-            </CustomButton>
+            <div className="flex flex-col items-center">
+              <CustomButton 
+                className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
+                glowEffect
+                onClick={onStartGame}
+                disabled={attemptsLeft <= 0}
+              >
+                <VirtualReality className="w-12 h-12 mb-1" />
+                <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ВЗЛОМ' : 'HACK'}</span>
+              </CustomButton>
+            </div>
           </motion.div>
           
+          {/* Chips button styled as a desktop shortcut with microchip icon */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
             transition={{ delay: 0.5, duration: 0.3 }}
+            className="w-full"
           >
-            <CustomButton 
-              className="w-full uppercase"
-              variant="ghost" 
-              onClick={onShowLeaderboard}
-            >
-              {isTelegramWebApp ? 'ЛИДЕРБОРД' : 'LEADERBOARD'}
-            </CustomButton>
+            <div className="flex flex-col items-center">
+              <CustomButton 
+                className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
+                variant="ghost"
+                onClick={onShowAchievements}
+              >
+                <Microchip className="w-12 h-12 mb-1" />
+                <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ЧИПЫ' : 'CHIPS'}</span>
+              </CustomButton>
+            </div>
           </motion.div>
           
+          {/* Vulnerability search button (previously "Watch Ad") */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
@@ -118,14 +134,14 @@ const StartScreen: React.FC<StartScreenProps> = ({
           >
             <CustomButton 
               className="w-full uppercase"
-              variant="ghost"
-              onClick={onShowAchievements}
-              leftIcon={<Trophy className="w-5 h-5" />}
+              variant="secondary"
+              onClick={onWatchAd}
             >
-              {isTelegramWebApp ? 'ЧИПЫ' : 'CHIPS'}
+              {isTelegramWebApp ? 'ПОИСК УЯЗВИМОСТЕЙ' : 'SEARCH VULNERABILITIES'}
             </CustomButton>
           </motion.div>
           
+          {/* Daemon Protocol button (previously "Unlimited") */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
@@ -133,13 +149,14 @@ const StartScreen: React.FC<StartScreenProps> = ({
           >
             <CustomButton 
               className="w-full uppercase"
-              variant="secondary"
-              onClick={onWatchAd}
+              variant="tertiary"
+              onClick={onBuyUnlimited}
             >
-              {isTelegramWebApp ? 'ДОП ПОПЫТКИ' : 'WATCH AD FOR ATTEMPTS'}
+              {isTelegramWebApp ? 'ПРОТОКОЛ "ДЕМОН"' : 'DAEMON PROTOCOL'}
             </CustomButton>
           </motion.div>
           
+          {/* Leaderboard button moved under Daemon Protocol */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
@@ -147,10 +164,10 @@ const StartScreen: React.FC<StartScreenProps> = ({
           >
             <CustomButton 
               className="w-full uppercase"
-              variant="tertiary"
-              onClick={onBuyUnlimited}
+              variant="ghost" 
+              onClick={onShowLeaderboard}
             >
-              {isTelegramWebApp ? 'БЕЗЛИМИТ' : 'UNLIMITED ATTEMPTS'}
+              {isTelegramWebApp ? 'ЛИДЕРБОРД' : 'LEADERBOARD'}
             </CustomButton>
           </motion.div>
         </div>
