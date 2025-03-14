@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
@@ -424,16 +423,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   return (
     <>
-      {/* Matrix Rain effect that appears between the grid and blocks */}
-      <div className="absolute inset-0 z-5 pointer-events-none">
-        <MatrixRain className="z-5" />
-      </div>
-      
+      {/* Grid Canvas */}
       <canvas 
         ref={canvasRef} 
         className="absolute inset-0 z-10 transition-opacity duration-500"
         style={{ opacity: isActive ? 1 : 0 }}
       />
+      
+      {/* Matrix Rain effect that appears above the grid but below the blocks */}
+      <div className="absolute inset-0 z-20 pointer-events-none">
+        <MatrixRain className="z-20" />
+      </div>
+      
+      {/* This is a transparent overlay for the blocks and player that will be drawn on top of the Matrix */}
+      <div className="absolute inset-0 z-30 pointer-events-none" id="blocks-overlay" />
     </>
   );
 };
