@@ -1,103 +1,64 @@
 
 import { PlayerSkin, PlayerSkinInfo } from './types';
-import { getBlockColor } from './mazeUtils';
+import { getScores } from './storageUtils';
 
-// Get highest score from localStorage
-const getHighestScore = (): number => {
-  const scores = localStorage.getItem('netrunner_scores');
-  if (!scores) return 0;
-  
-  const parsedScores = JSON.parse(scores);
-  if (!parsedScores || !parsedScores.length) return 0;
-  
-  return Math.max(...parsedScores);
-};
-
-// Check if skin is unlocked
-export const isSkinUnlocked = (skinId: PlayerSkin): boolean => {
-  const highestScore = getHighestScore();
-  
-  switch (skinId) {
-    case PlayerSkin.PURPLE:
-      return highestScore >= 25000;
-    case PlayerSkin.RED:
-      return highestScore >= 50000;
-    case PlayerSkin.RAINBOW:
-      return highestScore >= 75000;
-    case PlayerSkin.DEFAULT:
-    default:
-      return true;
-  }
-};
-
-// Get player skins with unlock status
+// Get all available player skins with unlock status
 export const getPlayerSkins = (): PlayerSkinInfo[] => {
   const highestScore = getHighestScore();
   
   return [
     {
       id: PlayerSkin.DEFAULT,
-      name: "Стандартный",
-      description: "Стандартный цвет точки",
-      color: "#00ffcc",
-      unlockCondition: () => true,
-      unlocked: true
+      name: "Default",
+      description: "Standard netrunner connection",
+      color: "#00ffcc", // Cyber teal
+      unlocked: true // Always unlocked
     },
     {
       id: PlayerSkin.PURPLE,
-      name: "Фиолетовый",
-      description: "Открывается при достижении 25% взлома",
-      color: "#cc00ff",
-      unlockCondition: () => highestScore >= 25000,
-      unlocked: highestScore >= 25000
+      name: "Violet Trace",
+      description: "Unlocks at 25% hack completion",
+      color: "#b967ff", // Purple
+      unlocked: highestScore >= 25000 // 25% hack completion
     },
     {
       id: PlayerSkin.RED,
-      name: "Красный",
-      description: "Открывается при достижении 50% взлома",
-      color: "#ff0000",
-      unlockCondition: () => highestScore >= 50000,
-      unlocked: highestScore >= 50000
+      name: "Red Alert",
+      description: "Unlocks at 50% hack completion",
+      color: "#ff3e3e", // Red
+      unlocked: highestScore >= 50000 // 50% hack completion
     },
     {
       id: PlayerSkin.RAINBOW,
-      name: "Перелив",
-      description: "Открывается при достижении 75% взлома",
-      color: (score: number, time: number) => {
-        // Change color every second (60 frames)
-        const colorPhase = Math.floor(time / 60) % 5;
-        return getBlockColor(colorPhase * 5000);
-      },
-      unlockCondition: () => highestScore >= 75000,
-      unlocked: highestScore >= 75000
+      name: "Quantum Shift",
+      description: "Unlocks at 75% hack completion",
+      color: "rainbow", // Special rainbow effect
+      unlocked: highestScore >= 75000 // 75% hack completion
     }
   ];
 };
 
-// Get selected skin from localStorage or default
+// Get the highest score achieved
+export const getHighestScore = (): number => {
+  const scores = getScores();
+  return scores.length > 0 ? Math.max(...scores) : 0;
+};
+
+// Get the selected skin from localStorage
 export const getSelectedSkin = (): PlayerSkin => {
-  const savedSkin = localStorage.getItem('netrunner_selected_skin');
-  if (savedSkin && Object.values(PlayerSkin).includes(savedSkin as PlayerSkin)) {
-    return savedSkin as PlayerSkin;
+  try {
+    const savedSkin = localStorage.getItem('netrunner_skin');
+    return savedSkin ? (savedSkin as PlayerSkin) : PlayerSkin.DEFAULT;
+  } catch (e) {
+    return PlayerSkin.DEFAULT;
   }
-  return PlayerSkin.DEFAULT;
 };
 
 // Save selected skin to localStorage
-export const saveSelectedSkin = (skinId: PlayerSkin): void => {
-  localStorage.setItem('netrunner_selected_skin', skinId);
-};
-
-// Get color for player based on selected skin
-export const getPlayerColor = (selectedSkin: PlayerSkin, score: number, time: number): string => {
-  const skins = getPlayerSkins();
-  const skin = skins.find(s => s.id === selectedSkin);
-  
-  if (!skin) return "#00ffcc"; // Default color
-  
-  if (typeof skin.color === 'function') {
-    return skin.color(score, time);
+export const saveSelectedSkin = (skin: PlayerSkin): void => {
+  try {
+    localStorage.setItem('netrunner_skin', skin);
+  } catch (e) {
+    console.error('Failed to save skin preference', e);
   }
-  
-  return skin.color;
 };

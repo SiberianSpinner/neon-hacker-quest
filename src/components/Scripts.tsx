@@ -27,7 +27,7 @@ const Scripts: React.FC<ScriptsProps> = ({
   
   useEffect(() => {
     if (isVisible) {
-      // Get player skins with unlock status
+      // Get player skins with unlock status - this will check player's score
       setSkins(getPlayerSkins());
       
       // Simulate loading
