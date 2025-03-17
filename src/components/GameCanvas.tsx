@@ -9,7 +9,8 @@ import {
 } from '@/utils/gameLogic';
 import { getGlowColor, getOppositeColor } from '@/utils/mazeUtils';
 import { Key, DoorOpen } from 'lucide-react';
-import { BoosterType, GameState } from '@/utils/types';
+import { BoosterType, GameState, PlayerSkin } from '@/utils/types';
+import { getPlayerColor } from '@/utils/skinsUtils';
 import MatrixRain from './MatrixRain';
 
 interface GameCanvasProps {
@@ -17,13 +18,15 @@ interface GameCanvasProps {
   onGameOver: (score: number) => void;
   onGameWin: (score: number) => void;
   attemptsLeft: number;
+  selectedSkin: PlayerSkin;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
   isActive, 
   onGameOver,
   onGameWin,
-  attemptsLeft 
+  attemptsLeft,
+  selectedSkin
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -36,7 +39,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   
   // Matrix symbols pool to use for blocks
   const matrixSymbols = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンабвгдеёжзийклмнопрстуфхцчшщъыьэюя';
-
+  
   // Function to get score color based on completion percentage
   const getScoreColor = (score: number): string => {
     const percentage = score / 1000; // 1000 points = 1%
@@ -105,9 +108,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       
-      setGameState(
-        initGameState(canvas.width, canvas.height)
-      );
+      const initialState = initGameState(canvas.width, canvas.height);
+      initialState.selectedSkin = selectedSkin; // Set initial selected skin
+      
+      setGameState(initialState);
 
       const handleResize = () => {
         canvas.width = window.innerWidth;
@@ -131,7 +135,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, []);
 
-  // Update game state when active status changes
+  // Update game state when active status or selectedSkin changes
   useEffect(() => {
     // Only trigger a state change when isActive status changes
     if (isActive !== previousActive) {
@@ -144,6 +148,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           setGameState(prevState => {
             if (!prevState) return null;
             const newState = startGame(prevState);
+            newState.selectedSkin = selectedSkin; // Update skin on new game
             console.log("New game state:", newState);
             return newState;
           });
@@ -160,17 +165,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     }
     
-    // Always ensure attemptsLeft is updated
-    if (gameState && gameState.attemptsLeft !== attemptsLeft) {
-      setGameState(prevState => {
-        if (!prevState) return null;
-        return {
-          ...prevState,
-          attemptsLeft
-        };
-      });
+    // Always ensure attemptsLeft and selectedSkin are updated
+    if (gameState) {
+      if (gameState.attemptsLeft !== attemptsLeft || gameState.selectedSkin !== selectedSkin) {
+        setGameState(prevState => {
+          if (!prevState) return null;
+          return {
+            ...prevState,
+            attemptsLeft,
+            selectedSkin
+          };
+        });
+      }
     }
-  }, [isActive, attemptsLeft, gameState, previousActive]);
+  }, [isActive, attemptsLeft, gameState, previousActive, selectedSkin]);
 
   // Handle keyboard input
   useEffect(() => {
@@ -362,7 +370,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           const pulseFactor = newState.player.invulnerable ? 
             1 + 0.3 * Math.sin(pulseRef.current * 0.2 * Math.PI) : 1;
 
-          // Draw player with invulnerability effect if active
+          // Get player color based on selected skin
+          const playerColor = getPlayerColor(
+            newState.selectedSkin, 
+            newState.score, 
+            time
+          );
+
+          // Draw player with skin color and invulnerability effect if active
           ctx.save();
           
           // Invulnerability aura
@@ -381,10 +396,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             ctx.fill();
           }
           
-          // Glow effect
-          ctx.shadowColor = '#00ffcc';
+          // Glow effect - using skin color
+          ctx.shadowColor = playerColor;
           ctx.shadowBlur = 15;
-          ctx.fillStyle = '#00ffcc';
+          ctx.fillStyle = playerColor;
           ctx.beginPath();
           ctx.arc(newState.player.x, newState.player.y, newState.player.size, 0, Math.PI * 2);
           ctx.fill();
@@ -396,8 +411,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.arc(newState.player.x, newState.player.y, newState.player.size / 2, 0, Math.PI * 2);
           ctx.fill();
           
-          // "Data stream" effect behind player
-          ctx.strokeStyle = 'rgba(0, 255, 204, 0.4)';
+          // "Data stream" effect behind player - using skin color
+          ctx.strokeStyle = `rgba(${playerColor.replace(/[^\d,]/g, '')}, 0.4)`;
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(newState.player.x, newState.player.y);

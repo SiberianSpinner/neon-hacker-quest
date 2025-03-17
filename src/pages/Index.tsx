@@ -1,11 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import GameCanvas from '@/components/GameCanvas';
 import StartScreen from '@/components/StartScreen';
 import Leaderboard from '@/components/Leaderboard';
 import Achievements from '@/components/Achievements';
+import Scripts from '@/components/Scripts';
 import { toast } from "sonner";
 import { saveScore, getScores, setUnlimitedAttempts } from '@/utils/gameLogic';
+import { PlayerSkin } from '@/utils/types';
+import { getSelectedSkin, saveSelectedSkin } from '@/utils/skinsUtils';
 
 declare global {
   interface Window {
@@ -31,10 +35,12 @@ const Index = () => {
   const [gameActive, setGameActive] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showScripts, setShowScripts] = useState(false);
   const [attemptsLeft, setAttemptsLeft] = useState(3);
   const [lastScore, setLastScore] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [isTelegramWebApp, setIsTelegramWebApp] = useState(false);
+  const [selectedSkin, setSelectedSkin] = useState<PlayerSkin>(PlayerSkin.DEFAULT);
 
   // Check if running in Telegram WebApp
   useEffect(() => {
@@ -43,6 +49,11 @@ const Index = () => {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
     }
+  }, []);
+
+  // Load selected skin
+  useEffect(() => {
+    setSelectedSkin(getSelectedSkin());
   }, []);
 
   // Loading sequence
@@ -54,6 +65,16 @@ const Index = () => {
     
     return () => clearTimeout(timer);
   }, []);
+  
+  // Handle skin selection
+  const handleSelectSkin = (skin: PlayerSkin) => {
+    setSelectedSkin(skin);
+    saveSelectedSkin(skin);
+    
+    toast.success(isTelegramWebApp ? "Скрипт активирован" : "Script activated", {
+      description: isTelegramWebApp ? "Новый скрипт успешно применен" : "New script successfully applied"
+    });
+  };
   
   // Handle game over
   const handleGameOver = (score: number) => {
@@ -257,6 +278,7 @@ const Index = () => {
         onGameOver={handleGameOver}
         onGameWin={handleGameWin}
         attemptsLeft={attemptsLeft}
+        selectedSkin={selectedSkin}
       />
       
       {/* Start Screen */}
@@ -265,6 +287,7 @@ const Index = () => {
         onStartGame={handleStartGame}
         onShowLeaderboard={() => setShowLeaderboard(true)}
         onShowAchievements={() => setShowAchievements(true)}
+        onShowScripts={() => setShowScripts(true)}
         onWatchAd={handleWatchAd}
         onBuyUnlimited={handleBuyUnlimited}
         attemptsLeft={attemptsLeft}
@@ -285,9 +308,18 @@ const Index = () => {
         isTelegramWebApp={isTelegramWebApp}
       />
       
+      {/* Scripts */}
+      <Scripts
+        isVisible={showScripts}
+        onClose={() => setShowScripts(false)}
+        onSelectSkin={handleSelectSkin}
+        selectedSkin={selectedSkin}
+        isTelegramWebApp={isTelegramWebApp}
+      />
+      
       {/* Version tag */}
       <div className="absolute bottom-2 right-2 text-xs text-cyber-foreground/30">
-        v1.3.0
+        v1.4.0
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
-import { GameState, Player, MazeBlock, Booster, BoosterType } from './types';
+import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
 import { checkCollision } from './collisionUtils';
 import { saveScore, getScores } from './storageUtils';
 import { updateAchievements } from './achievementsUtils';
+import { getSelectedSkin } from './skinsUtils';
 
 // Initialize game state
 export const initGameState = (canvasWidth: number, canvasHeight: number): GameState => {
@@ -27,7 +28,8 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     cursorControl: false,
     gameWon: false,
     collectedSafetyKeys: 0,
-    collectedBackdoors: 0 // Initialize backdoor counter
+    collectedBackdoors: 0,
+    selectedSkin: getSelectedSkin() // Get selected skin from localStorage
   };
 };
 
@@ -178,12 +180,13 @@ export const startGame = (state: GameState): GameState => {
     gameSpeed: 2,
     gameWon: false,
     collectedSafetyKeys: 0,
-    collectedBackdoors: 0, // Reset backdoor counter
+    collectedBackdoors: 0,
     player: {
       ...state.player,
       invulnerable: false,
       invulnerableTimer: 0
-    }
+    },
+    selectedSkin: state.selectedSkin // Preserve selected skin
   };
 };
 
@@ -255,6 +258,5 @@ export const setUnlimitedAttempts = (state: GameState): GameState => {
 
 // Re-export everything from the separate modules for backward compatibility
 export { updatePlayerMovement } from './playerUtils';
-export { generateMaze, getBlockColor } from './mazeUtils';
-export { checkCollision } from './collisionUtils';
+export { generateMaze, getBlockColor, checkCollision, checkBoosterCollision } from './mazeUtils';
 export { saveScore, getScores } from './storageUtils';

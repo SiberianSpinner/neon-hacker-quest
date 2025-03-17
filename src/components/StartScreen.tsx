@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
-import { Trophy, Microchip, Cable } from 'lucide-react';
+import { Trophy, Microchip, Cable, Code } from 'lucide-react';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -13,6 +13,7 @@ interface StartScreenProps {
   onWatchAd: () => void;
   onBuyUnlimited: () => void;
   onShowAchievements: () => void;
+  onShowScripts: () => void; // New prop for scripts
   attemptsLeft: number;
   lastScore?: number;
   isTelegramWebApp?: boolean;
@@ -25,6 +26,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
   onWatchAd,
   onBuyUnlimited,
   onShowAchievements,
+  onShowScripts, // New prop
   attemptsLeft,
   lastScore,
   isTelegramWebApp = false
@@ -87,50 +89,68 @@ const StartScreen: React.FC<StartScreenProps> = ({
         </div>
         
         <div className="w-full space-y-3">
-          {/* Play button styled as a desktop shortcut with LAN cable icon */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-            transition={{ delay: 0.4, duration: 0.3 }}
-            className="w-full"
-          >
-            <div className="flex flex-col items-center">
-              <CustomButton 
-                className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
-                glowEffect
-                onClick={onStartGame}
-                disabled={attemptsLeft <= 0}
-                leftIcon={<Cable className="w-12 h-12 mb-1" />}
-              >
-                <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ВЗЛОМ' : 'HACK'}</span>
-              </CustomButton>
-            </div>
-          </motion.div>
-          
-          {/* Chips button styled as a desktop shortcut with microchip icon */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-            transition={{ delay: 0.5, duration: 0.3 }}
-            className="w-full"
-          >
-            <div className="flex flex-col items-center">
-              <CustomButton 
-                className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
-                variant="ghost"
-                onClick={onShowAchievements}
-              >
-                <Microchip className="w-12 h-12 mb-1" />
-                <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ЧИПЫ' : 'CHIPS'}</span>
-              </CustomButton>
-            </div>
-          </motion.div>
+          <div className="flex justify-between items-center gap-4 mb-4">
+            {/* Play button styled as a desktop shortcut with LAN cable icon */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+            >
+              <div className="flex flex-col items-center">
+                <CustomButton 
+                  className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
+                  glowEffect
+                  onClick={onStartGame}
+                  disabled={attemptsLeft <= 0}
+                  leftIcon={<Cable className="w-12 h-12 mb-1" />}
+                >
+                  <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ВЗЛОМ' : 'HACK'}</span>
+                </CustomButton>
+              </div>
+            </motion.div>
+            
+            {/* Chips button styled as a desktop shortcut with microchip icon */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+            >
+              <div className="flex flex-col items-center">
+                <CustomButton 
+                  className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
+                  variant="ghost"
+                  onClick={onShowAchievements}
+                >
+                  <Microchip className="w-12 h-12 mb-1" />
+                  <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ЧИПЫ' : 'CHIPS'}</span>
+                </CustomButton>
+              </div>
+            </motion.div>
+            
+            {/* Scripts button (new) with code icon */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
+              transition={{ delay: 0.6, duration: 0.3 }}
+            >
+              <div className="flex flex-col items-center">
+                <CustomButton 
+                  className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
+                  variant="ghost"
+                  onClick={onShowScripts}
+                >
+                  <Code className="w-12 h-12 mb-1" />
+                  <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'СКРИПТЫ' : 'SCRIPTS'}</span>
+                </CustomButton>
+              </div>
+            </motion.div>
+          </div>
           
           {/* Vulnerability search button (previously "Watch Ad") */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-            transition={{ delay: 0.6, duration: 0.3 }}
+            transition={{ delay: 0.7, duration: 0.3 }}
           >
             <CustomButton 
               className="w-full uppercase"
@@ -145,7 +165,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-            transition={{ delay: 0.7, duration: 0.3 }}
+            transition={{ delay: 0.8, duration: 0.3 }}
           >
             <CustomButton 
               className="w-full uppercase"
@@ -160,7 +180,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-            transition={{ delay: 0.8, duration: 0.3 }}
+            transition={{ delay: 0.9, duration: 0.3 }}
           >
             <CustomButton 
               className="w-full uppercase"
@@ -175,7 +195,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: menuLoaded ? 0.7 : 0 }}
-          transition={{ delay: 0.9, duration: 0.5 }}
+          transition={{ delay: 1.0, duration: 0.5 }}
           className="text-xs text-cyber-foreground/50 text-center mt-4"
         >
           {isTelegramWebApp ? 'ИЗБЕГАЙ СТЕН И ВЫЖИВАЙ' : 'NAVIGATE THE CYBER MAZE AND SURVIVE'}
