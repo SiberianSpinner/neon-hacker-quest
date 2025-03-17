@@ -1,3 +1,4 @@
+
 import { Player } from './types';
 
 // Update player movement based on keyboard input and cursor position if enabled
@@ -10,7 +11,7 @@ export const updatePlayerMovement = (
   cursorPosition: { x: number | null, y: number | null }
 ): Player => {
   const newPlayer = { ...player };
-  const moveSpeed = 5;
+  const moveSpeed = 10; // Doubled from 5 to 10
   
   if (cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
     // Calculate direction vector towards cursor

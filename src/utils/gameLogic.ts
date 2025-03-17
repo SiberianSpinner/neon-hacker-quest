@@ -1,3 +1,4 @@
+
 import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -21,7 +22,7 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     maze: [],
     boosters: [],
     score: 0,
-    gameSpeed: 2,
+    gameSpeed: 4, // Doubled from 2 to 4
     attemptsLeft: 3,
     gameActive: false,
     colorPhase: 0,
@@ -121,7 +122,7 @@ export const updateGameState = (
   );
   
   // Update score and color phase (add score boost from backdoor if collected)
-  const newScore = state.score + 1 + scoreBoost;
+  const newScore = state.score + 2 + scoreBoost; // Doubled from 1 to 2
   // Update color phase every 5000 points
   const newColorPhase = Math.floor(newScore / 5000);
   
@@ -135,7 +136,7 @@ export const updateGameState = (
     boosters: [...newBoosters.filter(b => b.active), ...newGeneratedBoosters],
     score: newScore,
     colorPhase: newColorPhase,
-    gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)), // Gradually increase speed
+    gameSpeed: Math.min(10, 4 + Math.floor(newScore / 2000)), // Doubled base speed (2->4) and max speed (5->10)
     gameWon,
     collectedSafetyKeys: newCollectedSafetyKeys,
     collectedBackdoors: newCollectedBackdoors
