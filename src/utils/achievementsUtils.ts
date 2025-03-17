@@ -91,7 +91,7 @@ export const loadAchievements = (): Achievement[] => {
       const savedAchievement = savedMap.get(defaultAchievement.id);
       return savedAchievement ? {
         ...defaultAchievement,
-        unlocked: savedAchievement.unlocked
+        unlocked: savedAchievement.unlocked as boolean
       } : defaultAchievement;
     });
   } catch (e) {

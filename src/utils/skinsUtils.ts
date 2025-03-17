@@ -62,3 +62,34 @@ export const saveSelectedSkin = (skin: PlayerSkin): void => {
     console.error('Failed to save skin preference', e);
   }
 };
+
+// Get player color based on selected skin and game state
+export const getPlayerColor = (
+  skin: PlayerSkin,
+  score: number = 0,
+  time: number = 0
+): string => {
+  switch (skin) {
+    case PlayerSkin.DEFAULT:
+      return "#00ffcc"; // Cyber teal
+    case PlayerSkin.PURPLE:
+      return "#b967ff"; // Purple
+    case PlayerSkin.RED:
+      return "#ff3e3e"; // Red
+    case PlayerSkin.RAINBOW:
+      // Rainbow effect - color changes every second based on time
+      const colorPhase = Math.floor(time / 1000) % 7;
+      switch (colorPhase) {
+        case 0: return '#ff0000'; // Red
+        case 1: return '#ff9900'; // Orange
+        case 2: return '#ffff00'; // Yellow
+        case 3: return '#00ff00'; // Green
+        case 4: return '#00ccff'; // Blue
+        case 5: return '#cc00ff'; // Purple
+        case 6: return '#ff00cc'; // Pink
+        default: return '#00ffcc'; // Default
+      }
+    default:
+      return "#00ffcc"; // Default to cyber teal
+  }
+};

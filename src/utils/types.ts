@@ -70,3 +70,11 @@ export interface Achievement {
   unlocked: boolean;
   imageSrc?: string;
 }
+
+// Add ShapeType enum for maze generation
+export enum ShapeType {
+  SINGLE = 'SINGLE',
+  VERTICAL_DOUBLE = 'VERTICAL_DOUBLE',
+  HORIZONTAL_DOUBLE = 'HORIZONTAL_DOUBLE',
+  L_SHAPE = 'L_SHAPE'
+}
