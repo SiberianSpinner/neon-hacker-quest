@@ -1,6 +1,7 @@
 
 import { Achievement, GameState } from './types';
 import { getItem, setItem } from './storageUtils';
+import { getDailyGameStats } from './gameLogic';
 
 // Constants
 const ACHIEVEMENTS_STORAGE_KEY = 'netrunner_achievements';
@@ -20,6 +21,22 @@ export const initialAchievements: Achievement[] = [
     name: 'Неуязвимый',
     description: 'Собрать 10 Ключей Безопасности за одну игру',
     imageSrc: '/achievements/invulnerable.svg',
+    unlocked: false,
+    unlockCondition: () => false, // Will be dynamically checked
+  },
+  {
+    id: 'secret_path',
+    name: 'Секретный ход',
+    description: 'Собрать 10 Бекдоров за одну игру',
+    imageSrc: '/achievements/secret_path.svg',
+    unlocked: false,
+    unlockCondition: () => false, // Will be dynamically checked
+  },
+  {
+    id: 'tireless',
+    name: 'Неутомимый',
+    description: 'Использовать 10 Уязвимостей за день',
+    imageSrc: '/achievements/tireless.svg',
     unlocked: false,
     unlockCondition: () => false, // Will be dynamically checked
   },
@@ -57,10 +74,32 @@ export const createAchievementIcons = () => {
     <path d="M40,50 L60,50" stroke="#ff00ff" stroke-width="1" opacity="0.5"/>
     <path d="M40,55 L60,55" stroke="#ff00ff" stroke-width="1" opacity="0.5"/>
   </svg>`;
+  
+  // Secret Path icon - door with 10x
+  const secretPathSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="45" fill="#0a0a0a" stroke="#cc00ff" stroke-width="2"/>
+    <rect x="35" y="25" width="30" height="50" fill="none" stroke="#cc00ff" stroke-width="2"/>
+    <text x="50" y="55" font-family="monospace" font-size="18" fill="#cc00ff" text-anchor="middle">10×</text>
+    <circle cx="60" cy="50" r="3" fill="#cc00ff"/>
+    <path d="M35,25 L35,75" stroke="#cc00ff" stroke-width="1" opacity="0.5"/>
+    <path d="M65,25 L65,75" stroke="#cc00ff" stroke-width="1" opacity="0.5"/>
+  </svg>`;
+  
+  // Tireless icon - clock with 10 attempts
+  const tirelessSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="45" fill="#0a0a0a" stroke="#00ccff" stroke-width="2"/>
+    <circle cx="50" cy="50" r="30" fill="none" stroke="#00ccff" stroke-width="2"/>
+    <text x="50" y="55" font-family="monospace" font-size="18" fill="#00ccff" text-anchor="middle">10×</text>
+    <path d="M50,30 L50,50 L65,50" stroke="#00ccff" stroke-width="2"/>
+    <path d="M50,50 L50,20" stroke="#00ccff" stroke-width="1" opacity="0.5"/>
+    <path d="M50,50 L70,50" stroke="#00ccff" stroke-width="1" opacity="0.5"/>
+  </svg>`;
 
   return {
     netrunner: createSVG('netrunner.svg', netrunnerSVG),
     invulnerable: createSVG('invulnerable.svg', invulnerableSVG),
+    secret_path: createSVG('secret_path.svg', secretPathSVG),
+    tireless: createSVG('tireless.svg', tirelessSVG),
   };
 };
 
@@ -86,6 +125,7 @@ export const saveAchievements = (achievements: Achievement[]): void => {
 export const updateAchievements = (gameState: GameState): Achievement[] => {
   const achievements = loadAchievements();
   const svgIcons = createAchievementIcons();
+  const dailyStats = getDailyGameStats();
   
   // Track if any achievements were unlocked in this update
   let anyUnlocked = false;
@@ -110,6 +150,18 @@ export const updateAchievements = (gameState: GameState): Achievement[] => {
         break;
       case 'invulnerable':
         if (gameState.collectedSafetyKeys >= 10) {
+          achievement.unlocked = true;
+          anyUnlocked = true;
+        }
+        break;
+      case 'secret_path':
+        if (gameState.collectedBackdoors >= 10) {
+          achievement.unlocked = true;
+          anyUnlocked = true;
+        }
+        break;
+      case 'tireless':
+        if (dailyStats.gamesPlayed >= 10) {
           achievement.unlocked = true;
           anyUnlocked = true;
         }

@@ -298,78 +298,53 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             return;
           }
 
-          // Draw boosters
+          // Draw boosters - UPDATED TO RENDER DIAMOND SHAPE
           newState.boosters.forEach(booster => {
             if (booster.active) {
+              // Common diamond shape rendering
+              ctx.save();
+              
+              // Use color based on booster type
+              const boosterColor = booster.type === BoosterType.SAFETY_KEY 
+                ? getOppositeColor(newState.score) 
+                : '#cc00ff'; // Purple for backdoor
+              
+              // Glow effect
+              ctx.shadowColor = boosterColor;
+              ctx.shadowBlur = 15;
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+              
+              // Calculate center and size
+              const centerX = booster.x + booster.size / 2;
+              const centerY = booster.y + booster.size / 2;
+              const diamondSize = booster.size * 0.7; // Slightly smaller than hitbox
+              
+              // Draw diamond shape
+              ctx.fillStyle = boosterColor;
+              ctx.beginPath();
+              // Diamond vertices
+              ctx.moveTo(centerX, centerY - diamondSize/2); // Top
+              ctx.lineTo(centerX + diamondSize/2, centerY); // Right
+              ctx.lineTo(centerX, centerY + diamondSize/2); // Bottom
+              ctx.lineTo(centerX - diamondSize/2, centerY); // Left
+              ctx.closePath();
+              ctx.fill();
+              
+              // Draw icon inside diamond
+              ctx.fillStyle = '#ffffff';
+              ctx.font = `${diamondSize * 0.5}px "JetBrains Mono", monospace`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              
+              // Draw appropriate symbol based on booster type
               if (booster.type === BoosterType.SAFETY_KEY) {
-                // Draw key booster with glow effect
-                ctx.save();
-                
-                // Use opposite color for the booster based on current score
-                const oppositeColor = getOppositeColor(newState.score);
-                
-                // Glow effect
-                ctx.shadowColor = oppositeColor;
-                ctx.shadowBlur = 15;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-                
-                // Draw key icon with reduced size (70% of original)
-                const reducedSize = booster.size * 0.7;
-                ctx.fillStyle = oppositeColor;
-                ctx.beginPath();
-                ctx.arc(
-                  booster.x + booster.size / 2, 
-                  booster.y + booster.size / 2, 
-                  reducedSize / 2, 
-                  0, 
-                  Math.PI * 2
-                );
-                ctx.fill();
-                
-                // Draw key symbol
-                ctx.fillStyle = '#ffffff';
-                ctx.font = `${reducedSize * 0.6}px "JetBrains Mono", monospace`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🔑', booster.x + booster.size / 2, booster.y + booster.size / 2);
-                
-                ctx.restore();
+                ctx.fillText('🔑', centerX, centerY);
               } else if (booster.type === BoosterType.BACKDOOR) {
-                // Draw backdoor booster with glow effect
-                ctx.save();
-                
-                // Use purple color for backdoor
-                const backdoorColor = '#cc00ff';
-                
-                // Glow effect
-                ctx.shadowColor = backdoorColor;
-                ctx.shadowBlur = 15;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-                
-                // Draw door icon with reduced size (70% of original)
-                const reducedSize = booster.size * 0.7;
-                ctx.fillStyle = backdoorColor;
-                ctx.beginPath();
-                ctx.arc(
-                  booster.x + booster.size / 2, 
-                  booster.y + booster.size / 2, 
-                  reducedSize / 2, 
-                  0, 
-                  Math.PI * 2
-                );
-                ctx.fill();
-                
-                // Draw door symbol
-                ctx.fillStyle = '#ffffff';
-                ctx.font = `${reducedSize * 0.6}px "JetBrains Mono", monospace`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🚪', booster.x + booster.size / 2, booster.y + booster.size / 2);
-                
-                ctx.restore();
+                ctx.fillText('🚪', centerX, centerY);
               }
+              
+              ctx.restore();
             }
           });
 

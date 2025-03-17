@@ -48,6 +48,7 @@ export interface GameState {
   cursorControl: boolean;
   gameWon?: boolean;
   collectedSafetyKeys: number;
+  collectedBackdoors: number; // New field to track backdoor boosters
 }
 
 // New achievement-related types
@@ -58,4 +59,10 @@ export interface Achievement {
   imageSrc: string;
   unlocked: boolean;
   unlockCondition: () => boolean;
+}
+
+// New type for tracking daily game play
+export interface DailyGameStats {
+  date: string;
+  gamesPlayed: number;
 }

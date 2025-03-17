@@ -1,4 +1,3 @@
-
 import { GameState, Player, MazeBlock, Booster, BoosterType } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -27,7 +26,8 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     colorPhase: 0,
     cursorControl: false,
     gameWon: false,
-    collectedSafetyKeys: 0
+    collectedSafetyKeys: 0,
+    collectedBackdoors: 0 // Initialize backdoor counter
   };
 };
 
@@ -89,6 +89,7 @@ export const updateGameState = (
   // Check for booster collisions
   let collectedBooster = false;
   let newCollectedSafetyKeys = state.collectedSafetyKeys;
+  let newCollectedBackdoors = state.collectedBackdoors;
   let scoreBoost = 0;
   
   newBoosters.forEach(booster => {
@@ -103,6 +104,7 @@ export const updateGameState = (
       } else if (booster.type === BoosterType.BACKDOOR) {
         // Add 3000 points when collecting a Backdoor
         scoreBoost = 3000;
+        newCollectedBackdoors += 1; // Increment collected backdoors count
       }
     }
   });
@@ -133,7 +135,8 @@ export const updateGameState = (
     colorPhase: newColorPhase,
     gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)), // Gradually increase speed
     gameWon,
-    collectedSafetyKeys: newCollectedSafetyKeys
+    collectedSafetyKeys: newCollectedSafetyKeys,
+    collectedBackdoors: newCollectedBackdoors
   };
   
   return {
@@ -163,6 +166,9 @@ export const toggleCursorControl = (state: GameState): GameState => {
 // Start a new game
 export const startGame = (state: GameState): GameState => {
   console.log("Starting game with state:", state);
+  // Track daily game plays
+  updateDailyGameStats();
+  
   return {
     ...state,
     gameActive: true,
@@ -172,11 +178,49 @@ export const startGame = (state: GameState): GameState => {
     gameSpeed: 2,
     gameWon: false,
     collectedSafetyKeys: 0,
+    collectedBackdoors: 0, // Reset backdoor counter
     player: {
       ...state.player,
       invulnerable: false,
       invulnerableTimer: 0
     }
+  };
+};
+
+// Track daily game plays
+export const updateDailyGameStats = (): void => {
+  const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  const DAILY_STATS_KEY = 'netrunner_daily_stats';
+  
+  // Get existing stats
+  const statsJson = localStorage.getItem(DAILY_STATS_KEY);
+  let stats = statsJson ? JSON.parse(statsJson) : { date: today, gamesPlayed: 0 };
+  
+  // If it's a new day, reset counter
+  if (stats.date !== today) {
+    stats = { date: today, gamesPlayed: 0 };
+  }
+  
+  // Increment games played today
+  stats.gamesPlayed += 1;
+  
+  // Save back to storage
+  localStorage.setItem(DAILY_STATS_KEY, JSON.stringify(stats));
+};
+
+// Function to get daily game stats
+export const getDailyGameStats = (): { date: string, gamesPlayed: number } => {
+  const DAILY_STATS_KEY = 'netrunner_daily_stats';
+  const statsJson = localStorage.getItem(DAILY_STATS_KEY);
+  
+  if (statsJson) {
+    return JSON.parse(statsJson);
+  }
+  
+  // Default if no stats exist
+  return { 
+    date: new Date().toISOString().split('T')[0], 
+    gamesPlayed: 0 
   };
 };
 
