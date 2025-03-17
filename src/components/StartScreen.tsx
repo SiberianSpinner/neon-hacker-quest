@@ -90,11 +90,31 @@ const StartScreen: React.FC<StartScreenProps> = ({
         
         <div className="w-full space-y-3">
           <div className="flex justify-between items-center gap-4 mb-4">
-            {/* Play button styled as a desktop shortcut with LAN cable icon */}
+            {/* Chips button styled as a desktop shortcut with microchip icon 
+                This was moved to the first position (swapped with Hack) */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
               transition={{ delay: 0.4, duration: 0.3 }}
+            >
+              <div className="flex flex-col items-center">
+                <CustomButton 
+                  className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
+                  variant="ghost"
+                  onClick={onShowAchievements}
+                >
+                  <Microchip className="w-12 h-12 mb-1" />
+                  <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ЧИПЫ' : 'CHIPS'}</span>
+                </CustomButton>
+              </div>
+            </motion.div>
+            
+            {/* Play button styled as a desktop shortcut with LAN cable icon 
+                This was moved to the second position (swapped with Chips) */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
             >
               <div className="flex flex-col items-center">
                 <CustomButton 
@@ -105,24 +125,6 @@ const StartScreen: React.FC<StartScreenProps> = ({
                   leftIcon={<Cable className="w-12 h-12 mb-1" />}
                 >
                   <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ВЗЛОМ' : 'HACK'}</span>
-                </CustomButton>
-              </div>
-            </motion.div>
-            
-            {/* Chips button styled as a desktop shortcut with microchip icon */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-            >
-              <div className="flex flex-col items-center">
-                <CustomButton 
-                  className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
-                  variant="ghost"
-                  onClick={onShowAchievements}
-                >
-                  <Microchip className="w-12 h-12 mb-1" />
-                  <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ЧИПЫ' : 'CHIPS'}</span>
                 </CustomButton>
               </div>
             </motion.div>
@@ -198,7 +200,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           transition={{ delay: 1.0, duration: 0.5 }}
           className="text-xs text-cyber-foreground/50 text-center mt-4"
         >
-          {isTelegramWebApp ? 'ИЗБЕГАЙ СТЕН И ВЫЖИВАЙ' : 'NAVIGATE THE CYBER MAZE AND SURVIVE'}
+          {isTelegramWebApp ? 'ВЗЛОМАЙ СИСТЕМУ БЕЗОПАСНОСТИ ОДНОЙ ИЗ КОРПОРАЦИЙ' : 'HACK THE SECURITY SYSTEM OF ONE OF THE CORPORATIONS'}
         </motion.div>
       </div>
     </div>

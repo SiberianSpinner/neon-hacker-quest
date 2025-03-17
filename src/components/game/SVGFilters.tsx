@@ -7,7 +7,7 @@ const SVGFilters: React.FC = () => {
     <defs>
       {/* Glow filter for player */}
       <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="15" result="blur" />
+        <feGaussianBlur stdDeviation="5" result="blur" />
         <feComposite in="SourceGraphic" in2="blur" operator="over" />
       </filter>
       
@@ -19,14 +19,14 @@ const SVGFilters: React.FC = () => {
       
       {/* Glow filter for boosters */}
       <filter id="boosterGlow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="15" result="blur" />
+        <feGaussianBlur stdDeviation="4" result="blur" />
         <feComposite in="SourceGraphic" in2="blur" operator="over" />
       </filter>
       
       {/* Invulnerability gradient */}
       <radialGradient id="invulnerabilityGradient">
-        <stop offset="0%" stopColor="rgba(0, 204, 255, 0.8)" />
-        <stop offset="100%" stopColor="rgba(0, 204, 255, 0)" />
+        <stop offset="10%" stopColor="rgba(0, 204, 255, 0.6)" />
+        <stop offset="90%" stopColor="rgba(0, 204, 255, 0)" />
       </radialGradient>
     </defs>
   );

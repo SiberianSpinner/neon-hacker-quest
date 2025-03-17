@@ -19,7 +19,7 @@ const PlayerEntity: React.FC<PlayerEntityProps> = ({ player, time, selectedSkin 
 
   // Calculate pulse effect for invulnerability
   const pulseFactor = player.invulnerable ? 
-    1 + 0.3 * Math.sin(time * 0.0004 * Math.PI) : 1;
+    1 + 0.2 * Math.sin(time * 0.008 * Math.PI) : 1;
 
   return (
     <g>
