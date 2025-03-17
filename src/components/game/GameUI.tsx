@@ -63,8 +63,8 @@ const GameUI: React.FC<GameUIProps> = ({
         </text>
       )}
       
-      {/* Cursor/Touch crosshair - always show on mobile */}
-      {(cursorControl || isMobile) && cursorPosition.x !== null && cursorPosition.y !== null && (
+      {/* Direction indicator for mobile swipe - show where the player is moving */}
+      {isMobile && cursorPosition.x !== null && cursorPosition.y !== null && (
         <g stroke="rgba(0, 255, 204, 0.6)" strokeWidth="1">
           <line 
             x1={cursorPosition.x - 10} 
@@ -85,17 +85,39 @@ const GameUI: React.FC<GameUIProps> = ({
             fill="none" 
           />
           
-          {/* Additional touch indicator for mobile */}
-          {isMobile && (
-            <circle 
-              cx={cursorPosition.x} 
-              cy={cursorPosition.y} 
-              r={20} 
-              fill="rgba(0, 255, 204, 0.1)" 
-              stroke="rgba(0, 255, 204, 0.3)"
-              strokeWidth="1"
-            />
-          )}
+          {/* Touch area indicator */}
+          <circle 
+            cx={cursorPosition.x} 
+            cy={cursorPosition.y} 
+            r={20} 
+            fill="rgba(0, 255, 204, 0.1)" 
+            stroke="rgba(0, 255, 204, 0.3)"
+            strokeWidth="1"
+          />
+        </g>
+      )}
+      
+      {/* Cursor crosshair for desktop */}
+      {!isMobile && cursorControl && cursorPosition.x !== null && cursorPosition.y !== null && (
+        <g stroke="rgba(0, 255, 204, 0.6)" strokeWidth="1">
+          <line 
+            x1={cursorPosition.x - 10} 
+            y1={cursorPosition.y} 
+            x2={cursorPosition.x + 10} 
+            y2={cursorPosition.y} 
+          />
+          <line 
+            x1={cursorPosition.x} 
+            y1={cursorPosition.y - 10} 
+            x2={cursorPosition.x} 
+            y2={cursorPosition.y + 10} 
+          />
+          <circle 
+            cx={cursorPosition.x} 
+            cy={cursorPosition.y} 
+            r={10} 
+            fill="none" 
+          />
         </g>
       )}
     </>

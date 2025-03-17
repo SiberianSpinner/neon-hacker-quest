@@ -44,6 +44,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const isMobile = useIsMobile();
   
+  // For swipe direction control
+  const [swipeDirection, setSwipeDirection] = useState<{ x: number, y: number } | null>(null);
+  const [touchStartPosition, setTouchStartPosition] = useState<{ x: number, y: number } | null>(null);
+  const swipeInertiaTimeout = useRef<number | null>(null);
+  
   // Initialize dimensions and game state
   useEffect(() => {
     if (containerRef.current) {
@@ -159,6 +164,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [gameState, isMobile]);
 
+  // Clear swipe direction after a delay to simulate inertia
+  const clearSwipeDirection = () => {
+    if (swipeInertiaTimeout.current !== null) {
+      window.clearTimeout(swipeInertiaTimeout.current);
+    }
+    
+    swipeInertiaTimeout.current = window.setTimeout(() => {
+      setSwipeDirection(null);
+    }, 300); // Clear direction after 300ms for inertia effect
+  };
+
   // Handle mouse/touch movement
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -171,43 +187,75 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (containerRef.current && e.touches.length > 0) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setCursorPosition({
-          x: e.touches[0].clientX - rect.left,
-          y: e.touches[0].clientY - rect.top
-        });
-        e.preventDefault(); // Prevent scrolling on touch devices
-      }
-    };
-    
     const handleTouchStart = (e: TouchEvent) => {
       if (containerRef.current && e.touches.length > 0) {
         const rect = containerRef.current.getBoundingClientRect();
-        setCursorPosition({
-          x: e.touches[0].clientX - rect.left,
-          y: e.touches[0].clientY - rect.top
-        });
+        const touchX = e.touches[0].clientX - rect.left;
+        const touchY = e.touches[0].clientY - rect.top;
+        
+        setTouchStartPosition({ x: touchX, y: touchY });
+        setCursorPosition({ x: touchX, y: touchY });
         e.preventDefault(); // Prevent default touch actions
       }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (containerRef.current && e.touches.length > 0 && touchStartPosition) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const touchX = e.touches[0].clientX - rect.left;
+        const touchY = e.touches[0].clientY - rect.top;
+        
+        // Calculate swipe direction
+        const dx = touchX - touchStartPosition.x;
+        const dy = touchY - touchStartPosition.y;
+        
+        // Update cursor position for UI display
+        setCursorPosition({ x: touchX, y: touchY });
+        
+        // Only register as swipe if movement is significant
+        const minSwipeDistance = 10;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > minSwipeDistance) {
+          // Normalize direction vector
+          const normalizedDx = dx / distance;
+          const normalizedDy = dy / distance;
+          
+          setSwipeDirection({ x: normalizedDx, y: normalizedDy });
+        }
+        
+        e.preventDefault(); // Prevent scrolling
+      }
+    };
+
+    const handleTouchEnd = () => {
+      setTouchStartPosition(null);
+      // Don't clear swipe direction immediately - let it clear after timeout
+      clearSwipeDirection();
     };
 
     const container = containerRef.current;
     if (container) {
       container.addEventListener('mousemove', handleMouseMove);
-      container.addEventListener('touchmove', handleTouchMove, { passive: false });
       container.addEventListener('touchstart', handleTouchStart, { passive: false });
+      container.addEventListener('touchmove', handleTouchMove, { passive: false });
+      container.addEventListener('touchend', handleTouchEnd);
     }
 
     return () => {
       if (container) {
         container.removeEventListener('mousemove', handleMouseMove);
-        container.removeEventListener('touchmove', handleTouchMove);
         container.removeEventListener('touchstart', handleTouchStart);
+        container.removeEventListener('touchmove', handleTouchMove);
+        container.removeEventListener('touchend', handleTouchEnd);
+      }
+      
+      // Clear any pending timeout when unmounting
+      if (swipeInertiaTimeout.current !== null) {
+        window.clearTimeout(swipeInertiaTimeout.current);
       }
     };
-  }, []);
+  }, [touchStartPosition]);
 
   // Game animation loop
   useEffect(() => {
@@ -233,7 +281,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           keys,
           cursorPosition,
           deltaTime,
-          isMobile // Pass isMobile to updateGameState
+          isMobile,
+          swipeDirection
         );
 
         // Check for game win condition
@@ -270,7 +319,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [gameState, keys, onGameOver, onGameWin, cursorPosition, dimensions, isMobile]);
+  }, [gameState, keys, onGameOver, onGameWin, cursorPosition, dimensions, isMobile, swipeDirection]);
 
   return (
     <>
@@ -329,7 +378,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             transition: 'opacity 0.5s ease-in-out'
           }}
         >
-          Коснитесь экрана, чтобы управлять движением
+          Проведите пальцем по экрану, чтобы задать направление движения
         </div>
       )}
       

@@ -1,7 +1,7 @@
 
 import { Player } from './types';
 
-// Update player movement based on keyboard input and cursor position if enabled
+// Update player movement based on keyboard input and swipe direction on mobile
 export const updatePlayerMovement = (
   player: Player,
   keys: { [key: string]: boolean },
@@ -9,21 +9,27 @@ export const updatePlayerMovement = (
   canvasHeight: number,
   cursorControl: boolean,
   cursorPosition: { x: number | null, y: number | null },
-  isMobile: boolean
+  isMobile: boolean,
+  swipeDirection: { x: number, y: number } | null
 ): Player => {
   const newPlayer = { ...player };
   const moveSpeed = 6.67; // Reduced from 10 to 6.67 (1.5x slower)
   
-  // On mobile, always use cursor/touch control
-  if ((isMobile || cursorControl) && cursorPosition.x !== null && cursorPosition.y !== null) {
-    // Calculate direction vector towards cursor/touch
+  // On mobile, use swipe direction if available
+  if (isMobile && swipeDirection) {
+    newPlayer.speedX = swipeDirection.x * moveSpeed;
+    newPlayer.speedY = swipeDirection.y * moveSpeed;
+  }
+  // Desktop cursor control
+  else if (cursorControl && !isMobile && cursorPosition.x !== null && cursorPosition.y !== null) {
+    // Calculate direction vector towards cursor
     const dx = cursorPosition.x - player.x;
     const dy = cursorPosition.y - player.y;
     
-    // Calculate distance to cursor/touch
+    // Calculate distance to cursor
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance > 5) {  // Only move if cursor/touch is not too close
+    if (distance > 5) {  // Only move if cursor is not too close
       // Normalize direction vector and multiply by move speed
       const normalizedDx = dx / distance;
       const normalizedDy = dy / distance;
@@ -31,7 +37,7 @@ export const updatePlayerMovement = (
       newPlayer.speedX = normalizedDx * moveSpeed;
       newPlayer.speedY = normalizedDy * moveSpeed;
     } else {
-      // If cursor/touch is very close, stop movement
+      // If cursor is very close, stop movement
       newPlayer.speedX = 0;
       newPlayer.speedY = 0;
     }
