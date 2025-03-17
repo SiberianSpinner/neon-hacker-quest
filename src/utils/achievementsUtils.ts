@@ -1,4 +1,3 @@
-
 import { Achievement, GameState } from './types';
 import { getScores } from './storageUtils';
 import { getDailyGameStats } from './gameLogic';
@@ -81,7 +80,7 @@ const ACHIEVEMENTS: Achievement[] = [
 export const loadAchievements = (): Achievement[] => {
   try {
     const savedAchievements = localStorage.getItem('netrunner_achievements');
-    const parsed = savedAchievements ? JSON.parse(savedAchievements) : [];
+    const parsed: Achievement[] = savedAchievements ? JSON.parse(savedAchievements) : [];
     
     // Create a map of saved achievements for quick lookup
     const savedMap = new Map(parsed.map((a: Achievement) => [a.id, a]));
@@ -91,7 +90,7 @@ export const loadAchievements = (): Achievement[] => {
       const savedAchievement = savedMap.get(defaultAchievement.id);
       return savedAchievement ? {
         ...defaultAchievement,
-        unlocked: savedAchievement.unlocked as boolean
+        unlocked: Boolean(savedAchievement.unlocked)
       } : defaultAchievement;
     });
   } catch (e) {
