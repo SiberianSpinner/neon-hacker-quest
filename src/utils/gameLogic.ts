@@ -1,3 +1,4 @@
+
 import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -258,5 +259,6 @@ export const setUnlimitedAttempts = (state: GameState): GameState => {
 
 // Re-export everything from the separate modules for backward compatibility
 export { updatePlayerMovement } from './playerUtils';
-export { generateMaze, getBlockColor, checkCollision, checkBoosterCollision } from './mazeUtils';
+export { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
+export { checkCollision } from './collisionUtils';
 export { saveScore, getScores } from './storageUtils';
