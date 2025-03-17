@@ -1,6 +1,6 @@
 import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
-// Generate maze blocks with Tetris-like shapes
+// Generate maze blocks with corridor-like patterns
 export const generateMaze = (
   maze: MazeBlock[], 
   canvasWidth: number,
@@ -11,78 +11,144 @@ export const generateMaze = (
   const newMaze = [...maze];
   const boosters: Booster[] = [];
   
-  // Calculate spawn rate increase based on score (2% per 1000 points instead of 5%)
-  const baseSpawnRate = 0.0125;
-  const spawnRateIncrease = Math.floor(score / 1000) * 0.00025; // 2% of 0.0125 = 0.00025
+  // Calculate spawn rate increase based on score
+  const baseSpawnRate = 0.025; // Increased from 0.0125 for more continuous generation
+  const spawnRateIncrease = Math.floor(score / 1000) * 0.0005; 
   const currentSpawnRate = baseSpawnRate + spawnRateIncrease;
   
-  // Calculate number of shapes to spawn (increase by 5% every 2500 points)
-  const baseShapeCount = 1;
-  const shapeCountIncrease = Math.floor(score / 2500) * 0.05;
-  const shapesToSpawn = Math.max(1, Math.floor(baseShapeCount * (1 + shapeCountIncrease)));
+  // Size for each matrix symbol
+  const symbolSize = 16;
   
-  // Generate new maze blocks with adjusted probability and increased shape count
+  // Grid system for maze generation
+  const gridSize = symbolSize * 1.5; // Space between symbols
+  const numCols = Math.floor(canvasWidth / gridSize);
+  
+  // Track current paths to ensure we always have a way through
+  const pathColumns = new Set<number>();
+  if (maze.length === 0) {
+    // Initialize with 2-3 paths on first generation
+    const numInitialPaths = 2 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < numInitialPaths; i++) {
+      pathColumns.add(Math.floor(Math.random() * numCols));
+    }
+  } else {
+    // Find existing paths in the last row of blocks
+    const lastRowY = maze.length > 0 ? 
+      Math.max(...maze.map(block => block.y)) : -gridSize;
+      
+    const lastRowBlocks = maze.filter(block => 
+      Math.abs(block.y - lastRowY) < gridSize/2);
+      
+    // Find gaps in the last row (these are paths)
+    const blockedColumns = new Set<number>();
+    lastRowBlocks.forEach(block => {
+      const col = Math.floor(block.x / gridSize);
+      blockedColumns.add(col);
+    });
+    
+    // Identify path columns
+    for (let col = 0; col < numCols; col++) {
+      if (!blockedColumns.has(col)) {
+        pathColumns.add(col);
+      }
+    }
+    
+    // Ensure we have at least one path
+    if (pathColumns.size === 0) {
+      pathColumns.add(Math.floor(Math.random() * numCols));
+    }
+  }
+  
+  // Generate new row of maze with some probability
   if (Math.random() < currentSpawnRate || maze.length === 0) {
-    for (let i = 0; i < shapesToSpawn; i++) {
-      const gridSize = 50; // Base size for each block cube
+    const y = maze.length > 0 ? 
+      Math.max(...maze.map(block => block.y)) + gridSize : -gridSize;
+    
+    // Sometimes shift paths (make turns) - more likely at higher scores
+    const pathShiftProbability = 0.1 + (score / 50000); // Max 30% at 100k score
+    if (Math.random() < pathShiftProbability) {
+      const pathArray = Array.from(pathColumns);
       
-      // Calculate how many potential columns we have
-      const numCols = Math.floor(canvasWidth / gridSize);
-      
-      // Keep track of all newly created blocks to check for overlaps
-      const newBlocks: MazeBlock[] = [];
-      
-      // Choose a random starting position that's not strictly aligned to the grid
-      // but still ensures the shape stays within canvas boundaries
-      const randomOffset = Math.random() * (gridSize / 2); // 0 to half a grid cell offset
-      const col = Math.floor(Math.random() * (numCols - 2)); // Leave space for larger shapes
-      const x = col * gridSize + randomOffset;
-      const y = -gridSize * 2; // Start above the canvas
-      
-      // Randomly select one of the four shape types
-      const shapeType = getRandomShapeType();
-      
-      // Create the selected shape
-      const shapeBlocks = createShape(shapeType, x, y, gridSize);
-      
-      // Check if the entire shape can be placed without overlapping existing blocks
-      const existingBlocks = [...maze]; // All currently existing blocks
-      const canPlaceShape = !shapeBlocks.some(block => 
-        checkBlockOverlap(block, existingBlocks, gridSize) || 
-        checkBlockOverlap(block, newBlocks, gridSize)
-      );
-      
-      // Only add the shape if it can be placed without overlaps
-      if (canPlaceShape) {
-        // Add all blocks of the shape
-        shapeBlocks.forEach(block => {
-          newBlocks.push(block);
-          newMaze.push(block);
+      // Randomly choose a path to shift
+      if (pathArray.length > 0) {
+        const pathToShift = pathArray[Math.floor(Math.random() * pathArray.length)];
+        pathColumns.delete(pathToShift);
+        
+        // Shift left or right
+        const direction = Math.random() > 0.5 ? 1 : -1;
+        const newPath = Math.max(0, Math.min(numCols - 1, pathToShift + direction));
+        pathColumns.add(newPath);
+        
+        // Sometimes add a corner piece to make the turn smoother
+        if (Math.random() < 0.7) {
+          // Add the connection block for the turn
+          newMaze.push({
+            x: (Math.min(pathToShift, newPath)) * gridSize,
+            y: y - gridSize,
+            width: gridSize,
+            height: gridSize,
+            colorPhase: 0
+          });
+        }
+      }
+    }
+    
+    // Sometimes add a new path or remove an existing one
+    if (Math.random() < 0.15 && pathColumns.size > 1) {
+      const pathArray = Array.from(pathColumns);
+      // Remove a random path
+      pathColumns.delete(pathArray[Math.floor(Math.random() * pathArray.length)]);
+    } else if (Math.random() < 0.15 && pathColumns.size < numCols / 3) {
+      // Add a new random path
+      let newPath;
+      do {
+        newPath = Math.floor(Math.random() * numCols);
+      } while (pathColumns.has(newPath));
+      pathColumns.add(newPath);
+    }
+    
+    // Generate the new row with walls where there are no paths
+    for (let col = 0; col < numCols; col++) {
+      if (!pathColumns.has(col)) {
+        newMaze.push({
+          x: col * gridSize,
+          y: y,
+          width: gridSize,
+          height: gridSize,
+          colorPhase: 0
         });
       }
     }
   }
   
-  // Choose only one booster type to spawn per frame
+  // Update maze blocks - move down and remove off-screen blocks
+  const updatedMaze = newMaze
+    .map(block => ({
+      ...block,
+      y: block.y + gameSpeed
+    }))
+    .filter(block => block.y < canvasHeight + gridSize);
+  
+  // Choose only one booster type to spawn per frame - keep existing logic
   // Pick a random number between 0 and 1
   const boosterRandom = Math.random();
   
   // Safety Key booster (30% chance if eligible)
   if (score > 0 && Math.round(score) % 3000 < 2 && boosterRandom < 0.3) {
-    const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.SAFETY_KEY);
+    const booster = generateBooster(canvasWidth, canvasHeight, [...updatedMaze], score, BoosterType.SAFETY_KEY);
     if (booster) {
       boosters.push(booster);
     }
   } 
   // Backdoor booster (30% chance if eligible and safety key wasn't spawned)
   else if (score > 0 && Math.round(score) % 1400 < 2 && boosterRandom >= 0.3 && boosterRandom < 0.6) {
-    const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.BACKDOOR);
+    const booster = generateBooster(canvasWidth, canvasHeight, [...updatedMaze], score, BoosterType.BACKDOOR);
     if (booster) {
       boosters.push(booster);
     }
   }
   
-  return { maze: newMaze, boosters };
+  return { maze: updatedMaze, boosters };
 };
 
 // Generate a booster at a random valid position
