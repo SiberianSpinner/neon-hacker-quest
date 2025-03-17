@@ -1,141 +1,103 @@
 
 import { PlayerSkin, PlayerSkinInfo } from './types';
-import { getScores } from './storageUtils';
+import { getBlockColor } from './mazeUtils';
 
-// Get all available player skins with unlock status
+// Get highest score from localStorage
+const getHighestScore = (): number => {
+  const scores = localStorage.getItem('netrunner_scores');
+  if (!scores) return 0;
+  
+  const parsedScores = JSON.parse(scores);
+  if (!parsedScores || !parsedScores.length) return 0;
+  
+  return Math.max(...parsedScores);
+};
+
+// Check if skin is unlocked
+export const isSkinUnlocked = (skinId: PlayerSkin): boolean => {
+  const highestScore = getHighestScore();
+  
+  switch (skinId) {
+    case PlayerSkin.PURPLE:
+      return highestScore >= 25000;
+    case PlayerSkin.RED:
+      return highestScore >= 50000;
+    case PlayerSkin.RAINBOW:
+      return highestScore >= 75000;
+    case PlayerSkin.DEFAULT:
+    default:
+      return true;
+  }
+};
+
+// Get player skins with unlock status
 export const getPlayerSkins = (): PlayerSkinInfo[] => {
   const highestScore = getHighestScore();
-  console.log("Current highest score:", highestScore); // Debug log
   
   return [
     {
       id: PlayerSkin.DEFAULT,
-      name: "Default",
-      description: "Standard netrunner connection",
-      color: "#00ffcc", // Cyber teal
-      unlocked: true // Always unlocked
+      name: "Стандартный",
+      description: "Стандартный цвет точки",
+      color: "#00ffcc",
+      unlockCondition: () => true,
+      unlocked: true
     },
     {
       id: PlayerSkin.PURPLE,
       name: "Фиолетовый",
-      description: "Доступен при взломе 25%",
-      color: "#b967ff", // Purple
-      unlocked: highestScore >= 25000 // 25% hack completion
+      description: "Открывается при достижении 25% взлома",
+      color: "#cc00ff",
+      unlockCondition: () => highestScore >= 25000,
+      unlocked: highestScore >= 25000
     },
     {
       id: PlayerSkin.RED,
       name: "Красный",
-      description: "Доступен при взломе 50%",
-      color: "#ff3e3e", // Red
-      unlocked: highestScore >= 50000 // 50% hack completion
+      description: "Открывается при достижении 50% взлома",
+      color: "#ff0000",
+      unlockCondition: () => highestScore >= 50000,
+      unlocked: highestScore >= 50000
     },
     {
       id: PlayerSkin.RAINBOW,
       name: "Перелив",
-      description: "Доступен при взломе 75%",
-      color: "rainbow", // Special rainbow effect
-      unlocked: highestScore >= 75000 // 75% hack completion
+      description: "Открывается при достижении 75% взлома",
+      color: (score: number, time: number) => {
+        // Change color every second (60 frames)
+        const colorPhase = Math.floor(time / 60) % 5;
+        return getBlockColor(colorPhase * 5000);
+      },
+      unlockCondition: () => highestScore >= 75000,
+      unlocked: highestScore >= 75000
     }
   ];
 };
 
-// Get the highest score achieved
-export const getHighestScore = (): number => {
-  try {
-    const scores = getScores();
-    console.log("All scores:", scores); // Debug log
-    
-    if (!scores || scores.length === 0) {
-      console.log("No scores found");
-      return 0;
-    }
-    
-    // Find maximum score
-    const maxScore = Math.max(...scores);
-    console.log("Maximum score found:", maxScore);
-    return maxScore;
-  } catch (error) {
-    console.error("Error getting highest score:", error);
-    return 0;
-  }
-};
-
-// Get the selected skin from localStorage
+// Get selected skin from localStorage or default
 export const getSelectedSkin = (): PlayerSkin => {
-  try {
-    const savedSkin = localStorage.getItem('netrunner_skin');
-    return savedSkin ? (savedSkin as PlayerSkin) : PlayerSkin.DEFAULT;
-  } catch (e) {
-    return PlayerSkin.DEFAULT;
+  const savedSkin = localStorage.getItem('netrunner_selected_skin');
+  if (savedSkin && Object.values(PlayerSkin).includes(savedSkin as PlayerSkin)) {
+    return savedSkin as PlayerSkin;
   }
+  return PlayerSkin.DEFAULT;
 };
 
 // Save selected skin to localStorage
-export const saveSelectedSkin = (skin: PlayerSkin): void => {
-  try {
-    localStorage.setItem('netrunner_skin', skin);
-    console.log("Saved selected skin:", skin);
-  } catch (e) {
-    console.error('Failed to save skin preference', e);
-  }
+export const saveSelectedSkin = (skinId: PlayerSkin): void => {
+  localStorage.setItem('netrunner_selected_skin', skinId);
 };
 
-// Rainbow colors array for smooth transitions
-const rainbowColors = [
-  '#ff0000', // Red
-  '#ff9900', // Orange
-  '#ffff00', // Yellow
-  '#00ff00', // Green
-  '#00ccff', // Blue
-  '#cc00ff', // Purple
-  '#ff00cc', // Pink
-];
-
-// Get player color based on selected skin and game state
-export const getPlayerColor = (
-  skin: PlayerSkin,
-  score: number = 0,
-  time: number = 0
-): string => {
-  switch (skin) {
-    case PlayerSkin.DEFAULT:
-      return "#00ffcc"; // Cyber teal
-    case PlayerSkin.PURPLE:
-      return "#b967ff"; // Purple
-    case PlayerSkin.RED:
-      return "#ff3e3e"; // Red
-    case PlayerSkin.RAINBOW:
-      // Smooth rainbow effect - interpolate between colors based on time
-      const totalDuration = 7000; // 7 seconds for full cycle
-      const normalizedTime = (time % totalDuration) / totalDuration;
-      const numColors = rainbowColors.length;
-      const index = normalizedTime * numColors;
-      const lowerIndex = Math.floor(index) % numColors;
-      const upperIndex = (lowerIndex + 1) % numColors;
-      const blend = index - lowerIndex;
-      
-      return interpolateColors(rainbowColors[lowerIndex], rainbowColors[upperIndex], blend);
-    default:
-      return "#00ffcc"; // Default to cyber teal
+// Get color for player based on selected skin
+export const getPlayerColor = (selectedSkin: PlayerSkin, score: number, time: number): string => {
+  const skins = getPlayerSkins();
+  const skin = skins.find(s => s.id === selectedSkin);
+  
+  if (!skin) return "#00ffcc"; // Default color
+  
+  if (typeof skin.color === 'function') {
+    return skin.color(score, time);
   }
-};
-
-// Helper function to interpolate between two colors
-const interpolateColors = (color1: string, color2: string, ratio: number): string => {
-  // Parse hex colors to RGB
-  const r1 = parseInt(color1.substring(1, 3), 16);
-  const g1 = parseInt(color1.substring(3, 5), 16);
-  const b1 = parseInt(color1.substring(5, 7), 16);
   
-  const r2 = parseInt(color2.substring(1, 3), 16);
-  const g2 = parseInt(color2.substring(3, 5), 16);
-  const b2 = parseInt(color2.substring(5, 7), 16);
-  
-  // Interpolate RGB values
-  const r = Math.round(r1 + (r2 - r1) * ratio);
-  const g = Math.round(g1 + (g2 - g1) * ratio);
-  const b = Math.round(b1 + (b2 - b1) * ratio);
-  
-  // Convert back to hex
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  return skin.color;
 };

@@ -22,8 +22,7 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     maze: [],
     boosters: [],
     score: 0,
-    // Restored original gameSpeed to 3 (was 2)
-    gameSpeed: 3,
+    gameSpeed: 2,
     attemptsLeft: 3,
     gameActive: false,
     colorPhase: 0,
@@ -179,8 +178,7 @@ export const startGame = (state: GameState): GameState => {
     score: 0,
     maze: [],
     boosters: [],
-    // Restored original gameSpeed to 3 (was 2)
-    gameSpeed: 3,
+    gameSpeed: 2,
     gameWon: false,
     collectedSafetyKeys: 0,
     collectedBackdoors: 0,
@@ -232,8 +230,6 @@ export const getDailyGameStats = (): { date: string, gamesPlayed: number } => {
 
 // End game and save score
 export const endGame = (state: GameState): GameState => {
-  // Save the score to local storage
-  console.log("Ending game, saving score:", state.score);
   saveScore(state.score);
   
   // Update achievements

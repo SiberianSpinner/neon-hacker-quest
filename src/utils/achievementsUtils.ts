@@ -1,229 +1,216 @@
+
 import { Achievement, GameState } from './types';
-import { getScores } from './storageUtils';
+import { getItem, setItem } from './storageUtils';
 import { getDailyGameStats } from './gameLogic';
 
-// Define all achievements
-const ACHIEVEMENTS: Achievement[] = [
+// Constants
+const ACHIEVEMENTS_STORAGE_KEY = 'netrunner_achievements';
+
+// Initial achievement definitions
+export const initialAchievements: Achievement[] = [
   {
-    id: 'first_run',
-    name: 'First Boot',
-    description: 'Start your first hack attempt',
+    id: 'netrunner',
+    name: 'Нетраннер',
+    description: 'Успешный взлом (100%)',
+    imageSrc: '/achievements/netrunner.svg',
     unlocked: false,
-    imageSrc: '/achievements/first-boot.svg',
+    unlockCondition: () => false, // Will be dynamically checked
   },
   {
-    id: 'reach_10percent',
-    name: '10% Access',
-    description: 'Reach 10% hack completion',
+    id: 'invulnerable',
+    name: 'Неуязвимый',
+    description: 'Собрать 10 Ключей Безопасности за одну игру',
+    imageSrc: '/achievements/invulnerable.svg',
     unlocked: false,
-    imageSrc: '/achievements/ten-percent.svg',
+    unlockCondition: () => false, // Will be dynamically checked
   },
   {
-    id: 'reach_25percent',
-    name: '25% Access',
-    description: 'Reach 25% hack completion',
+    id: 'secret_path',
+    name: 'Секретный ход',
+    description: 'Собрать 10 Бекдоров за одну игру',
+    imageSrc: '/achievements/secret_path.svg',
     unlocked: false,
-    imageSrc: '/achievements/twenty-five-percent.svg',
+    unlockCondition: () => false, // Will be dynamically checked
   },
   {
-    id: 'reach_50percent',
-    name: '50% Access',
-    description: 'Reach 50% hack completion',
+    id: 'tireless',
+    name: 'Неутомимый',
+    description: 'Использовать 10 Уязвимостей за день',
+    imageSrc: '/achievements/tireless.svg',
     unlocked: false,
-    imageSrc: '/achievements/fifty-percent.svg',
+    unlockCondition: () => false, // Will be dynamically checked
   },
-  {
-    id: 'reach_75percent',
-    name: '75% Access',
-    description: 'Reach 75% hack completion',
-    unlocked: false,
-    imageSrc: '/achievements/seventy-five-percent.svg',
-  },
-  {
-    id: 'reach_100percent',
-    name: '100% Access',
-    description: 'Complete the hack at 100%',
-    unlocked: false,
-    imageSrc: '/achievements/hundred-percent.svg',
-  },
-  {
-    id: 'collect_key',
-    name: 'Security Bypass',
-    description: 'Collect your first Safety Key',
-    unlocked: false,
-    imageSrc: '/achievements/security-bypass.svg',
-  },
-  {
-    id: 'collect_backdoor',
-    name: 'Backdoor Found',
-    description: 'Collect your first Backdoor',
-    unlocked: false,
-    imageSrc: '/achievements/backdoor.svg',
-  },
-  {
-    id: 'play_3_times',
-    name: 'Persistence',
-    description: 'Play the game 3 times in one day',
-    unlocked: false,
-    imageSrc: '/achievements/persistence.svg',
-  },
-  {
-    id: 'play_10_times',
-    name: 'Determination',
-    description: 'Play the game 10 times in one day',
-    unlocked: false,
-    imageSrc: '/achievements/determination.svg',
-  }
 ];
 
-// Load achievements from localStorage, merging with defaults
+// Create SVG icons for achievements
+export const createAchievementIcons = () => {
+  // Create directory if it doesn't exist
+  const createSVG = (filename: string, content: string) => {
+    try {
+      // In a real app, we would create files on the server
+      // For now, we'll use base64 data URLs for images
+      return `data:image/svg+xml;base64,${btoa(content)}`;
+    } catch (error) {
+      console.error('Error creating SVG:', error);
+      return '';
+    }
+  };
+
+  // Netrunner icon - stylized hacker with "100%" symbol
+  const netrunnerSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="netrunnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#00ffcc" />
+        <stop offset="100%" stop-color="#00ccff" />
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="45" fill="#0a0a0a" stroke="#00ffcc" stroke-width="2"/>
+    <path d="M50,25 L25,40 L25,70 L50,85 L75,70 L75,40 Z" fill="none" stroke="url(#netrunnerGrad)" stroke-width="2"/>
+    <text x="50" y="55" font-family="monospace" font-size="14" fill="#00ffcc" text-anchor="middle">100%</text>
+    <g opacity="0.7">
+      <path d="M40,30 L60,30" stroke="#00ffcc" stroke-width="1"/>
+      <path d="M30,40 L45,40" stroke="#00ffcc" stroke-width="1"/>
+      <path d="M55,40 L70,40" stroke="#00ffcc" stroke-width="1"/>
+      <path d="M30,60 L70,60" stroke="#00ffcc" stroke-width="1"/>
+      <path d="M35,70 L65,70" stroke="#00ffcc" stroke-width="1"/>
+    </g>
+  </svg>`;
+
+  // Invulnerable icon - shield with key
+  const invulnerableSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="invulnerableGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ff00ff" />
+        <stop offset="100%" stop-color="#cc00ff" />
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="45" fill="#0a0a0a" stroke="#ff00ff" stroke-width="2"/>
+    <path d="M50,20 L28,30 V55 C28,70 40,80 50,85 C60,80 72,70 72,55 V30 L50,20z" fill="none" stroke="url(#invulnerableGrad)" stroke-width="2"/>
+    <path d="M45,50 L45,60 L40,60 L40,65 L50,65 L50,50 Z" fill="#ff00ff"/>
+    <circle cx="53" cy="48" r="6" fill="none" stroke="#ff00ff" stroke-width="2"/>
+    <path d="M53,54 L53,65" stroke="#ff00ff" stroke-width="2"/>
+    <g opacity="0.5">
+      <path d="M40,40 L60,40" stroke="#ff00ff" stroke-width="1"/>
+      <path d="M60,45 L60,70" stroke="#ff00ff" stroke-width="1"/>
+      <path d="M40,70 L60,70" stroke="#ff00ff" stroke-width="1"/>
+    </g>
+  </svg>`;
+  
+  // Secret Path icon - door with secret path
+  const secretPathSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="secretPathGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#cc00ff" />
+        <stop offset="100%" stop-color="#9900ff" />
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="45" fill="#0a0a0a" stroke="#cc00ff" stroke-width="2"/>
+    <rect x="35" y="25" width="30" height="50" rx="2" fill="none" stroke="url(#secretPathGrad)" stroke-width="2"/>
+    <circle cx="60" cy="50" r="3" fill="#cc00ff"/>
+    <path d="M20,30 C30,40 40,20 50,30 C60,40 70,20 80,30" fill="none" stroke="#cc00ff" stroke-width="2" opacity="0.5"/>
+    <path d="M20,70 C30,80 40,60 50,70 C60,80 70,60 80,70" fill="none" stroke="#cc00ff" stroke-width="2" opacity="0.5"/>
+    <text x="50" y="55" font-family="monospace" font-size="6" fill="#cc00ff" text-anchor="middle">BACKDOOR</text>
+  </svg>`;
+  
+  // Tireless icon - clock with energy symbol
+  const tirelessSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="tirelessGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#00ccff" />
+        <stop offset="100%" stop-color="#0099ff" />
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="45" fill="#0a0a0a" stroke="#00ccff" stroke-width="2"/>
+    <circle cx="50" cy="50" r="35" fill="none" stroke="url(#tirelessGrad)" stroke-width="2"/>
+    <path d="M50,30 L50,50 L65,60" stroke="#00ccff" stroke-width="3" fill="none"/>
+    <path d="M50,15 L50,25" stroke="#00ccff" stroke-width="2"/>
+    <path d="M50,75 L50,85" stroke="#00ccff" stroke-width="2"/>
+    <path d="M15,50 L25,50" stroke="#00ccff" stroke-width="2"/>
+    <path d="M75,50 L85,50" stroke="#00ccff" stroke-width="2"/>
+    <path d="M43,50 L57,50" stroke="#00ccff" stroke-width="2" opacity="0.7"/>
+    <path d="M50,43 L50,57" stroke="#00ccff" stroke-width="2" opacity="0.7"/>
+  </svg>`;
+
+  return {
+    netrunner: createSVG('netrunner.svg', netrunnerSVG),
+    invulnerable: createSVG('invulnerable.svg', invulnerableSVG),
+    secret_path: createSVG('secret_path.svg', secretPathSVG),
+    tireless: createSVG('tireless.svg', tirelessSVG),
+  };
+};
+
+// Load achievements from storage
 export const loadAchievements = (): Achievement[] => {
-  try {
-    const savedAchievements = localStorage.getItem('netrunner_achievements');
-    const parsed: Achievement[] = savedAchievements ? JSON.parse(savedAchievements) : [];
-    
-    // Create a map of saved achievements for quick lookup
-    const savedMap = new Map(parsed.map((a: Achievement) => [a.id, a]));
-    
-    // Merge with default achievements
-    return ACHIEVEMENTS.map(defaultAchievement => {
-      const savedAchievement = savedMap.get(defaultAchievement.id);
-      return savedAchievement ? {
-        ...defaultAchievement,
-        unlocked: Boolean(savedAchievement.unlocked)
-      } : defaultAchievement;
-    });
-  } catch (e) {
-    console.error('Error loading achievements', e);
-    return [...ACHIEVEMENTS];
+  const storedAchievements = getItem(ACHIEVEMENTS_STORAGE_KEY);
+  if (storedAchievements) {
+    try {
+      return JSON.parse(storedAchievements);
+    } catch (e) {
+      console.error('Failed to parse stored achievements:', e);
+    }
   }
+  return initialAchievements;
 };
 
-// Save achievements to localStorage
-const saveAchievements = (achievements: Achievement[]): void => {
-  try {
-    localStorage.setItem('netrunner_achievements', JSON.stringify(achievements));
-  } catch (e) {
-    console.error('Error saving achievements', e);
-  }
-};
-
-// Check if specific achievement is unlocked
-export const isAchievementUnlocked = (id: string): boolean => {
-  const achievements = loadAchievements();
-  const achievement = achievements.find(a => a.id === id);
-  return achievement ? achievement.unlocked : false;
+// Save achievements to storage
+export const saveAchievements = (achievements: Achievement[]): void => {
+  setItem(ACHIEVEMENTS_STORAGE_KEY, JSON.stringify(achievements));
 };
 
 // Update achievements based on game state
-export const updateAchievements = (state: GameState): void => {
+export const updateAchievements = (gameState: GameState): Achievement[] => {
   const achievements = loadAchievements();
-  let updated = false;
-  
-  // First run achievement
-  if (!isAchievementUnlocked('first_run')) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'first_run');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-    }
-  }
-  
-  // Score-based achievements
-  const highestScore = getHighestScore();
-  
-  // 10% completion
-  if (!isAchievementUnlocked('reach_10percent') && highestScore >= 10000) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'reach_10percent');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-    }
-  }
-  
-  // 25% completion
-  if (!isAchievementUnlocked('reach_25percent') && highestScore >= 25000) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'reach_25percent');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-    }
-  }
-  
-  // 50% completion
-  if (!isAchievementUnlocked('reach_50percent') && highestScore >= 50000) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'reach_50percent');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-    }
-  }
-  
-  // 75% completion
-  if (!isAchievementUnlocked('reach_75percent') && highestScore >= 75000) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'reach_75percent');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-    }
-  }
-  
-  // 100% completion
-  if (!isAchievementUnlocked('reach_100percent') && highestScore >= 100000) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'reach_100percent');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-    }
-  }
-  
-  // Collected Safety Key
-  if (!isAchievementUnlocked('collect_key') && state.collectedSafetyKeys > 0) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'collect_key');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-    }
-  }
-  
-  // Collected Backdoor
-  if (!isAchievementUnlocked('collect_backdoor') && state.collectedBackdoors > 0) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'collect_backdoor');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-    }
-  }
-  
-  // Daily games played
+  const svgIcons = createAchievementIcons();
   const dailyStats = getDailyGameStats();
   
-  // 3 games in a day
-  if (!isAchievementUnlocked('play_3_times') && dailyStats.gamesPlayed >= 3) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'play_3_times');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
+  // Track if any achievements were unlocked in this update
+  let anyUnlocked = false;
+  
+  // Update each achievement
+  const updatedAchievements = achievements.map(achievement => {
+    // Set the correct image source
+    achievement.imageSrc = svgIcons[achievement.id as keyof typeof svgIcons] || achievement.imageSrc;
+    
+    // Skip if already unlocked
+    if (achievement.unlocked) {
+      return achievement;
     }
+    
+    // Check conditions for each achievement
+    switch (achievement.id) {
+      case 'netrunner':
+        if (gameState.gameWon) {
+          achievement.unlocked = true;
+          anyUnlocked = true;
+        }
+        break;
+      case 'invulnerable':
+        if (gameState.collectedSafetyKeys >= 10) {
+          achievement.unlocked = true;
+          anyUnlocked = true;
+        }
+        break;
+      case 'secret_path':
+        if (gameState.collectedBackdoors >= 10) {
+          achievement.unlocked = true;
+          anyUnlocked = true;
+        }
+        break;
+      case 'tireless':
+        if (dailyStats.gamesPlayed >= 10) {
+          achievement.unlocked = true;
+          anyUnlocked = true;
+        }
+        break;
+    }
+    
+    return achievement;
+  });
+  
+  // Save if any changes were made
+  if (anyUnlocked) {
+    saveAchievements(updatedAchievements);
   }
   
-  // 10 games in a day
-  if (!isAchievementUnlocked('play_10_times') && dailyStats.gamesPlayed >= 10) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'play_10_times');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-    }
-  }
-  
-  // Save if any achievements were updated
-  if (updated) {
-    saveAchievements(achievements);
-  }
-};
-
-// Get the highest score achieved
-export const getHighestScore = (): number => {
-  const scores = getScores();
-  return scores.length > 0 ? Math.max(...scores) : 0;
+  return updatedAchievements;
 };

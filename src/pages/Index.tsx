@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import GameCanvas from '@/components/GameCanvas';
@@ -80,10 +81,6 @@ const Index = () => {
     setGameActive(false);
     setLastScore(score);
     
-    // Save score to storage
-    saveScore(score);
-    console.log("Game over, saved score:", score);
-    
     // Show toast with score
     toast("Взлом прерван", {
       description: `Ваш счёт: ${score}`,
@@ -104,10 +101,6 @@ const Index = () => {
   const handleGameWin = (score: number) => {
     setGameActive(false);
     setLastScore(score);
-    
-    // Save score to storage
-    saveScore(score);
-    console.log("Game won, saved score:", score);
     
     // Show toast with winning message
     toast.success("Взлом успешно завершен!", {

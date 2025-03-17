@@ -1,21 +1,17 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
   updateGameState, 
+  getBlockColor,
   startGame,
-  toggleCursorControl
+  toggleCursorControl,
+  formatScoreAsPercentage
 } from '@/utils/gameLogic';
-import { GameState, PlayerSkin } from '@/utils/types';
+import { getGlowColor, getOppositeColor } from '@/utils/mazeUtils';
+import { Key, DoorOpen } from 'lucide-react';
+import { BoosterType, GameState, PlayerSkin } from '@/utils/types';
+import { getPlayerColor } from '@/utils/skinsUtils';
 import MatrixRain from './MatrixRain';
-
-// Import our newly created components
-import PlayerEntity from './game/PlayerEntity';
-import MazeBlocks from './game/MazeBlocks';
-import Boosters from './game/Boosters';
-import GameUI from './game/GameUI';
-import GameGrid from './game/GameGrid';
-import SVGFilters from './game/SVGFilters';
 
 interface GameCanvasProps {
   isActive: boolean;
@@ -32,39 +28,101 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   attemptsLeft,
   selectedSkin
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const requestRef = useRef<number>();
   const previousTimeRef = useRef<number>();
   const [previousActive, setPreviousActive] = useState(false);
   const [keys, setKeys] = useState<{ [key: string]: boolean }>({});
   const [cursorPosition, setCursorPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: null });
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const pulseRef = useRef<number>(0);
   
-  // Initialize dimensions and game state
+  // Matrix symbols pool to use for blocks
+  const matrixSymbols = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンабвгдеёжзийклмнопрстуфхцчшщъыьэюя';
+  
+  // Function to get score color based on completion percentage
+  const getScoreColor = (score: number): string => {
+    const percentage = score / 1000; // 1000 points = 1%
+    
+    if (percentage < 25) return '#ff0000'; // Red (0-25%)
+    if (percentage < 50) return '#ff9900'; // Orange (25-50%)
+    if (percentage < 75) return '#cc00ff'; // Purple (50-75%)
+    if (percentage < 90) return '#00ff00'; // Green (75-90%)
+    return '#ffffff'; // White (90-100%)
+  };
+  
+  // Function to generate a random matrix symbol
+  const getRandomMatrixSymbol = () => {
+    return matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
+  };
+  
+  // Function to render a block as matrix symbols
+  const renderBlockAsMatrixSymbols = (
+    ctx: CanvasRenderingContext2D, 
+    block: { x: number; y: number; width: number; height: number; }, 
+    blockColor: string,
+    glowColor: string
+  ) => {
+    const symbolSize = 16; // Double the size of background matrix (which is typically 8px)
+    const symbolsPerRow = 3; // 3x3 matrix of symbols per block
+    const symbolsPerCol = 3;
+    
+    // Calculate the width and height of each grid cell within the block
+    const cellWidth = block.width / symbolsPerRow;
+    const cellHeight = block.height / symbolsPerCol;
+    
+    // Save the current context state
+    ctx.save();
+    
+    // Glow effect for the entire block area
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 15;
+    
+    // Set font properties
+    ctx.font = `bold ${symbolSize}px "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Use block color for text
+    ctx.fillStyle = blockColor;
+    
+    // Fill the block with random matrix symbols
+    for (let row = 0; row < symbolsPerRow; row++) {
+      for (let col = 0; col < symbolsPerCol; col++) {
+        const symbol = getRandomMatrixSymbol();
+        const x = block.x + (col + 0.5) * cellWidth;
+        const y = block.y + (row + 0.5) * cellHeight;
+        
+        // Draw the matrix symbol
+        ctx.fillText(symbol, x, y);
+      }
+    }
+    
+    ctx.restore();
+  };
+
+  // Initialize game state
   useEffect(() => {
-    if (containerRef.current) {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      setDimensions({ width, height });
+    if (canvasRef.current) {
+      const canvas = canvasRef.current;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
       
-      const initialState = initGameState(width, height);
+      const initialState = initGameState(canvas.width, canvas.height);
       initialState.selectedSkin = selectedSkin; // Set initial selected skin
+      
       setGameState(initialState);
 
       const handleResize = () => {
-        const newWidth = window.innerWidth;
-        const newHeight = window.innerHeight;
-        setDimensions({ width: newWidth, height: newHeight });
-        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         setGameState(prevState => {
           if (!prevState) return null;
           return {
             ...prevState,
             player: {
               ...prevState.player,
-              y: newHeight - 100
+              y: canvas.height - 100
             }
           };
         });
@@ -152,8 +210,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   // Handle mouse/touch movement
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
+      if (canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
         setCursorPosition({
           x: e.clientX - rect.left,
           y: e.clientY - rect.top
@@ -162,8 +220,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (containerRef.current && e.touches.length > 0) {
-        const rect = containerRef.current.getBoundingClientRect();
+      if (canvasRef.current && e.touches.length > 0) {
+        const rect = canvasRef.current.getBoundingClientRect();
         setCursorPosition({
           x: e.touches[0].clientX - rect.left,
           y: e.touches[0].clientY - rect.top
@@ -172,35 +230,58 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     };
 
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener('mousemove', handleMouseMove);
-      container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    if (canvasRef.current) {
+      canvasRef.current.addEventListener('mousemove', handleMouseMove);
+      canvasRef.current.addEventListener('touchmove', handleTouchMove, { passive: false });
     }
 
     return () => {
-      if (container) {
-        container.removeEventListener('mousemove', handleMouseMove);
-        container.removeEventListener('touchmove', handleTouchMove);
+      if (canvasRef.current) {
+        canvasRef.current.removeEventListener('mousemove', handleMouseMove);
+        canvasRef.current.removeEventListener('touchmove', handleTouchMove);
       }
     };
   }, []);
 
   // Game animation loop
   useEffect(() => {
-    if (!gameState || !containerRef.current) return;
+    if (!gameState || !canvasRef.current) return;
 
     const animate = (time: number) => {
       if (previousTimeRef.current !== undefined) {
         if (gameState.gameActive) {
-          const width = dimensions.width;
-          const height = dimensions.height;
+          const canvas = canvasRef.current!;
+          const ctx = canvas.getContext('2d')!;
+
+          // Clear canvas
+          ctx.fillStyle = '#0a0a0a';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // Draw grid lines for cyberpunk effect
+          ctx.strokeStyle = 'rgba(0, 255, 204, 0.1)';
+          ctx.lineWidth = 1;
+          
+          // Horizontal lines
+          for (let i = 0; i < canvas.height; i += 50) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(canvas.width, i);
+            ctx.stroke();
+          }
+          
+          // Vertical lines
+          for (let i = 0; i < canvas.width; i += 50) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, canvas.height);
+            ctx.stroke();
+          }
 
           // Update game state
           const { newState, collision, gameWon } = updateGameState(
             gameState,
-            width,
-            height,
+            canvas.width,
+            canvas.height,
             keys,
             cursorPosition
           );
@@ -225,7 +306,164 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             return;
           }
 
-          // Update game state
+          // Draw boosters - UPDATED TO RENDER DIAMOND SHAPE
+          newState.boosters.forEach(booster => {
+            if (booster.active) {
+              // Common diamond shape rendering
+              ctx.save();
+              
+              // Use color based on booster type
+              const boosterColor = booster.type === BoosterType.SAFETY_KEY 
+                ? getOppositeColor(newState.score) 
+                : '#cc00ff'; // Purple for backdoor
+              
+              // Glow effect
+              ctx.shadowColor = boosterColor;
+              ctx.shadowBlur = 15;
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+              
+              // Calculate center and size
+              const centerX = booster.x + booster.size / 2;
+              const centerY = booster.y + booster.size / 2;
+              const diamondSize = booster.size * 0.7; // Slightly smaller than hitbox
+              
+              // Draw diamond shape
+              ctx.fillStyle = boosterColor;
+              ctx.beginPath();
+              // Diamond vertices
+              ctx.moveTo(centerX, centerY - diamondSize/2); // Top
+              ctx.lineTo(centerX + diamondSize/2, centerY); // Right
+              ctx.lineTo(centerX, centerY + diamondSize/2); // Bottom
+              ctx.lineTo(centerX - diamondSize/2, centerY); // Left
+              ctx.closePath();
+              ctx.fill();
+              
+              // Draw icon inside diamond
+              ctx.fillStyle = '#ffffff';
+              ctx.font = `${diamondSize * 0.5}px "JetBrains Mono", monospace`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              
+              // Draw appropriate symbol based on booster type
+              if (booster.type === BoosterType.SAFETY_KEY) {
+                ctx.fillText('🔑', centerX, centerY);
+              } else if (booster.type === BoosterType.BACKDOOR) {
+                ctx.fillText('🚪', centerX, centerY);
+              }
+              
+              ctx.restore();
+            }
+          });
+
+          // Draw maze blocks as matrix symbols
+          newState.maze.forEach(block => {
+            const blockColor = getBlockColor(newState.score);
+            const glowColor = getGlowColor(blockColor);
+            
+            // Render the block using matrix symbols
+            renderBlockAsMatrixSymbols(ctx, block, blockColor, glowColor);
+          });
+
+          // Update pulse effect
+          pulseRef.current = (pulseRef.current + 1) % 30; // 0.5 sec at 60 FPS
+          const pulseFactor = newState.player.invulnerable ? 
+            1 + 0.3 * Math.sin(pulseRef.current * 0.2 * Math.PI) : 1;
+
+          // Get player color based on selected skin
+          const playerColor = getPlayerColor(
+            newState.selectedSkin, 
+            newState.score, 
+            time
+          );
+
+          // Draw player with skin color and invulnerability effect if active
+          ctx.save();
+          
+          // Invulnerability aura
+          if (newState.player.invulnerable) {
+            const auraSize = newState.player.size * 2.5 * pulseFactor;
+            const gradient = ctx.createRadialGradient(
+              newState.player.x, newState.player.y, newState.player.size,
+              newState.player.x, newState.player.y, auraSize
+            );
+            gradient.addColorStop(0, 'rgba(0, 204, 255, 0.8)');
+            gradient.addColorStop(1, 'rgba(0, 204, 255, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(newState.player.x, newState.player.y, auraSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Glow effect - using skin color
+          ctx.shadowColor = playerColor;
+          ctx.shadowBlur = 15;
+          ctx.fillStyle = playerColor;
+          ctx.beginPath();
+          ctx.arc(newState.player.x, newState.player.y, newState.player.size, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Core
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(newState.player.x, newState.player.y, newState.player.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // "Data stream" effect behind player - using skin color
+          ctx.strokeStyle = `rgba(${playerColor.replace(/[^\d,]/g, '')}, 0.4)`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(newState.player.x, newState.player.y);
+          ctx.lineTo(
+            newState.player.x - newState.player.speedX * 5, 
+            newState.player.y - newState.player.speedY * 5
+          );
+          ctx.stroke();
+          
+          ctx.restore();
+
+          // Draw score centered with increased size and dynamic color based on percentage
+          const scoreColor = getScoreColor(newState.score);
+          ctx.fillStyle = scoreColor;
+          ctx.font = '17.6px "JetBrains Mono", monospace'; // 16px + 10%
+          
+          // Format score as hack percentage (1000 points = 1%)
+          const formattedScore = formatScoreAsPercentage(newState.score);
+          
+          // Center the score text
+          ctx.textAlign = 'center';
+          ctx.fillText(`ВЗЛОМ: ${formattedScore}`, canvas.width / 2, 30);
+          
+          // Draw invulnerability timer if active
+          if (newState.player.invulnerable) {
+            const secondsLeft = (newState.player.invulnerableTimer / 60).toFixed(1);
+            ctx.fillStyle = '#00ccff'; // Light blue color
+            ctx.textAlign = 'center';
+            ctx.fillText(`НЕУЯЗВИМОСТЬ: ${secondsLeft}s`, canvas.width / 2, 55);
+          }
+          
+          // Draw cursor target if cursor control is active
+          if (newState.cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
+            ctx.strokeStyle = 'rgba(0, 255, 204, 0.6)';
+            ctx.lineWidth = 1;
+            
+            // Draw crosshair
+            const crossSize = 10;
+            ctx.beginPath();
+            ctx.moveTo(cursorPosition.x - crossSize, cursorPosition.y);
+            ctx.lineTo(cursorPosition.x + crossSize, cursorPosition.y);
+            ctx.moveTo(cursorPosition.x, cursorPosition.y - crossSize);
+            ctx.lineTo(cursorPosition.x, cursorPosition.y + crossSize);
+            ctx.stroke();
+            
+            // Draw circle
+            ctx.beginPath();
+            ctx.arc(cursorPosition.x, cursorPosition.y, crossSize, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
           setGameState(newState);
         }
       }
@@ -240,54 +478,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [gameState, keys, onGameOver, onGameWin, cursorPosition, dimensions]);
+  }, [gameState, keys, onGameOver, onGameWin, cursorPosition]);
 
   return (
     <>
-      <div 
-        ref={containerRef}
+      <canvas 
+        ref={canvasRef} 
         className="absolute inset-0 z-0 transition-opacity duration-500"
         style={{ opacity: isActive ? 1 : 0 }}
-      >
-        {gameState && (
-          <svg 
-            ref={svgRef}
-            width={dimensions.width}
-            height={dimensions.height}
-            className="absolute inset-0"
-            style={{ background: '#0a0a0a' }}
-          >
-            {/* SVG filters for glow effects */}
-            <SVGFilters />
-            
-            {/* Background grid */}
-            <GameGrid canvasWidth={dimensions.width} canvasHeight={dimensions.height} />
-            
-            {/* Maze blocks */}
-            <MazeBlocks blocks={gameState.maze} score={gameState.score} />
-            
-            {/* Boosters */}
-            <Boosters boosters={gameState.boosters} score={gameState.score} />
-            
-            {/* Player */}
-            <PlayerEntity 
-              player={gameState.player} 
-              time={previousTimeRef.current || 0} 
-              selectedSkin={gameState.selectedSkin} 
-            />
-            
-            {/* Game UI (score, invulnerability timer, etc.) */}
-            <GameUI 
-              score={gameState.score}
-              invulnerable={gameState.player.invulnerable}
-              invulnerableTimer={gameState.player.invulnerableTimer}
-              cursorControl={gameState.cursorControl}
-              cursorPosition={cursorPosition}
-              canvasWidth={dimensions.width}
-            />
-          </svg>
-        )}
-      </div>
+      />
       
       {/* Matrix Rain overlay (always visible) */}
       <MatrixRain className="z-10" />
