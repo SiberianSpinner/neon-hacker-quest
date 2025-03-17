@@ -1,21 +1,8 @@
 
-// Use a more efficient approach to localStorage to reduce possible lag
-
-// Cache for storage values to reduce reads
-const storageCache: Record<string, any> = {};
-
-// Generic storage utility functions with caching
+// Generic storage utility functions
 export const getItem = (key: string): string | null => {
-  // Check cache first
-  if (key in storageCache) {
-    return storageCache[key];
-  }
-  
   try {
-    const value = localStorage.getItem(key);
-    // Cache the result
-    storageCache[key] = value;
-    return value;
+    return localStorage.getItem(key);
   } catch (error) {
     console.error('Error getting item from storage:', error);
     return null;
@@ -24,28 +11,43 @@ export const getItem = (key: string): string | null => {
 
 export const setItem = (key: string, value: string): void => {
   try {
-    // Update cache
-    storageCache[key] = value;
     localStorage.setItem(key, value);
   } catch (error) {
     console.error('Error saving item to storage:', error);
   }
 };
 
-// Batch operation to save scores for better performance
+// Save score to local storage
 export const saveScore = (score: number): void => {
   try {
-    // Use cache if available
-    const scoresJson = storageCache['netrunner_scores'] || localStorage.getItem('netrunner_scores') || '[]';
-    const scores = JSON.parse(scoresJson);
+    // Skip saving if score is too small (prevents saving test/debug runs)
+    if (score < 10) {
+      console.log("Score too small, not saving:", score);
+      return;
+    }
+
+    // Get existing scores
+    const scoresJson = localStorage.getItem('netrunner_scores') || '[]';
+    let scores = JSON.parse(scoresJson);
+    
+    // Ensure scores is an array
+    if (!Array.isArray(scores)) {
+      scores = [];
+    }
+    
+    // Add the new score
     scores.push(score);
+    
+    // Sort scores in descending order
     scores.sort((a: number, b: number) => b - a);
     
-    const newScores = JSON.stringify(scores.slice(0, 10));
+    // Keep only top 10 scores
+    const topScores = scores.slice(0, 10);
     
-    // Update cache and storage in one operation
-    storageCache['netrunner_scores'] = newScores;
-    localStorage.setItem('netrunner_scores', newScores);
+    // Save scores back to localStorage
+    localStorage.setItem('netrunner_scores', JSON.stringify(topScores));
+    
+    console.log(`Score ${score} saved, current scores:`, topScores);
   } catch (error) {
     console.error('Error saving score:', error);
   }
@@ -54,19 +56,46 @@ export const saveScore = (score: number): void => {
 // Get scores from local storage
 export const getScores = (): number[] => {
   try {
-    // Use cache if available
-    const scoresJson = storageCache['netrunner_scores'] || localStorage.getItem('netrunner_scores');
+    const scoresJson = localStorage.getItem('netrunner_scores');
     
-    if (scoresJson) {
-      // Update cache with parsed result
-      const scores = JSON.parse(scoresJson);
-      storageCache['netrunner_scores'] = scoresJson;
-      return scores;
+    // Handle case when no scores exist yet
+    if (!scoresJson) {
+      console.log('No scores found in storage');
+      return [];
     }
     
-    return [];
+    const scores = JSON.parse(scoresJson);
+    
+    // Validate that scores is an array
+    if (!Array.isArray(scores)) {
+      console.warn('Invalid scores format in storage, returning empty array');
+      return [];
+    }
+    
+    return scores;
   } catch (error) {
     console.error('Error loading scores:', error);
     return [];
+  }
+};
+
+// For debugging: clear all scores
+export const clearAllScores = (): void => {
+  try {
+    localStorage.removeItem('netrunner_scores');
+    console.log('All scores cleared from storage');
+  } catch (error) {
+    console.error('Error clearing scores:', error);
+  }
+};
+
+// For debugging: set a specific high score
+export const setTestHighScore = (score: number): void => {
+  try {
+    const scores = [score];
+    localStorage.setItem('netrunner_scores', JSON.stringify(scores));
+    console.log(`Test high score set to: ${score}`);
+  } catch (error) {
+    console.error('Error setting test score:', error);
   }
 };

@@ -21,7 +21,7 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     maze: [],
     boosters: [],
     score: 0,
-    gameSpeed: 3, // Set back to 3 for proper speed
+    gameSpeed: 2,
     attemptsLeft: 3,
     gameActive: false,
     colorPhase: 0,
@@ -33,7 +33,7 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
   };
 };
 
-// Update game state for each frame - optimize performance
+// Update game state for each frame
 export const updateGameState = (
   state: GameState, 
   canvasWidth: number, 
@@ -63,76 +63,53 @@ export const updateGameState = (
     }
   }
   
-  // Update maze blocks - more efficiently
+  // Update maze blocks
   let collision = false;
-  const gameSpeed = state.gameSpeed;
-  const newMaze = [];
-  
-  // Pre-calculate canvas height + buffer
-  const maxY = canvasHeight + 100;
-  
-  // Process blocks more efficiently
-  for (let i = 0; i < state.maze.length; i++) {
-    const block = state.maze[i];
-    // Move block down
-    const newBlock = { 
-      x: block.x, 
-      y: block.y + gameSpeed,
-      width: block.width, 
-      height: block.height 
-    };
-    
-    // Only keep blocks that are still on or near screen
-    if (newBlock.y < maxY) {
-      newMaze.push(newBlock);
+  const newMaze = state.maze
+    .map(block => {
+      // Move block down
+      const newBlock = { ...block, y: block.y + state.gameSpeed };
       
       // Check collision (only if player is not invulnerable)
-      if (!newPlayer.invulnerable && !collision && checkCollision(newPlayer, newBlock)) {
+      if (!newPlayer.invulnerable && checkCollision(newPlayer, newBlock)) {
         collision = true;
       }
-    }
-  }
+      
+      return newBlock;
+    })
+    .filter(block => block.y < canvasHeight + 100); // Keep blocks that are still on or near screen
   
-  // Update boosters more efficiently
-  const newBoosters = [];
-  let collectedSafetyKeys = state.collectedSafetyKeys;
-  let collectedBackdoors = state.collectedBackdoors;
+  // Update boosters
+  const newBoosters = state.boosters
+    .map(booster => {
+      // Move booster down
+      const newBooster = { ...booster, y: booster.y + state.gameSpeed };
+      return newBooster;
+    })
+    .filter(booster => booster.y < canvasHeight + 100 && booster.active); // Keep active boosters on screen
+    
+  // Check for booster collisions
+  let collectedBooster = false;
+  let newCollectedSafetyKeys = state.collectedSafetyKeys;
+  let newCollectedBackdoors = state.collectedBackdoors;
   let scoreBoost = 0;
   
-  // Process boosters more efficiently
-  for (let i = 0; i < state.boosters.length; i++) {
-    const booster = state.boosters[i];
-    // Only process active boosters
-    if (booster.active) {
-      // Move booster down
-      const newBooster = { 
-        x: booster.x, 
-        y: booster.y + gameSpeed,
-        size: booster.size,
-        type: booster.type,
-        active: true 
-      };
+  newBoosters.forEach(booster => {
+    if (booster.active && checkBoosterCollision(newPlayer.x, newPlayer.y, newPlayer.size, booster)) {
+      booster.active = false; // Deactivate collected booster
+      collectedBooster = true;
       
-      // Check if booster is still on screen
-      if (newBooster.y < maxY) {
-        // Check for booster collisions
-        if (checkBoosterCollision(newPlayer.x, newPlayer.y, newPlayer.size, newBooster)) {
-          // Handle booster collection
-          if (newBooster.type === BoosterType.SAFETY_KEY) {
-            newPlayer.invulnerable = true;
-            newPlayer.invulnerableTimer = 1800; // 30 seconds at 60 FPS
-            collectedSafetyKeys += 1;
-          } else if (newBooster.type === BoosterType.BACKDOOR) {
-            scoreBoost = 3000;
-            collectedBackdoors += 1;
-          }
-        } else {
-          // Only keep boosters that haven't been collected
-          newBoosters.push(newBooster);
-        }
+      if (booster.type === BoosterType.SAFETY_KEY) {
+        newPlayer.invulnerable = true;
+        newPlayer.invulnerableTimer = 1800; // 30 seconds at 60 FPS (60 * 30 = 1800)
+        newCollectedSafetyKeys += 1; // Increment collected safety keys count
+      } else if (booster.type === BoosterType.BACKDOOR) {
+        // Add 3000 points when collecting a Backdoor
+        scoreBoost = 3000;
+        newCollectedBackdoors += 1; // Increment collected backdoors count
       }
     }
-  }
+  });
   
   // Generate new blocks and potentially boosters
   const { maze: updatedMaze, boosters: newGeneratedBoosters } = generateMaze(
@@ -143,22 +120,25 @@ export const updateGameState = (
     state.score
   );
   
-  // Update score and check if player has won
+  // Update score and color phase (add score boost from backdoor if collected)
   const newScore = state.score + 1 + scoreBoost;
+  // Update color phase every 5000 points
+  const newColorPhase = Math.floor(newScore / 5000);
+  
+  // Check if player has won (reached 100,000 points - 100% hack completion)
   const gameWon = newScore >= 100000;
   
-  // Create new state object efficiently
   const newState = {
     ...state,
     player: newPlayer,
     maze: updatedMaze,
-    boosters: [...newBoosters, ...newGeneratedBoosters],
+    boosters: [...newBoosters.filter(b => b.active), ...newGeneratedBoosters],
     score: newScore,
-    colorPhase: Math.floor(newScore / 5000),
-    gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)),
+    colorPhase: newColorPhase,
+    gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)), // Gradually increase speed
     gameWon,
-    collectedSafetyKeys,
-    collectedBackdoors
+    collectedSafetyKeys: newCollectedSafetyKeys,
+    collectedBackdoors: newCollectedBackdoors
   };
   
   return {
@@ -249,6 +229,8 @@ export const getDailyGameStats = (): { date: string, gamesPlayed: number } => {
 
 // End game and save score
 export const endGame = (state: GameState): GameState => {
+  // Save the score to local storage
+  console.log("Ending game, saving score:", state.score);
   saveScore(state.score);
   
   // Update achievements

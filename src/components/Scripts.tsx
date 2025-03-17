@@ -5,7 +5,8 @@ import { Check, Lock } from 'lucide-react';
 import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
 import { PlayerSkin, PlayerSkinInfo } from '@/utils/types';
-import { getPlayerSkins, saveSelectedSkin } from '@/utils/skinsUtils';
+import { getPlayerSkins, saveSelectedSkin, getHighestScore } from '@/utils/skinsUtils';
+import { setTestHighScore } from '@/utils/storageUtils';
 
 interface ScriptsProps {
   isVisible: boolean;
@@ -24,28 +25,48 @@ const Scripts: React.FC<ScriptsProps> = ({
 }) => {
   const [skins, setSkins] = useState<PlayerSkinInfo[]>([]);
   const [loadingComplete, setLoadingComplete] = useState(false);
+  const [highScore, setHighScore] = useState(0);
   
   useEffect(() => {
     if (isVisible) {
-      // Get player skins with unlock status
-      setSkins(getPlayerSkins());
-      
-      // Simulate loading
-      const timer = setTimeout(() => {
-        setLoadingComplete(true);
-      }, 300);
-      
-      return () => clearTimeout(timer);
+      // Force refresh skin data when the component becomes visible
+      refreshSkinData();
     } else {
       setLoadingComplete(false);
     }
   }, [isVisible]);
+  
+  const refreshSkinData = () => {
+    // Get current highest score
+    const currentHighScore = getHighestScore();
+    setHighScore(currentHighScore);
+    console.log("Scripts opened, highest score:", currentHighScore);
+    
+    // Get player skins with unlock status - this will check player's score
+    setSkins(getPlayerSkins());
+    
+    // Simulate loading
+    const timer = setTimeout(() => {
+      setLoadingComplete(true);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  };
   
   const handleSelectSkin = (skin: PlayerSkinInfo) => {
     if (!skin.unlocked) return;
     
     onSelectSkin(skin.id);
     saveSelectedSkin(skin.id);
+  };
+  
+  // For debugging in development: set a test high score
+  const handleSetTestScore = (scorePercent: number) => {
+    const actualScore = scorePercent * 1000; // Convert percent to actual score
+    setTestHighScore(actualScore);
+    
+    // Refresh skin data after setting the score
+    setTimeout(refreshSkinData, 100);
   };
   
   if (!isVisible) return null;
@@ -64,6 +85,13 @@ const Scripts: React.FC<ScriptsProps> = ({
         <h2 className="text-2xl text-center font-bold text-cyber-primary mb-6 uppercase">
           {isTelegramWebApp ? 'СКРИПТЫ' : 'SCRIPTS'}
         </h2>
+        
+        <div className="text-center mb-4 text-cyber-foreground/70 text-sm">
+          {isTelegramWebApp 
+            ? `Ваш рекорд: ${highScore.toLocaleString()} (${(highScore / 1000).toFixed(1)}%)`
+            : `Highest score: ${highScore.toLocaleString()} (${(highScore / 1000).toFixed(1)}%)`
+          }
+        </div>
         
         <div className="grid grid-cols-2 gap-4 mb-6">
           {skins.map((skin) => (
@@ -113,6 +141,45 @@ const Scripts: React.FC<ScriptsProps> = ({
             </div>
           ))}
         </div>
+        
+        {/* Debug controls (only visible in development) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-6 p-3 border border-dashed border-red-500/30 rounded">
+            <p className="text-xs text-red-400 mb-2">Debug Controls:</p>
+            <div className="flex gap-2 flex-wrap">
+              <button 
+                onClick={() => handleSetTestScore(25)} 
+                className="text-xs bg-red-900/30 hover:bg-red-900/50 px-2 py-1 rounded text-white"
+              >
+                Set 25%
+              </button>
+              <button 
+                onClick={() => handleSetTestScore(50)} 
+                className="text-xs bg-red-900/30 hover:bg-red-900/50 px-2 py-1 rounded text-white"
+              >
+                Set 50%
+              </button>
+              <button 
+                onClick={() => handleSetTestScore(75)} 
+                className="text-xs bg-red-900/30 hover:bg-red-900/50 px-2 py-1 rounded text-white"
+              >
+                Set 75%
+              </button>
+              <button 
+                onClick={() => handleSetTestScore(100)} 
+                className="text-xs bg-red-900/30 hover:bg-red-900/50 px-2 py-1 rounded text-white"
+              >
+                Set 100%
+              </button>
+              <button 
+                onClick={refreshSkinData} 
+                className="text-xs bg-green-900/30 hover:bg-green-900/50 px-2 py-1 rounded text-white"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+        )}
         
         <div className="flex justify-center">
           <CustomButton onClick={onClose}>

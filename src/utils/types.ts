@@ -1,3 +1,5 @@
+
+// Core game objects
 export interface Player {
   x: number;
   y: number;
@@ -13,18 +15,12 @@ export interface MazeBlock {
   y: number;
   width: number;
   height: number;
-}
-
-export enum ShapeType {
-  SINGLE = 'single',
-  VERTICAL_DOUBLE = 'vertical_double',
-  HORIZONTAL_DOUBLE = 'horizontal_double',
-  L_SHAPE = 'l_shape'
+  colorPhase: number;
 }
 
 export enum BoosterType {
-  SAFETY_KEY = 'safety_key',
-  BACKDOOR = 'backdoor'
+  SAFETY_KEY = 'SAFETY_KEY',
+  BACKDOOR = 'BACKDOOR'
 }
 
 export interface Booster {
@@ -35,38 +31,6 @@ export interface Booster {
   active: boolean;
 }
 
-export interface GameState {
-  player: Player;
-  maze: MazeBlock[];
-  boosters: Booster[];
-  score: number;
-  gameSpeed: number;
-  attemptsLeft: number;
-  gameActive: boolean;
-  colorPhase: number;
-  cursorControl: boolean;
-  gameWon?: boolean;
-  collectedSafetyKeys: number;
-  collectedBackdoors: number; // New field to track backdoor boosters
-}
-
-// New achievement-related types
-export interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  imageSrc: string;
-  unlocked: boolean;
-  unlockCondition: () => boolean;
-}
-
-// New type for tracking daily game play
-export interface DailyGameStats {
-  date: string;
-  gamesPlayed: number;
-}
-
-// New enum for player skin types
 export enum PlayerSkin {
   DEFAULT = 'default',
   PURPLE = 'purple',
@@ -74,6 +38,14 @@ export enum PlayerSkin {
   RAINBOW = 'rainbow'
 }
 
+export interface PlayerSkinInfo {
+  id: PlayerSkin;
+  name: string;
+  description: string;
+  color: string | 'rainbow';
+  unlocked: boolean;
+}
+
 export interface GameState {
   player: Player;
   maze: MazeBlock[];
@@ -84,34 +56,25 @@ export interface GameState {
   gameActive: boolean;
   colorPhase: number;
   cursorControl: boolean;
-  gameWon?: boolean;
+  gameWon: boolean;
   collectedSafetyKeys: number;
   collectedBackdoors: number;
-  selectedSkin: PlayerSkin; // New field for selected skin
+  selectedSkin: PlayerSkin;
 }
 
-// New achievement-related types
+// Achievements
 export interface Achievement {
   id: string;
   name: string;
   description: string;
-  imageSrc: string;
   unlocked: boolean;
-  unlockCondition: () => boolean;
+  imageSrc?: string;
 }
 
-// New type for tracking daily game play
-export interface DailyGameStats {
-  date: string;
-  gamesPlayed: number;
-}
-
-// New interface for player skins
-export interface PlayerSkinInfo {
-  id: PlayerSkin;
-  name: string;
-  description: string;
-  color: string | ((score: number, time: number) => string);
-  unlockCondition: () => boolean;
-  unlocked: boolean;
+// Add ShapeType enum for maze generation
+export enum ShapeType {
+  SINGLE = 'SINGLE',
+  VERTICAL_DOUBLE = 'VERTICAL_DOUBLE',
+  HORIZONTAL_DOUBLE = 'HORIZONTAL_DOUBLE',
+  L_SHAPE = 'L_SHAPE'
 }

@@ -22,8 +22,10 @@ const Achievements: React.FC<AchievementsProps> = ({
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
   
+  // Reload achievements when component becomes visible
   useEffect(() => {
     if (isVisible) {
+      // Reload fresh achievements data
       setAchievements(loadAchievements());
     }
   }, [isVisible]);

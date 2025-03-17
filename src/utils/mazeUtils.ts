@@ -101,7 +101,13 @@ const generateBooster = (
     const y = padding + Math.random() * (canvasHeight - padding * 2 - size);
     
     // Create a temporary block to represent the booster for collision checking
-    const tempBlock: MazeBlock = { x, y, width: size, height: size };
+    const tempBlock: MazeBlock = { 
+      x, 
+      y, 
+      width: size, 
+      height: size, 
+      colorPhase: 0 // Add colorPhase property
+    };
     
     // Check if the booster would overlap with any existing block
     if (!checkBlockOverlap(tempBlock, existingBlocks, 10)) {
@@ -140,6 +146,7 @@ const createShape = (
   gridSize: number
 ): MazeBlock[] => {
   const blocks: MazeBlock[] = [];
+  const colorPhase = 0; // Default colorPhase
   
   switch(type) {
     case ShapeType.SINGLE:
@@ -148,7 +155,8 @@ const createShape = (
         x: startX,
         y: startY,
         width: gridSize,
-        height: gridSize
+        height: gridSize,
+        colorPhase
       });
       break;
       
@@ -158,13 +166,15 @@ const createShape = (
         x: startX,
         y: startY,
         width: gridSize,
-        height: gridSize
+        height: gridSize,
+        colorPhase
       });
       blocks.push({
         x: startX,
         y: startY + gridSize,
         width: gridSize,
-        height: gridSize
+        height: gridSize,
+        colorPhase
       });
       break;
       
@@ -174,13 +184,15 @@ const createShape = (
         x: startX,
         y: startY,
         width: gridSize,
-        height: gridSize
+        height: gridSize,
+        colorPhase
       });
       blocks.push({
         x: startX + gridSize,
         y: startY,
         width: gridSize,
-        height: gridSize
+        height: gridSize,
+        colorPhase
       });
       break;
       
@@ -190,19 +202,22 @@ const createShape = (
         x: startX,
         y: startY,
         width: gridSize,
-        height: gridSize
+        height: gridSize,
+        colorPhase
       });
       blocks.push({
         x: startX,
         y: startY + gridSize,
         width: gridSize,
-        height: gridSize
+        height: gridSize,
+        colorPhase
       });
       blocks.push({
         x: startX + gridSize,
         y: startY + gridSize,
         width: gridSize,
-        height: gridSize
+        height: gridSize,
+        colorPhase
       });
       break;
   }
