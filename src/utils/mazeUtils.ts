@@ -1,3 +1,4 @@
+
 import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
 // Generate maze blocks with corridor-like patterns
@@ -94,20 +95,22 @@ export const generateMaze = (
     const y = maze.length > 0 ? 
       Math.max(...maze.map(block => block.y)) + gridSize : -gridSize;
     
-    // Sometimes shift paths (make turns) - more likely at higher scores
-    const pathShiftProbability = 0.1 + (score / 50000); // Max 30% at 100k score
+    // More frequent horizontal shifts to create a more vertical-oriented maze with corridors
+    const pathShiftProbability = 0.3 + (score / 30000); // Increased from 0.1 to 0.3
     if (Math.random() < pathShiftProbability && pathSegments.length > 0) {
       // Choose a random path segment to modify
       const segmentIndex = Math.floor(Math.random() * pathSegments.length);
       const segment = pathSegments[segmentIndex];
       
-      // Decide how to modify the path
+      // Decide how to modify the path - more likely to shift horizontally
       const modType = Math.random();
       
-      if (modType < 0.5) {
+      if (modType < 0.7) { // Increased from 0.5 to 0.7 to make horizontal shifts more common
         // Shift path (left or right)
         const direction = Math.random() > 0.5 ? 1 : -1;
-        const newStart = Math.max(0, Math.min(numCols - segment.width, segment.start + direction));
+        // Make larger shifts to create more noticeable corridors
+        const shiftAmount = 1 + Math.floor(Math.random() * 2); // Shift by 1-2 columns
+        const newStart = Math.max(0, Math.min(numCols - segment.width, segment.start + direction * shiftAmount));
         
         // Only make change if we don't overlap with other paths
         let canShift = true;
@@ -125,15 +128,16 @@ export const generateMaze = (
           // Update the segment
           pathSegments[segmentIndex] = { ...segment, start: newStart };
           
-          // Add connector blocks for the turn
-          if (Math.random() < 0.7) {
+          // Create a horizontal corridor by adding connector blocks for the turn
+          // Higher probability to create corridors (70% -> 90%)
+          if (Math.random() < 0.9) {
             const minX = Math.min(segment.start, newStart);
             const maxX = Math.max(segment.start + segment.width, newStart + segment.width);
-            const width = maxX - minX;
             
-            // Add the connection blocks for the turn in the previous row
+            // Add the connection blocks for the horizontal corridor
             for (let col = 0; col < numCols; col++) {
               if (col < minX || col >= maxX) {
+                // Add wall blocks to create a corridor
                 newMaze.push({
                   x: col * gridSize,
                   y: y - gridSize,
@@ -141,6 +145,25 @@ export const generateMaze = (
                   height: gridSize,
                   colorPhase: 0
                 });
+              }
+            }
+            
+            // Sometimes extend the corridor vertically to make it longer
+            if (Math.random() < 0.4) {
+              const corridorLength = 1 + Math.floor(Math.random() * 2); // 1-2 additional vertical segments
+              
+              for (let i = 1; i <= corridorLength; i++) {
+                for (let col = 0; col < numCols; col++) {
+                  if (col < minX || col >= maxX) {
+                    newMaze.push({
+                      x: col * gridSize,
+                      y: y - gridSize * (i + 1),
+                      width: gridSize,
+                      height: gridSize,
+                      colorPhase: 0
+                    });
+                  }
+                }
               }
             }
           }

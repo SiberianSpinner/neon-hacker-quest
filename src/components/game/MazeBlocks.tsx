@@ -9,8 +9,8 @@ interface MazeBlocksProps {
 }
 
 const MazeBlocks: React.FC<MazeBlocksProps> = ({ blocks, score }) => {
-  // Matrix symbols pool to use for blocks
-  const matrixSymbols = '01アイウエオカキクケコサシスセソタチツテト';
+  // Matrix symbols pool to use for blocks - reduced character set for better performance
+  const matrixSymbols = '01アイウエオカキクケコサシス';
   
   // Use memoization to prevent excessive re-renders
   const renderedBlocks = useMemo(() => {
