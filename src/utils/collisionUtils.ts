@@ -3,9 +3,9 @@ import { Player, MazeBlock } from './types';
 
 // Check if player collides with a maze block
 export const checkCollision = (player: Player, block: MazeBlock): boolean => {
-  // Use a tighter collision box for single matrix symbol blocks
+  // Use an even tighter collision box for single matrix symbol blocks
   // Reduce collision size slightly to make gameplay more forgiving
-  const collisionBuffer = 2; // 2 pixel buffer for more forgiving collisions
+  const collisionBuffer = 4; // Increased buffer for more forgiving collisions (up from 2)
   
   return (
     player.x + player.size - collisionBuffer > block.x &&

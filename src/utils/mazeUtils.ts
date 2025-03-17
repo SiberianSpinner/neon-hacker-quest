@@ -12,7 +12,7 @@ export const generateMaze = (
   const boosters: Booster[] = [];
   
   // Calculate spawn rate increase based on score
-  const baseSpawnRate = 0.025; // Increased from 0.0125 for more continuous generation
+  const baseSpawnRate = 0.025; 
   const spawnRateIncrease = Math.floor(score / 1000) * 0.0005; 
   const currentSpawnRate = baseSpawnRate + spawnRateIncrease;
   
@@ -23,13 +23,21 @@ export const generateMaze = (
   const gridSize = symbolSize * 1.5; // Space between symbols
   const numCols = Math.floor(canvasWidth / gridSize);
   
+  // Make wider passages (4-6 symbols wide)
+  const minPassageWidth = 4;
+  const maxPassageWidth = 6;
+  
   // Track current paths to ensure we always have a way through
-  const pathColumns = new Set<number>();
+  const pathSegments: Array<{start: number, width: number}> = [];
+  
   if (maze.length === 0) {
-    // Initialize with 2-3 paths on first generation
-    const numInitialPaths = 2 + Math.floor(Math.random() * 2);
+    // Initialize with 1-2 wide passages on first generation
+    const numInitialPaths = 1 + Math.floor(Math.random() * 2);
     for (let i = 0; i < numInitialPaths; i++) {
-      pathColumns.add(Math.floor(Math.random() * numCols));
+      const passageWidth = minPassageWidth + Math.floor(Math.random() * (maxPassageWidth - minPassageWidth + 1));
+      const maxStartPosition = numCols - passageWidth;
+      const startPos = Math.floor(Math.random() * maxStartPosition);
+      pathSegments.push({ start: startPos, width: passageWidth });
     }
   } else {
     // Find existing paths in the last row of blocks
@@ -46,16 +54,38 @@ export const generateMaze = (
       blockedColumns.add(col);
     });
     
-    // Identify path columns
+    // Identify path segments
+    let currentSegmentStart: number | null = null;
+    let currentSegmentWidth = 0;
+    
     for (let col = 0; col < numCols; col++) {
       if (!blockedColumns.has(col)) {
-        pathColumns.add(col);
+        // This column is part of a path
+        if (currentSegmentStart === null) {
+          currentSegmentStart = col;
+          currentSegmentWidth = 1;
+        } else {
+          currentSegmentWidth++;
+        }
+      } else if (currentSegmentStart !== null) {
+        // End of a segment
+        pathSegments.push({ start: currentSegmentStart, width: currentSegmentWidth });
+        currentSegmentStart = null;
+        currentSegmentWidth = 0;
       }
     }
     
+    // Don't forget the last segment if it extends to the edge
+    if (currentSegmentStart !== null) {
+      pathSegments.push({ start: currentSegmentStart, width: currentSegmentWidth });
+    }
+    
     // Ensure we have at least one path
-    if (pathColumns.size === 0) {
-      pathColumns.add(Math.floor(Math.random() * numCols));
+    if (pathSegments.length === 0) {
+      const passageWidth = minPassageWidth + Math.floor(Math.random() * (maxPassageWidth - minPassageWidth + 1));
+      const maxStartPosition = numCols - passageWidth;
+      const startPos = Math.floor(Math.random() * maxStartPosition);
+      pathSegments.push({ start: startPos, width: passageWidth });
     }
   }
   
@@ -66,50 +96,127 @@ export const generateMaze = (
     
     // Sometimes shift paths (make turns) - more likely at higher scores
     const pathShiftProbability = 0.1 + (score / 50000); // Max 30% at 100k score
-    if (Math.random() < pathShiftProbability) {
-      const pathArray = Array.from(pathColumns);
+    if (Math.random() < pathShiftProbability && pathSegments.length > 0) {
+      // Choose a random path segment to modify
+      const segmentIndex = Math.floor(Math.random() * pathSegments.length);
+      const segment = pathSegments[segmentIndex];
       
-      // Randomly choose a path to shift
-      if (pathArray.length > 0) {
-        const pathToShift = pathArray[Math.floor(Math.random() * pathArray.length)];
-        pathColumns.delete(pathToShift);
-        
-        // Shift left or right
+      // Decide how to modify the path
+      const modType = Math.random();
+      
+      if (modType < 0.5) {
+        // Shift path (left or right)
         const direction = Math.random() > 0.5 ? 1 : -1;
-        const newPath = Math.max(0, Math.min(numCols - 1, pathToShift + direction));
-        pathColumns.add(newPath);
+        const newStart = Math.max(0, Math.min(numCols - segment.width, segment.start + direction));
         
-        // Sometimes add a corner piece to make the turn smoother
-        if (Math.random() < 0.7) {
-          // Add the connection block for the turn
-          newMaze.push({
-            x: (Math.min(pathToShift, newPath)) * gridSize,
-            y: y - gridSize,
-            width: gridSize,
-            height: gridSize,
-            colorPhase: 0
-          });
+        // Only make change if we don't overlap with other paths
+        let canShift = true;
+        for (let i = 0; i < pathSegments.length; i++) {
+          if (i !== segmentIndex) {
+            const otherSeg = pathSegments[i];
+            if (!(newStart + segment.width <= otherSeg.start || newStart >= otherSeg.start + otherSeg.width)) {
+              canShift = false;
+              break;
+            }
+          }
+        }
+        
+        if (canShift) {
+          // Update the segment
+          pathSegments[segmentIndex] = { ...segment, start: newStart };
+          
+          // Add connector blocks for the turn
+          if (Math.random() < 0.7) {
+            const minX = Math.min(segment.start, newStart);
+            const maxX = Math.max(segment.start + segment.width, newStart + segment.width);
+            const width = maxX - minX;
+            
+            // Add the connection blocks for the turn in the previous row
+            for (let col = 0; col < numCols; col++) {
+              if (col < minX || col >= maxX) {
+                newMaze.push({
+                  x: col * gridSize,
+                  y: y - gridSize,
+                  width: gridSize,
+                  height: gridSize,
+                  colorPhase: 0
+                });
+              }
+            }
+          }
+        }
+      } else {
+        // Sometimes change width of the passage
+        const newWidth = minPassageWidth + Math.floor(Math.random() * (maxPassageWidth - minPassageWidth + 1));
+        const maxPossibleStart = numCols - newWidth;
+        
+        // Try to keep the passage centered
+        const center = segment.start + segment.width / 2;
+        const newStart = Math.max(0, Math.min(maxPossibleStart, Math.floor(center - newWidth / 2)));
+        
+        // Only make change if we don't overlap with other paths
+        let canResize = true;
+        for (let i = 0; i < pathSegments.length; i++) {
+          if (i !== segmentIndex) {
+            const otherSeg = pathSegments[i];
+            if (!(newStart + newWidth <= otherSeg.start || newStart >= otherSeg.start + otherSeg.width)) {
+              canResize = false;
+              break;
+            }
+          }
+        }
+        
+        if (canResize) {
+          // Update the segment
+          pathSegments[segmentIndex] = { start: newStart, width: newWidth };
         }
       }
     }
     
     // Sometimes add a new path or remove an existing one
-    if (Math.random() < 0.15 && pathColumns.size > 1) {
-      const pathArray = Array.from(pathColumns);
-      // Remove a random path
-      pathColumns.delete(pathArray[Math.floor(Math.random() * pathArray.length)]);
-    } else if (Math.random() < 0.15 && pathColumns.size < numCols / 3) {
+    if (Math.random() < 0.15 && pathSegments.length > 1) {
+      // Remove a random path (but not the widest one)
+      const sortedSegments = [...pathSegments].sort((a, b) => a.width - b.width);
+      pathSegments.splice(pathSegments.indexOf(sortedSegments[0]), 1);
+    } else if (Math.random() < 0.15 && pathSegments.length < 3) {
       // Add a new random path
-      let newPath;
-      do {
-        newPath = Math.floor(Math.random() * numCols);
-      } while (pathColumns.has(newPath));
-      pathColumns.add(newPath);
+      const newWidth = minPassageWidth + Math.floor(Math.random() * (maxPassageWidth - minPassageWidth + 1));
+      const maxStart = numCols - newWidth;
+      
+      // Try 5 times to find a non-overlapping position
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const newStart = Math.floor(Math.random() * maxStart);
+        let overlaps = false;
+        
+        for (const segment of pathSegments) {
+          if (!(newStart + newWidth <= segment.start || newStart >= segment.start + segment.width)) {
+            overlaps = true;
+            break;
+          }
+        }
+        
+        if (!overlaps) {
+          pathSegments.push({ start: newStart, width: newWidth });
+          break;
+        }
+      }
     }
     
     // Generate the new row with walls where there are no paths
+    const isWall = new Array(numCols).fill(true);
+    
+    // Mark passage areas as not walls
+    for (const segment of pathSegments) {
+      for (let col = segment.start; col < segment.start + segment.width; col++) {
+        if (col < numCols) {
+          isWall[col] = false;
+        }
+      }
+    }
+    
+    // Create wall blocks
     for (let col = 0; col < numCols; col++) {
-      if (!pathColumns.has(col)) {
+      if (isWall[col]) {
         newMaze.push({
           x: col * gridSize,
           y: y,
@@ -129,8 +236,7 @@ export const generateMaze = (
     }))
     .filter(block => block.y < canvasHeight + gridSize);
   
-  // Choose only one booster type to spawn per frame - keep existing logic
-  // Pick a random number between 0 and 1
+  // Choose only one booster type to spawn per frame
   const boosterRandom = Math.random();
   
   // Safety Key booster (30% chance if eligible)
