@@ -43,7 +43,16 @@ export const getPlayerSkins = (): PlayerSkinInfo[] => {
 export const getHighestScore = (): number => {
   const scores = getScores();
   console.log("All scores:", scores); // Debug log
-  return scores.length > 0 ? Math.max(...scores) : 0;
+  
+  if (!scores || scores.length === 0) {
+    console.log("No scores found");
+    return 0;
+  }
+  
+  // Find maximum score
+  const maxScore = Math.max(...scores);
+  console.log("Maximum score found:", maxScore);
+  return maxScore;
 };
 
 // Get the selected skin from localStorage
@@ -60,6 +69,7 @@ export const getSelectedSkin = (): PlayerSkin => {
 export const saveSelectedSkin = (skin: PlayerSkin): void => {
   try {
     localStorage.setItem('netrunner_skin', skin);
+    console.log("Saved selected skin:", skin);
   } catch (e) {
     console.error('Failed to save skin preference', e);
   }

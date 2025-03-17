@@ -1,4 +1,3 @@
-
 // Generic storage utility functions
 export const getItem = (key: string): string | null => {
   try {
@@ -20,11 +19,28 @@ export const setItem = (key: string, value: string): void => {
 // Save score to local storage
 export const saveScore = (score: number): void => {
   try {
+    // Get existing scores
     const scoresJson = localStorage.getItem('netrunner_scores') || '[]';
-    const scores = JSON.parse(scoresJson);
+    let scores = JSON.parse(scoresJson);
+    
+    // Ensure scores is an array
+    if (!Array.isArray(scores)) {
+      scores = [];
+    }
+    
+    // Add the new score
     scores.push(score);
+    
+    // Sort scores in descending order
     scores.sort((a: number, b: number) => b - a);
-    localStorage.setItem('netrunner_scores', JSON.stringify(scores.slice(0, 10)));
+    
+    // Keep only top 10 scores
+    const topScores = scores.slice(0, 10);
+    
+    // Save scores back to localStorage
+    localStorage.setItem('netrunner_scores', JSON.stringify(topScores));
+    
+    console.log(`Score ${score} saved, current scores:`, topScores);
   } catch (error) {
     console.error('Error saving score:', error);
   }
@@ -33,8 +49,23 @@ export const saveScore = (score: number): void => {
 // Get scores from local storage
 export const getScores = (): number[] => {
   try {
-    const scoresJson = localStorage.getItem('netrunner_scores') || '[]';
-    return JSON.parse(scoresJson);
+    const scoresJson = localStorage.getItem('netrunner_scores');
+    
+    // Handle case when no scores exist yet
+    if (!scoresJson) {
+      console.log('No scores found in storage');
+      return [];
+    }
+    
+    const scores = JSON.parse(scoresJson);
+    
+    // Validate that scores is an array
+    if (!Array.isArray(scores)) {
+      console.warn('Invalid scores format in storage, returning empty array');
+      return [];
+    }
+    
+    return scores;
   } catch (error) {
     console.error('Error loading scores:', error);
     return [];
