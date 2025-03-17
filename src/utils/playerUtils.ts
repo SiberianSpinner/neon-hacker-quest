@@ -15,10 +15,16 @@ export const updatePlayerMovement = (
   const newPlayer = { ...player };
   const moveSpeed = 6.67; // Reduced from 10 to 6.67 (1.5x slower)
   
-  // On mobile, use swipe direction if available
-  if (isMobile && swipeDirection) {
-    newPlayer.speedX = swipeDirection.x * moveSpeed;
-    newPlayer.speedY = swipeDirection.y * moveSpeed;
+  // On mobile, use swipe direction if available, otherwise stop movement
+  if (isMobile) {
+    if (swipeDirection) {
+      newPlayer.speedX = swipeDirection.x * moveSpeed;
+      newPlayer.speedY = swipeDirection.y * moveSpeed;
+    } else {
+      // Stop movement when finger is lifted (no swipe direction)
+      newPlayer.speedX = 0;
+      newPlayer.speedY = 0;
+    }
   }
   // Desktop cursor control
   else if (cursorControl && !isMobile && cursorPosition.x !== null && cursorPosition.y !== null) {
