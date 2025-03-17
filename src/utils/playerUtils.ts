@@ -9,8 +9,8 @@ export const updatePlayerMovement = (
   canvasHeight: number,
   cursorControl: boolean,
   cursorPosition: { x: number | null, y: number | null },
-  isMobile: boolean,
-  swipeDirection: { x: number, y: number } | null
+  isMobile: boolean = false,
+  swipeDirection: { x: number, y: number } | null = null
 ): Player => {
   const newPlayer = { ...player };
   const moveSpeed = 6.67; // Reduced from 10 to 6.67 (1.5x slower)

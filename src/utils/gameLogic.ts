@@ -1,4 +1,3 @@
-
 import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -41,7 +40,9 @@ export const updateGameState = (
   canvasHeight: number,
   keys: { [key: string]: boolean },
   cursorPosition: { x: number | null, y: number | null },
-  deltaTime: number = 1 // Default to 1 for backward compatibility
+  deltaTime: number = 1, // Default to 1 for backward compatibility
+  isMobile: boolean = false,
+  swipeDirection: { x: number, y: number } | null = null
 ): { newState: GameState; collision: boolean; gameWon: boolean } => {
   if (!state.gameActive) {
     return { newState: state, collision: false, gameWon: false };
@@ -57,7 +58,9 @@ export const updateGameState = (
     canvasWidth, 
     canvasHeight, 
     state.cursorControl,
-    cursorPosition
+    cursorPosition,
+    isMobile,
+    swipeDirection
   );
   
   // Decrease invulnerable timer if active
