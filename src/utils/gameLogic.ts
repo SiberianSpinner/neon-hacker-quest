@@ -1,4 +1,3 @@
-
 import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -22,7 +21,7 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     maze: [],
     boosters: [],
     score: 0,
-    gameSpeed: 2,
+    gameSpeed: 3, // Set back to 3 for proper speed
     attemptsLeft: 3,
     gameActive: false,
     colorPhase: 0,
@@ -34,7 +33,7 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
   };
 };
 
-// Update game state for each frame
+// Update game state for each frame - optimize performance
 export const updateGameState = (
   state: GameState, 
   canvasWidth: number, 
@@ -64,53 +63,76 @@ export const updateGameState = (
     }
   }
   
-  // Update maze blocks
+  // Update maze blocks - more efficiently
   let collision = false;
-  const newMaze = state.maze
-    .map(block => {
-      // Move block down
-      const newBlock = { ...block, y: block.y + state.gameSpeed };
+  const gameSpeed = state.gameSpeed;
+  const newMaze = [];
+  
+  // Pre-calculate canvas height + buffer
+  const maxY = canvasHeight + 100;
+  
+  // Process blocks more efficiently
+  for (let i = 0; i < state.maze.length; i++) {
+    const block = state.maze[i];
+    // Move block down
+    const newBlock = { 
+      x: block.x, 
+      y: block.y + gameSpeed,
+      width: block.width, 
+      height: block.height 
+    };
+    
+    // Only keep blocks that are still on or near screen
+    if (newBlock.y < maxY) {
+      newMaze.push(newBlock);
       
       // Check collision (only if player is not invulnerable)
-      if (!newPlayer.invulnerable && checkCollision(newPlayer, newBlock)) {
+      if (!newPlayer.invulnerable && !collision && checkCollision(newPlayer, newBlock)) {
         collision = true;
       }
-      
-      return newBlock;
-    })
-    .filter(block => block.y < canvasHeight + 100); // Keep blocks that are still on or near screen
+    }
+  }
   
-  // Update boosters
-  const newBoosters = state.boosters
-    .map(booster => {
-      // Move booster down
-      const newBooster = { ...booster, y: booster.y + state.gameSpeed };
-      return newBooster;
-    })
-    .filter(booster => booster.y < canvasHeight + 100 && booster.active); // Keep active boosters on screen
-    
-  // Check for booster collisions
-  let collectedBooster = false;
-  let newCollectedSafetyKeys = state.collectedSafetyKeys;
-  let newCollectedBackdoors = state.collectedBackdoors;
+  // Update boosters more efficiently
+  const newBoosters = [];
+  let collectedSafetyKeys = state.collectedSafetyKeys;
+  let collectedBackdoors = state.collectedBackdoors;
   let scoreBoost = 0;
   
-  newBoosters.forEach(booster => {
-    if (booster.active && checkBoosterCollision(newPlayer.x, newPlayer.y, newPlayer.size, booster)) {
-      booster.active = false; // Deactivate collected booster
-      collectedBooster = true;
+  // Process boosters more efficiently
+  for (let i = 0; i < state.boosters.length; i++) {
+    const booster = state.boosters[i];
+    // Only process active boosters
+    if (booster.active) {
+      // Move booster down
+      const newBooster = { 
+        x: booster.x, 
+        y: booster.y + gameSpeed,
+        size: booster.size,
+        type: booster.type,
+        active: true 
+      };
       
-      if (booster.type === BoosterType.SAFETY_KEY) {
-        newPlayer.invulnerable = true;
-        newPlayer.invulnerableTimer = 1800; // 30 seconds at 60 FPS (60 * 30 = 1800)
-        newCollectedSafetyKeys += 1; // Increment collected safety keys count
-      } else if (booster.type === BoosterType.BACKDOOR) {
-        // Add 3000 points when collecting a Backdoor
-        scoreBoost = 3000;
-        newCollectedBackdoors += 1; // Increment collected backdoors count
+      // Check if booster is still on screen
+      if (newBooster.y < maxY) {
+        // Check for booster collisions
+        if (checkBoosterCollision(newPlayer.x, newPlayer.y, newPlayer.size, newBooster)) {
+          // Handle booster collection
+          if (newBooster.type === BoosterType.SAFETY_KEY) {
+            newPlayer.invulnerable = true;
+            newPlayer.invulnerableTimer = 1800; // 30 seconds at 60 FPS
+            collectedSafetyKeys += 1;
+          } else if (newBooster.type === BoosterType.BACKDOOR) {
+            scoreBoost = 3000;
+            collectedBackdoors += 1;
+          }
+        } else {
+          // Only keep boosters that haven't been collected
+          newBoosters.push(newBooster);
+        }
       }
     }
-  });
+  }
   
   // Generate new blocks and potentially boosters
   const { maze: updatedMaze, boosters: newGeneratedBoosters } = generateMaze(
@@ -121,25 +143,22 @@ export const updateGameState = (
     state.score
   );
   
-  // Update score and color phase (add score boost from backdoor if collected)
+  // Update score and check if player has won
   const newScore = state.score + 1 + scoreBoost;
-  // Update color phase every 5000 points
-  const newColorPhase = Math.floor(newScore / 5000);
-  
-  // Check if player has won (reached 100,000 points - 100% hack completion)
   const gameWon = newScore >= 100000;
   
+  // Create new state object efficiently
   const newState = {
     ...state,
     player: newPlayer,
     maze: updatedMaze,
-    boosters: [...newBoosters.filter(b => b.active), ...newGeneratedBoosters],
+    boosters: [...newBoosters, ...newGeneratedBoosters],
     score: newScore,
-    colorPhase: newColorPhase,
-    gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)), // Gradually increase speed
+    colorPhase: Math.floor(newScore / 5000),
+    gameSpeed: Math.min(5, 2 + Math.floor(newScore / 2000)),
     gameWon,
-    collectedSafetyKeys: newCollectedSafetyKeys,
-    collectedBackdoors: newCollectedBackdoors
+    collectedSafetyKeys,
+    collectedBackdoors
   };
   
   return {

@@ -9,8 +9,18 @@ export const updatePlayerMovement = (
   cursorControl: boolean,
   cursorPosition: { x: number | null, y: number | null }
 ): Player => {
-  const newPlayer = { ...player };
   const moveSpeed = 5;
+  
+  // Create new player object with initial values from current player
+  const newPlayer = { 
+    x: player.x,
+    y: player.y,
+    size: player.size,
+    speedX: 0,
+    speedY: 0,
+    invulnerable: player.invulnerable,
+    invulnerableTimer: player.invulnerableTimer
+  };
   
   if (cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
     // Calculate direction vector towards cursor
@@ -27,30 +37,20 @@ export const updatePlayerMovement = (
       
       newPlayer.speedX = normalizedDx * moveSpeed;
       newPlayer.speedY = normalizedDy * moveSpeed;
-    } else {
-      // If cursor is very close, stop movement
-      newPlayer.speedX = 0;
-      newPlayer.speedY = 0;
     }
   } else {
     // Keyboard controls (when cursor control is disabled)
-    // Update speeds based on key presses
+    // Only set speed in one direction if keys are pressed
     if (keys.ArrowLeft || keys.a) {
       newPlayer.speedX = -moveSpeed;
     } else if (keys.ArrowRight || keys.d) {
       newPlayer.speedX = moveSpeed;
-    } else {
-      // Decelerate X movement when no keys pressed
-      newPlayer.speedX = 0;
     }
     
     if (keys.ArrowUp || keys.w) {
       newPlayer.speedY = -moveSpeed;
     } else if (keys.ArrowDown || keys.s) {
       newPlayer.speedY = moveSpeed;
-    } else {
-      // Decelerate Y movement when no keys pressed
-      newPlayer.speedY = 0;
     }
   }
   
@@ -58,7 +58,7 @@ export const updatePlayerMovement = (
   newPlayer.x += newPlayer.speedX;
   newPlayer.y += newPlayer.speedY;
   
-  // Keep player inside canvas bounds
+  // Keep player inside canvas bounds - use Math.min/max more efficiently
   newPlayer.x = Math.max(newPlayer.size, Math.min(canvasWidth - newPlayer.size, newPlayer.x));
   newPlayer.y = Math.max(newPlayer.size, Math.min(canvasHeight - newPlayer.size, newPlayer.y));
   
