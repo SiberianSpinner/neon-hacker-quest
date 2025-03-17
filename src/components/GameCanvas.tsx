@@ -37,6 +37,67 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   // Matrix symbols pool to use for blocks
   const matrixSymbols = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンабвгдеёжзийклмнопрстуфхцчшщъыьэюя';
 
+  // Function to get score color based on completion percentage
+  const getScoreColor = (score: number): string => {
+    const percentage = score / 1000; // 1000 points = 1%
+    
+    if (percentage < 25) return '#ff0000'; // Red (0-25%)
+    if (percentage < 50) return '#ff9900'; // Orange (25-50%)
+    if (percentage < 75) return '#cc00ff'; // Purple (50-75%)
+    if (percentage < 90) return '#00ff00'; // Green (75-90%)
+    return '#ffffff'; // White (90-100%)
+  };
+  
+  // Function to generate a random matrix symbol
+  const getRandomMatrixSymbol = () => {
+    return matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
+  };
+  
+  // Function to render a block as matrix symbols
+  const renderBlockAsMatrixSymbols = (
+    ctx: CanvasRenderingContext2D, 
+    block: { x: number; y: number; width: number; height: number; }, 
+    blockColor: string,
+    glowColor: string
+  ) => {
+    const symbolSize = 16; // Double the size of background matrix (which is typically 8px)
+    const symbolsPerRow = 3; // 3x3 matrix of symbols per block
+    const symbolsPerCol = 3;
+    
+    // Calculate the width and height of each grid cell within the block
+    const cellWidth = block.width / symbolsPerRow;
+    const cellHeight = block.height / symbolsPerCol;
+    
+    // Save the current context state
+    ctx.save();
+    
+    // Glow effect for the entire block area
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 15;
+    
+    // Set font properties
+    ctx.font = `bold ${symbolSize}px "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Use block color for text
+    ctx.fillStyle = blockColor;
+    
+    // Fill the block with random matrix symbols
+    for (let row = 0; row < symbolsPerRow; row++) {
+      for (let col = 0; col < symbolsPerCol; col++) {
+        const symbol = getRandomMatrixSymbol();
+        const x = block.x + (col + 0.5) * cellWidth;
+        const y = block.y + (row + 0.5) * cellHeight;
+        
+        // Draw the matrix symbol
+        ctx.fillText(symbol, x, y);
+      }
+    }
+    
+    ctx.restore();
+  };
+
   // Initialize game state
   useEffect(() => {
     if (canvasRef.current) {
@@ -173,67 +234,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     };
   }, []);
-
-  // Function to get score color based on completion percentage
-  const getScoreColor = (score: number): string => {
-    const percentage = score / 1000; // 1000 points = 1%
-    
-    if (percentage < 25) return '#ff0000'; // Red (0-25%)
-    if (percentage < 50) return '#ff9900'; // Orange (25-50%)
-    if (percentage < 75) return '#cc00ff'; // Purple (50-75%)
-    if (percentage < 90) return '#00ff00'; // Green (75-90%)
-    return '#ffffff'; // White (90-100%)
-  };
-  
-  // Function to generate a random matrix symbol
-  const getRandomMatrixSymbol = () => {
-    return matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
-  };
-  
-  // Function to render a block as matrix symbols
-  const renderBlockAsMatrixSymbols = (
-    ctx: CanvasRenderingContext2D, 
-    block: { x: number; y: number; width: number; height: number; }, 
-    blockColor: string,
-    glowColor: string
-  ) => {
-    const symbolSize = 16; // Double the size of background matrix (which is typically 8px)
-    const symbolsPerRow = 3; // 3x3 matrix of symbols per block
-    const symbolsPerCol = 3;
-    
-    // Calculate the width and height of each grid cell within the block
-    const cellWidth = block.width / symbolsPerRow;
-    const cellHeight = block.height / symbolsPerCol;
-    
-    // Save the current context state
-    ctx.save();
-    
-    // Glow effect for the entire block area
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = 15;
-    
-    // Set font properties
-    ctx.font = `bold ${symbolSize}px "JetBrains Mono", monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    
-    // Use block color for text
-    ctx.fillStyle = blockColor;
-    
-    // Fill the block with random matrix symbols
-    for (let row = 0; row < symbolsPerRow; row++) {
-      for (let col = 0; col < symbolsPerCol; col++) {
-        const symbol = getRandomMatrixSymbol();
-        const x = block.x + (col + 0.5) * cellWidth;
-        const y = block.y + (row + 0.5) * cellHeight;
-        
-        // Draw the matrix symbol
-        ctx.fillText(symbol, x, y);
-      }
-    }
-    
-    ctx.restore();
-  };
 
   // Game animation loop
   useEffect(() => {
@@ -489,67 +489,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     };
   }, [gameState, keys, onGameOver, onGameWin, cursorPosition]);
-
-  // Function to get score color based on completion percentage
-  const getScoreColor = (score: number): string => {
-    const percentage = score / 1000; // 1000 points = 1%
-    
-    if (percentage < 25) return '#ff0000'; // Red (0-25%)
-    if (percentage < 50) return '#ff9900'; // Orange (25-50%)
-    if (percentage < 75) return '#cc00ff'; // Purple (50-75%)
-    if (percentage < 90) return '#00ff00'; // Green (75-90%)
-    return '#ffffff'; // White (90-100%)
-  };
-  
-  // Function to generate a random matrix symbol
-  const getRandomMatrixSymbol = () => {
-    return matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
-  };
-  
-  // Function to render a block as matrix symbols
-  const renderBlockAsMatrixSymbols = (
-    ctx: CanvasRenderingContext2D, 
-    block: { x: number; y: number; width: number; height: number; }, 
-    blockColor: string,
-    glowColor: string
-  ) => {
-    const symbolSize = 16; // Double the size of background matrix (which is typically 8px)
-    const symbolsPerRow = 3; // 3x3 matrix of symbols per block
-    const symbolsPerCol = 3;
-    
-    // Calculate the width and height of each grid cell within the block
-    const cellWidth = block.width / symbolsPerRow;
-    const cellHeight = block.height / symbolsPerCol;
-    
-    // Save the current context state
-    ctx.save();
-    
-    // Glow effect for the entire block area
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = 15;
-    
-    // Set font properties
-    ctx.font = `bold ${symbolSize}px "JetBrains Mono", monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    
-    // Use block color for text
-    ctx.fillStyle = blockColor;
-    
-    // Fill the block with random matrix symbols
-    for (let row = 0; row < symbolsPerRow; row++) {
-      for (let col = 0; col < symbolsPerCol; col++) {
-        const symbol = getRandomMatrixSymbol();
-        const x = block.x + (col + 0.5) * cellWidth;
-        const y = block.y + (row + 0.5) * cellHeight;
-        
-        // Draw the matrix symbol
-        ctx.fillText(symbol, x, y);
-      }
-    }
-    
-    ctx.restore();
-  };
 
   return (
     <>
