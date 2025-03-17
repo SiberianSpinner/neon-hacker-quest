@@ -39,14 +39,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const previousTimeRef = useRef<number>();
   const [previousActive, setPreviousActive] = useState(false);
   const [keys, setKeys] = useState<{ [key: string]: boolean }>({});
-  const [cursorPosition, setCursorPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: null });
+  const [cursorPosition, setCursorPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: number | null });
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const isMobile = useIsMobile();
   
-  // For swipe direction control
+  // Для управления свайпом
   const [swipeDirection, setSwipeDirection] = useState<{ x: number, y: number } | null>(null);
   const [touchStartPosition, setTouchStartPosition] = useState<{ x: number, y: number } | null>(null);
-  const swipeInertiaTimeout = useRef<number | null>(null);
+  const [isFingerOnScreen, setIsFingerOnScreen] = useState(false);
   
   // Initialize dimensions and game state
   useEffect(() => {
@@ -163,17 +163,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [gameState, isMobile]);
 
-  // Clear swipe direction after a delay to simulate inertia
-  const clearSwipeDirection = () => {
-    if (swipeInertiaTimeout.current !== null) {
-      window.clearTimeout(swipeInertiaTimeout.current);
-    }
-    
-    swipeInertiaTimeout.current = window.setTimeout(() => {
-      setSwipeDirection(null);
-    }, 300); // Clear direction after 300ms for inertia effect
-  };
-
   // Handle mouse/touch movement
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -188,13 +177,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     const handleTouchStart = (e: TouchEvent) => {
       if (containerRef.current && e.touches.length > 0) {
+        setIsFingerOnScreen(true);
         const rect = containerRef.current.getBoundingClientRect();
         const touchX = e.touches[0].clientX - rect.left;
         const touchY = e.touches[0].clientY - rect.top;
         
         setTouchStartPosition({ x: touchX, y: touchY });
         setCursorPosition({ x: touchX, y: touchY });
-        e.preventDefault(); // Prevent default touch actions
+        e.preventDefault();
       }
     };
 
@@ -221,6 +211,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           const normalizedDy = dy / distance;
           
           setSwipeDirection({ x: normalizedDx, y: normalizedDy });
+        } else {
+          // Если движение несущественное, останавливаем
+          setSwipeDirection(null);
         }
         
         e.preventDefault(); // Prevent scrolling
@@ -228,9 +221,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
 
     const handleTouchEnd = () => {
+      setIsFingerOnScreen(false);
       setTouchStartPosition(null);
-      // Don't clear swipe direction immediately - let it clear after timeout
-      clearSwipeDirection();
+      setSwipeDirection(null); // Немедленно останавливаем движение при отпускании пальца
     };
 
     const container = containerRef.current;
@@ -247,11 +240,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         container.removeEventListener('touchstart', handleTouchStart);
         container.removeEventListener('touchmove', handleTouchMove);
         container.removeEventListener('touchend', handleTouchEnd);
-      }
-      
-      // Clear any pending timeout when unmounting
-      if (swipeInertiaTimeout.current !== null) {
-        window.clearTimeout(swipeInertiaTimeout.current);
       }
     };
   }, [touchStartPosition]);

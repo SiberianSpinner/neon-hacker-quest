@@ -15,13 +15,14 @@ export const updatePlayerMovement = (
   const newPlayer = { ...player };
   const moveSpeed = 6.67; // Reduced from 10 to 6.67 (1.5x slower)
   
-  // On mobile, use swipe direction if available, otherwise stop movement
+  // На мобильных устройствах используем свайп-направление
   if (isMobile) {
     if (swipeDirection) {
+      // Если есть активное свайп-направление, двигаемся в этом направлении
       newPlayer.speedX = swipeDirection.x * moveSpeed;
       newPlayer.speedY = swipeDirection.y * moveSpeed;
     } else {
-      // Stop movement when finger is lifted (no swipe direction)
+      // Если свайп-направления нет (палец не движется или отпущен), останавливаемся
       newPlayer.speedX = 0;
       newPlayer.speedY = 0;
     }
