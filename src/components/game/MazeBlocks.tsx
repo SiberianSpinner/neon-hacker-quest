@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useRef } from 'react';
 import { MazeBlock } from '@/utils/types';
 import { getBlockColor, getGlowColor } from '@/utils/mazeUtils';
 
@@ -9,44 +9,50 @@ interface MazeBlocksProps {
 }
 
 const MazeBlocks: React.FC<MazeBlocksProps> = ({ blocks, score }) => {
-  // Reduce matrix symbols pool even further for better performance
-  const matrixSymbols = '01アイウ';
+  // Matrix symbols pool to use for blocks
+  const matrixSymbols = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンабвгдеёжзийклмнопрстуфхцчшщъыьэюя';
   
-  // Use memoization to prevent excessive re-renders
-  const renderedBlocks = useMemo(() => {
-    const blockColor = getBlockColor(score);
-    const glowColor = getGlowColor(blockColor);
-    
-    // Function to get a random matrix symbol
-    const getRandomMatrixSymbol = () => {
-      return matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
-    };
-    
-    // Limit the number of blocks rendered for better performance
-    // Sort by Y position to render the most relevant blocks first
-    const visibleBlocks = [...blocks]
-      .sort((a, b) => a.y - b.y)
-      .slice(0, 150); // Limit to 150 blocks maximum for better performance
-    
-    return visibleBlocks.map((block, index) => (
-      <g key={`block-${index}`} filter="url(#blockGlow)">
-        <text
-          x={block.x + block.width / 2}
-          y={block.y + block.height / 2}
-          fill={blockColor}
-          fontSize={16}
-          fontWeight="bold"
-          fontFamily='"JetBrains Mono", monospace'
-          textAnchor="middle"
-          dominantBaseline="middle"
-        >
-          {getRandomMatrixSymbol()}
-        </text>
-      </g>
-    ));
-  }, [blocks, score]);
+  // Function to get a random matrix symbol
+  const getRandomMatrixSymbol = () => {
+    return matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
+  };
   
-  return <>{renderedBlocks}</>;
+  return (
+    <>
+      {blocks.map((block, index) => {
+        const blockColor = getBlockColor(score);
+        const glowColor = getGlowColor(blockColor);
+        const symbolSize = 16;
+        const symbolsPerRow = 3;
+        const symbolsPerCol = 3;
+        const cellWidth = block.width / symbolsPerRow;
+        const cellHeight = block.height / symbolsPerCol;
+        
+        return (
+          <g key={`block-${index}`} filter="url(#blockGlow)">
+            {/* Render the block as matrix symbols */}
+            {Array.from({ length: symbolsPerRow }).map((_, rowIndex) => (
+              Array.from({ length: symbolsPerCol }).map((_, colIndex) => (
+                <text
+                  key={`symbol-${rowIndex}-${colIndex}`}
+                  x={block.x + (colIndex + 0.5) * cellWidth}
+                  y={block.y + (rowIndex + 0.5) * cellHeight}
+                  fill={blockColor}
+                  fontSize={symbolSize}
+                  fontWeight="bold"
+                  fontFamily='"JetBrains Mono", monospace'
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                >
+                  {getRandomMatrixSymbol()}
+                </text>
+              ))
+            ))}
+          </g>
+        );
+      })}
+    </>
+  );
 };
 
-export default React.memo(MazeBlocks);
+export default MazeBlocks;
