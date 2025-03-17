@@ -64,19 +64,24 @@ export const generateMaze = (
     }
   }
   
-  // Fix: Spawn "Safety Key" booster - check if modulo matches exactly without rounding errors
-  if (score > 0 && Math.round(score) % 1500 < 2 && Math.random() < 0.8) {
+  // Track if we've already spawned a booster in this frame to prevent paired spawns
+  let boosterSpawned = false;
+  
+  // Spawn "Safety Key" booster - reduced frequency (2x less frequent: 1500 -> 3000)
+  if (!boosterSpawned && score > 0 && Math.round(score) % 3000 < 2 && Math.random() < 0.8) {
     const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.SAFETY_KEY);
     if (booster) {
       boosters.push(booster);
+      boosterSpawned = true; // Mark that we've spawned a booster
     }
   }
   
-  // Fix: Spawn "Backdoor" booster - check if modulo matches exactly without rounding errors
-  if (score > 0 && Math.round(score) % 700 < 2 && Math.random() < 0.7) {
+  // Spawn "Backdoor" booster - reduced frequency (2x less frequent: 700 -> 1400)
+  if (!boosterSpawned && score > 0 && Math.round(score) % 1400 < 2 && Math.random() < 0.7) {
     const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.BACKDOOR);
     if (booster) {
       boosters.push(booster);
+      boosterSpawned = true; // Mark that we've spawned a booster
     }
   }
   

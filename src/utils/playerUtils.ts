@@ -11,7 +11,7 @@ export const updatePlayerMovement = (
   cursorPosition: { x: number | null, y: number | null }
 ): Player => {
   const newPlayer = { ...player };
-  const moveSpeed = 10; // Doubled from 5 to 10
+  const moveSpeed = 6.67; // Reduced from 10 to 6.67 (1.5x slower)
   
   if (cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
     // Calculate direction vector towards cursor
