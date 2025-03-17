@@ -22,8 +22,11 @@ const Boosters: React.FC<BoostersProps> = ({ boosters, score }) => {
         const centerY = booster.y + booster.size / 2;
         const diamondSize = booster.size * 0.7; // Slightly smaller than hitbox
         
+        // Create a unique key that includes all relevant information
+        const boosterKey = `booster-${index}-${booster.type}-${Math.round(booster.x)}-${Math.round(booster.y)}`;
+        
         return (
-          <g key={`booster-${index}-${booster.x}-${booster.y}`} filter="url(#boosterGlow)">
+          <g key={boosterKey} filter="url(#boosterGlow)">
             {/* Draw diamond shape */}
             <path
               d={`

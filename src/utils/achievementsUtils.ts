@@ -1,3 +1,4 @@
+
 import { Achievement, GameState } from './types';
 import { getScores } from './storageUtils';
 import { getDailyGameStats } from './gameLogic';
@@ -103,6 +104,7 @@ export const loadAchievements = (): Achievement[] => {
 const saveAchievements = (achievements: Achievement[]): void => {
   try {
     localStorage.setItem('netrunner_achievements', JSON.stringify(achievements));
+    console.log('Achievements saved:', achievements);
   } catch (e) {
     console.error('Error saving achievements', e);
   }
@@ -115,88 +117,98 @@ export const isAchievementUnlocked = (id: string): boolean => {
   return achievement ? achievement.unlocked : false;
 };
 
-// Update achievements based on game state
+// Update achievements based on game state and current score
 export const updateAchievements = (state: GameState): void => {
+  console.log('Updating achievements with state:', state);
   const achievements = loadAchievements();
   let updated = false;
   
-  // First run achievement
+  // First run achievement - unlocks as soon as the game is played
   if (!isAchievementUnlocked('first_run')) {
     const achievementIndex = achievements.findIndex(a => a.id === 'first_run');
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
+      console.log('Achievement unlocked: First Boot');
     }
   }
   
-  // Score-based achievements
-  const highestScore = getHighestScore();
+  // Check current score for percentage-based achievements
+  const currentScore = state.score;
   
-  // 10% completion
-  if (!isAchievementUnlocked('reach_10percent') && highestScore >= 10000) {
+  // 10% completion (10,000 points)
+  if (!isAchievementUnlocked('reach_10percent') && currentScore >= 10000) {
     const achievementIndex = achievements.findIndex(a => a.id === 'reach_10percent');
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
+      console.log('Achievement unlocked: 10% Access');
     }
   }
   
-  // 25% completion
-  if (!isAchievementUnlocked('reach_25percent') && highestScore >= 25000) {
+  // 25% completion (25,000 points)
+  if (!isAchievementUnlocked('reach_25percent') && currentScore >= 25000) {
     const achievementIndex = achievements.findIndex(a => a.id === 'reach_25percent');
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
+      console.log('Achievement unlocked: 25% Access');
     }
   }
   
-  // 50% completion
-  if (!isAchievementUnlocked('reach_50percent') && highestScore >= 50000) {
+  // 50% completion (50,000 points)
+  if (!isAchievementUnlocked('reach_50percent') && currentScore >= 50000) {
     const achievementIndex = achievements.findIndex(a => a.id === 'reach_50percent');
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
+      console.log('Achievement unlocked: 50% Access');
     }
   }
   
-  // 75% completion
-  if (!isAchievementUnlocked('reach_75percent') && highestScore >= 75000) {
+  // 75% completion (75,000 points)
+  if (!isAchievementUnlocked('reach_75percent') && currentScore >= 75000) {
     const achievementIndex = achievements.findIndex(a => a.id === 'reach_75percent');
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
+      console.log('Achievement unlocked: 75% Access');
     }
   }
   
-  // 100% completion
-  if (!isAchievementUnlocked('reach_100percent') && highestScore >= 100000) {
+  // 100% completion (100,000 points)
+  if (!isAchievementUnlocked('reach_100percent') && currentScore >= 100000) {
     const achievementIndex = achievements.findIndex(a => a.id === 'reach_100percent');
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
+      console.log('Achievement unlocked: 100% Access');
     }
   }
   
-  // Collected Safety Key
+  // Collected Safety Key - check the state directly
   if (!isAchievementUnlocked('collect_key') && state.collectedSafetyKeys > 0) {
     const achievementIndex = achievements.findIndex(a => a.id === 'collect_key');
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
+      console.log('Achievement unlocked: Security Bypass');
     }
   }
   
-  // Collected Backdoor
+  // Collected Backdoor - check the state directly
   if (!isAchievementUnlocked('collect_backdoor') && state.collectedBackdoors > 0) {
     const achievementIndex = achievements.findIndex(a => a.id === 'collect_backdoor');
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
+      console.log('Achievement unlocked: Backdoor Found');
     }
   }
   
-  // Daily games played
+  // Daily games played - check for play count achievements
   const dailyStats = getDailyGameStats();
+  console.log('Daily stats for achievements:', dailyStats);
   
   // 3 games in a day
   if (!isAchievementUnlocked('play_3_times') && dailyStats.gamesPlayed >= 3) {
@@ -204,6 +216,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
+      console.log('Achievement unlocked: Persistence');
     }
   }
   
@@ -213,6 +226,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
+      console.log('Achievement unlocked: Determination');
     }
   }
   

@@ -1,4 +1,3 @@
-
 import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
 // Generate maze blocks with Tetris-like shapes
@@ -64,24 +63,22 @@ export const generateMaze = (
     }
   }
   
-  // Track if we've already spawned a booster in this frame to prevent paired spawns
-  let boosterSpawned = false;
+  // Choose only one booster type to spawn per frame
+  // Pick a random number between 0 and 1
+  const boosterRandom = Math.random();
   
-  // Spawn "Safety Key" booster - reduced frequency (2x less frequent: 1500 -> 3000)
-  if (!boosterSpawned && score > 0 && Math.round(score) % 3000 < 2 && Math.random() < 0.8) {
+  // Safety Key booster (30% chance if eligible)
+  if (score > 0 && Math.round(score) % 3000 < 2 && boosterRandom < 0.3) {
     const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.SAFETY_KEY);
     if (booster) {
       boosters.push(booster);
-      boosterSpawned = true; // Mark that we've spawned a booster
     }
-  }
-  
-  // Spawn "Backdoor" booster - reduced frequency (2x less frequent: 700 -> 1400)
-  if (!boosterSpawned && score > 0 && Math.round(score) % 1400 < 2 && Math.random() < 0.7) {
+  } 
+  // Backdoor booster (30% chance if eligible and safety key wasn't spawned)
+  else if (score > 0 && Math.round(score) % 1400 < 2 && boosterRandom >= 0.3 && boosterRandom < 0.6) {
     const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.BACKDOOR);
     if (booster) {
       boosters.push(booster);
-      boosterSpawned = true; // Mark that we've spawned a booster
     }
   }
   
