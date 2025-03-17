@@ -1,3 +1,4 @@
+
 import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -21,7 +22,8 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     maze: [],
     boosters: [],
     score: 0,
-    gameSpeed: 2,
+    // Restored original gameSpeed to 3 (was 2)
+    gameSpeed: 3,
     attemptsLeft: 3,
     gameActive: false,
     colorPhase: 0,
@@ -177,7 +179,8 @@ export const startGame = (state: GameState): GameState => {
     score: 0,
     maze: [],
     boosters: [],
-    gameSpeed: 2,
+    // Restored original gameSpeed to 3 (was 2)
+    gameSpeed: 3,
     gameWon: false,
     collectedSafetyKeys: 0,
     collectedBackdoors: 0,

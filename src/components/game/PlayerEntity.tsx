@@ -17,9 +17,9 @@ const PlayerEntity: React.FC<PlayerEntityProps> = ({ player, time, selectedSkin 
     time
   );
 
-  // Calculate pulse effect for invulnerability
+  // Calculate pulse effect for invulnerability - restored original pulsation speed and amplitude
   const pulseFactor = player.invulnerable ? 
-    1 + 0.2 * Math.sin(time * 0.008 * Math.PI) : 1;
+    1 + 0.2 * Math.sin(time * 0.008) : 1;
 
   return (
     <g>
@@ -28,8 +28,9 @@ const PlayerEntity: React.FC<PlayerEntityProps> = ({ player, time, selectedSkin 
         <circle
           cx={player.x}
           cy={player.y}
-          r={player.size * 2.5 * pulseFactor}
+          r={player.size * 1.8 * pulseFactor}
           fill="url(#invulnerabilityGradient)"
+          opacity="0.6"
         />
       )}
       
