@@ -89,6 +89,7 @@ export const updateGameState = (
   // Check for booster collisions
   let collectedBooster = false;
   let newCollectedSafetyKeys = state.collectedSafetyKeys;
+  let scoreBoost = 0;
   
   newBoosters.forEach(booster => {
     if (booster.active && checkBoosterCollision(newPlayer.x, newPlayer.y, newPlayer.size, booster)) {
@@ -97,8 +98,11 @@ export const updateGameState = (
       
       if (booster.type === BoosterType.SAFETY_KEY) {
         newPlayer.invulnerable = true;
-        newPlayer.invulnerableTimer = 1800; // Changed: 30 seconds at 60 FPS (60 * 30 = 1800)
+        newPlayer.invulnerableTimer = 1800; // 30 seconds at 60 FPS (60 * 30 = 1800)
         newCollectedSafetyKeys += 1; // Increment collected safety keys count
+      } else if (booster.type === BoosterType.BACKDOOR) {
+        // Add 3000 points when collecting a Backdoor
+        scoreBoost = 3000;
       }
     }
   });
@@ -112,8 +116,8 @@ export const updateGameState = (
     state.score
   );
   
-  // Update score and color phase
-  const newScore = state.score + 1;
+  // Update score and color phase (add score boost from backdoor if collected)
+  const newScore = state.score + 1 + scoreBoost;
   // Update color phase every 5000 points
   const newColorPhase = Math.floor(newScore / 5000);
   

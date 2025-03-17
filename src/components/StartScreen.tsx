@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
-import { Trophy, Microchip, Gamepad } from 'lucide-react';
+import { Trophy, Microchip, Cable } from 'lucide-react';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -40,7 +41,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
   
   // Format score as percentage with three decimal places
   const formattedScore = lastScore !== undefined ? 
-    `${lastScore.toFixed(3)}%` : undefined;
+    `${(lastScore / 1000).toFixed(3)}%` : undefined;
   
   return (
     <div
@@ -86,7 +87,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
         </div>
         
         <div className="w-full space-y-3">
-          {/* Play button styled as a desktop shortcut with VR headset icon */}
+          {/* Play button styled as a desktop shortcut with LAN cable icon */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
@@ -99,7 +100,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
                 glowEffect
                 onClick={onStartGame}
                 disabled={attemptsLeft <= 0}
-                leftIcon={<Gamepad className="w-12 h-12 mb-1" />}
+                leftIcon={<Cable className="w-12 h-12 mb-1" />}
               >
                 <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ВЗЛОМ' : 'HACK'}</span>
               </CustomButton>

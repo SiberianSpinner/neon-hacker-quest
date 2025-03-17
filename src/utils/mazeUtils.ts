@@ -64,9 +64,17 @@ export const generateMaze = (
     }
   }
   
-  // Changed: Spawn booster every 1500 points with 80% chance
+  // Changed: Spawn "Safety Key" booster every 1500 points with 80% chance
   if (score > 0 && score % 1500 === 0 && Math.random() < 0.8) {
-    const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score);
+    const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.SAFETY_KEY);
+    if (booster) {
+      boosters.push(booster);
+    }
+  }
+  
+  // New: Spawn "Backdoor" booster every 700 points with 70% chance
+  if (score > 0 && score % 700 === 0 && Math.random() < 0.7) {
+    const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.BACKDOOR);
     if (booster) {
       boosters.push(booster);
     }
@@ -80,7 +88,8 @@ const generateBooster = (
   canvasWidth: number,
   canvasHeight: number,
   existingBlocks: MazeBlock[],
-  score: number
+  score: number,
+  boosterType: BoosterType
 ): Booster | null => {
   // Increased booster size from 30 to 60 (doubled)
   const size = 60; // Size of the booster (doubled from 30)
@@ -101,7 +110,7 @@ const generateBooster = (
         x,
         y,
         size,
-        type: BoosterType.SAFETY_KEY,
+        type: boosterType,
         active: true
       };
     }

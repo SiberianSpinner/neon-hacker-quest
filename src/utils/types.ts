@@ -24,7 +24,8 @@ export enum ShapeType {
 }
 
 export enum BoosterType {
-  SAFETY_KEY = 'safety_key'
+  SAFETY_KEY = 'safety_key',
+  BACKDOOR = 'backdoor'
 }
 
 export interface Booster {
