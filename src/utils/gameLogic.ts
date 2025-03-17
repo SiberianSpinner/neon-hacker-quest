@@ -1,4 +1,3 @@
-
 import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -230,6 +229,8 @@ export const getDailyGameStats = (): { date: string, gamesPlayed: number } => {
 
 // End game and save score
 export const endGame = (state: GameState): GameState => {
+  // Save the score to local storage
+  console.log("Ending game, saving score:", state.score);
   saveScore(state.score);
   
   // Update achievements

@@ -1,3 +1,4 @@
+
 // Generic storage utility functions
 export const getItem = (key: string): string | null => {
   try {
@@ -19,6 +20,12 @@ export const setItem = (key: string, value: string): void => {
 // Save score to local storage
 export const saveScore = (score: number): void => {
   try {
+    // Skip saving if score is too small (prevents saving test/debug runs)
+    if (score < 10) {
+      console.log("Score too small, not saving:", score);
+      return;
+    }
+
     // Get existing scores
     const scoresJson = localStorage.getItem('netrunner_scores') || '[]';
     let scores = JSON.parse(scoresJson);
@@ -69,5 +76,26 @@ export const getScores = (): number[] => {
   } catch (error) {
     console.error('Error loading scores:', error);
     return [];
+  }
+};
+
+// For debugging: clear all scores
+export const clearAllScores = (): void => {
+  try {
+    localStorage.removeItem('netrunner_scores');
+    console.log('All scores cleared from storage');
+  } catch (error) {
+    console.error('Error clearing scores:', error);
+  }
+};
+
+// For debugging: set a specific high score
+export const setTestHighScore = (score: number): void => {
+  try {
+    const scores = [score];
+    localStorage.setItem('netrunner_scores', JSON.stringify(scores));
+    console.log(`Test high score set to: ${score}`);
+  } catch (error) {
+    console.error('Error setting test score:', error);
   }
 };

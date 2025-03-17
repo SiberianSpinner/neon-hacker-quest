@@ -1,4 +1,3 @@
-
 import { PlayerSkin, PlayerSkinInfo } from './types';
 import { getScores } from './storageUtils';
 
@@ -41,18 +40,23 @@ export const getPlayerSkins = (): PlayerSkinInfo[] => {
 
 // Get the highest score achieved
 export const getHighestScore = (): number => {
-  const scores = getScores();
-  console.log("All scores:", scores); // Debug log
-  
-  if (!scores || scores.length === 0) {
-    console.log("No scores found");
+  try {
+    const scores = getScores();
+    console.log("All scores:", scores); // Debug log
+    
+    if (!scores || scores.length === 0) {
+      console.log("No scores found");
+      return 0;
+    }
+    
+    // Find maximum score
+    const maxScore = Math.max(...scores);
+    console.log("Maximum score found:", maxScore);
+    return maxScore;
+  } catch (error) {
+    console.error("Error getting highest score:", error);
     return 0;
   }
-  
-  // Find maximum score
-  const maxScore = Math.max(...scores);
-  console.log("Maximum score found:", maxScore);
-  return maxScore;
 };
 
 // Get the selected skin from localStorage
