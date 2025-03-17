@@ -132,26 +132,39 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements }) => 
             "relative rounded-lg p-4 border transition-all",
             achievement.unlocked 
               ? "border-cyber-primary bg-cyber-primary/10" 
-              : "border-gray-700 bg-black/50 opacity-70"
+              : "border-gray-700 bg-black/50"
           )}
         >
           <div className="flex items-center space-x-4">
             <div 
               className={cn(
-                "h-16 w-16 rounded-full overflow-hidden flex items-center justify-center",
+                "h-16 w-16 rounded-full overflow-hidden flex items-center justify-center relative",
                 achievement.unlocked 
-                  ? "bg-cyber-primary/20 text-glow" 
-                  : "bg-gray-800 text-gray-600"
+                  ? "bg-gradient-to-br from-cyber-primary/20 to-cyber-secondary/20 text-glow" 
+                  : "bg-gray-800"
               )}
             >
               {achievement.imageSrc ? (
-                <img 
-                  src={achievement.imageSrc} 
-                  alt={achievement.name} 
-                  className="h-full w-full object-cover"
-                />
+                <>
+                  <img 
+                    src={achievement.imageSrc} 
+                    alt={achievement.name} 
+                    className={cn(
+                      "h-full w-full object-cover",
+                      !achievement.unlocked && "grayscale opacity-50"
+                    )}
+                  />
+                  {/* Overlay for locked chips */}
+                  {!achievement.unlocked && (
+                    <div className="absolute inset-0 bg-gray-800/50 backdrop-blur-[1px] flex items-center justify-center">
+                      <div className="w-6 h-6 border-2 border-gray-500 rounded-full flex items-center justify-center">
+                        <div className="w-3 h-3 bg-gray-500 rounded-full" />
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
-                <Shield size={24} />
+                <Shield size={24} className={!achievement.unlocked ? "text-gray-500" : ""} />
               )}
             </div>
             
@@ -176,9 +189,14 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements }) => 
             
             {achievement.unlocked && (
               <div className="absolute top-2 right-2">
-                <span className="bg-cyber-primary/20 text-cyber-primary text-xs px-2 py-1 rounded-full">
+                <motion.span 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                  className="bg-cyber-primary/20 text-cyber-primary text-xs px-2 py-1 rounded-full"
+                >
                   ✓
-                </span>
+                </motion.span>
               </div>
             )}
           </div>

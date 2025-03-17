@@ -56,43 +56,79 @@ export const createAchievementIcons = () => {
     }
   };
 
-  // Netrunner icon - stylized "100%" with cyber elements
+  // Netrunner icon - stylized hacker with "100%" symbol
   const netrunnerSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="netrunnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#00ffcc" />
+        <stop offset="100%" stop-color="#00ccff" />
+      </linearGradient>
+    </defs>
     <circle cx="50" cy="50" r="45" fill="#0a0a0a" stroke="#00ffcc" stroke-width="2"/>
-    <text x="50" y="55" font-family="monospace" font-size="18" fill="#00ffcc" text-anchor="middle">100%</text>
-    <path d="M25,25 L75,75" stroke="#00ffcc" stroke-width="1" opacity="0.5"/>
-    <path d="M75,25 L25,75" stroke="#00ffcc" stroke-width="1" opacity="0.5"/>
-    <circle cx="50" cy="50" r="30" fill="none" stroke="#00ffcc" stroke-width="1" opacity="0.3"/>
+    <path d="M50,25 L25,40 L25,70 L50,85 L75,70 L75,40 Z" fill="none" stroke="url(#netrunnerGrad)" stroke-width="2"/>
+    <text x="50" y="55" font-family="monospace" font-size="14" fill="#00ffcc" text-anchor="middle">100%</text>
+    <g opacity="0.7">
+      <path d="M40,30 L60,30" stroke="#00ffcc" stroke-width="1"/>
+      <path d="M30,40 L45,40" stroke="#00ffcc" stroke-width="1"/>
+      <path d="M55,40 L70,40" stroke="#00ffcc" stroke-width="1"/>
+      <path d="M30,60 L70,60" stroke="#00ffcc" stroke-width="1"/>
+      <path d="M35,70 L65,70" stroke="#00ffcc" stroke-width="1"/>
+    </g>
   </svg>`;
 
   // Invulnerable icon - shield with key
   const invulnerableSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="invulnerableGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ff00ff" />
+        <stop offset="100%" stop-color="#cc00ff" />
+      </linearGradient>
+    </defs>
     <circle cx="50" cy="50" r="45" fill="#0a0a0a" stroke="#ff00ff" stroke-width="2"/>
-    <path d="M50,20 L30,30 V50 C30,65 40,75 50,80 C60,75 70,65 70,50 V30 L50,20z" fill="none" stroke="#ff00ff" stroke-width="2"/>
-    <text x="50" y="55" font-family="monospace" font-size="18" fill="#ff00ff" text-anchor="middle">10×</text>
-    <path d="M40,45 L60,45" stroke="#ff00ff" stroke-width="1" opacity="0.5"/>
-    <path d="M40,50 L60,50" stroke="#ff00ff" stroke-width="1" opacity="0.5"/>
-    <path d="M40,55 L60,55" stroke="#ff00ff" stroke-width="1" opacity="0.5"/>
+    <path d="M50,20 L28,30 V55 C28,70 40,80 50,85 C60,80 72,70 72,55 V30 L50,20z" fill="none" stroke="url(#invulnerableGrad)" stroke-width="2"/>
+    <path d="M45,50 L45,60 L40,60 L40,65 L50,65 L50,50 Z" fill="#ff00ff"/>
+    <circle cx="53" cy="48" r="6" fill="none" stroke="#ff00ff" stroke-width="2"/>
+    <path d="M53,54 L53,65" stroke="#ff00ff" stroke-width="2"/>
+    <g opacity="0.5">
+      <path d="M40,40 L60,40" stroke="#ff00ff" stroke-width="1"/>
+      <path d="M60,45 L60,70" stroke="#ff00ff" stroke-width="1"/>
+      <path d="M40,70 L60,70" stroke="#ff00ff" stroke-width="1"/>
+    </g>
   </svg>`;
   
-  // Secret Path icon - door with 10x
+  // Secret Path icon - door with secret path
   const secretPathSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="secretPathGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#cc00ff" />
+        <stop offset="100%" stop-color="#9900ff" />
+      </linearGradient>
+    </defs>
     <circle cx="50" cy="50" r="45" fill="#0a0a0a" stroke="#cc00ff" stroke-width="2"/>
-    <rect x="35" y="25" width="30" height="50" fill="none" stroke="#cc00ff" stroke-width="2"/>
-    <text x="50" y="55" font-family="monospace" font-size="18" fill="#cc00ff" text-anchor="middle">10×</text>
+    <rect x="35" y="25" width="30" height="50" rx="2" fill="none" stroke="url(#secretPathGrad)" stroke-width="2"/>
     <circle cx="60" cy="50" r="3" fill="#cc00ff"/>
-    <path d="M35,25 L35,75" stroke="#cc00ff" stroke-width="1" opacity="0.5"/>
-    <path d="M65,25 L65,75" stroke="#cc00ff" stroke-width="1" opacity="0.5"/>
+    <path d="M20,30 C30,40 40,20 50,30 C60,40 70,20 80,30" fill="none" stroke="#cc00ff" stroke-width="2" opacity="0.5"/>
+    <path d="M20,70 C30,80 40,60 50,70 C60,80 70,60 80,70" fill="none" stroke="#cc00ff" stroke-width="2" opacity="0.5"/>
+    <text x="50" y="55" font-family="monospace" font-size="6" fill="#cc00ff" text-anchor="middle">BACKDOOR</text>
   </svg>`;
   
-  // Tireless icon - clock with 10 attempts
+  // Tireless icon - clock with energy symbol
   const tirelessSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="tirelessGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#00ccff" />
+        <stop offset="100%" stop-color="#0099ff" />
+      </linearGradient>
+    </defs>
     <circle cx="50" cy="50" r="45" fill="#0a0a0a" stroke="#00ccff" stroke-width="2"/>
-    <circle cx="50" cy="50" r="30" fill="none" stroke="#00ccff" stroke-width="2"/>
-    <text x="50" y="55" font-family="monospace" font-size="18" fill="#00ccff" text-anchor="middle">10×</text>
-    <path d="M50,30 L50,50 L65,50" stroke="#00ccff" stroke-width="2"/>
-    <path d="M50,50 L50,20" stroke="#00ccff" stroke-width="1" opacity="0.5"/>
-    <path d="M50,50 L70,50" stroke="#00ccff" stroke-width="1" opacity="0.5"/>
+    <circle cx="50" cy="50" r="35" fill="none" stroke="url(#tirelessGrad)" stroke-width="2"/>
+    <path d="M50,30 L50,50 L65,60" stroke="#00ccff" stroke-width="3" fill="none"/>
+    <path d="M50,15 L50,25" stroke="#00ccff" stroke-width="2"/>
+    <path d="M50,75 L50,85" stroke="#00ccff" stroke-width="2"/>
+    <path d="M15,50 L25,50" stroke="#00ccff" stroke-width="2"/>
+    <path d="M75,50 L85,50" stroke="#00ccff" stroke-width="2"/>
+    <path d="M43,50 L57,50" stroke="#00ccff" stroke-width="2" opacity="0.7"/>
+    <path d="M50,43 L50,57" stroke="#00ccff" stroke-width="2" opacity="0.7"/>
   </svg>`;
 
   return {
