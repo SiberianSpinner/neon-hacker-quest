@@ -1,3 +1,4 @@
+
 import { PlayerSkin, PlayerSkinInfo } from './types';
 import { getScores } from './storageUtils';
 
@@ -79,6 +80,17 @@ export const saveSelectedSkin = (skin: PlayerSkin): void => {
   }
 };
 
+// Rainbow colors array for smooth transitions
+const rainbowColors = [
+  '#ff0000', // Red
+  '#ff9900', // Orange
+  '#ffff00', // Yellow
+  '#00ff00', // Green
+  '#00ccff', // Blue
+  '#cc00ff', // Purple
+  '#ff00cc', // Pink
+];
+
 // Get player color based on selected skin and game state
 export const getPlayerColor = (
   skin: PlayerSkin,
@@ -93,19 +105,37 @@ export const getPlayerColor = (
     case PlayerSkin.RED:
       return "#ff3e3e"; // Red
     case PlayerSkin.RAINBOW:
-      // Rainbow effect - color changes every second based on time
-      const colorPhase = Math.floor(time / 1000) % 7;
-      switch (colorPhase) {
-        case 0: return '#ff0000'; // Red
-        case 1: return '#ff9900'; // Orange
-        case 2: return '#ffff00'; // Yellow
-        case 3: return '#00ff00'; // Green
-        case 4: return '#00ccff'; // Blue
-        case 5: return '#cc00ff'; // Purple
-        case 6: return '#ff00cc'; // Pink
-        default: return '#00ffcc'; // Default
-      }
+      // Smooth rainbow effect - interpolate between colors based on time
+      const totalDuration = 7000; // 7 seconds for full cycle
+      const normalizedTime = (time % totalDuration) / totalDuration;
+      const numColors = rainbowColors.length;
+      const index = normalizedTime * numColors;
+      const lowerIndex = Math.floor(index) % numColors;
+      const upperIndex = (lowerIndex + 1) % numColors;
+      const blend = index - lowerIndex;
+      
+      return interpolateColors(rainbowColors[lowerIndex], rainbowColors[upperIndex], blend);
     default:
       return "#00ffcc"; // Default to cyber teal
   }
+};
+
+// Helper function to interpolate between two colors
+const interpolateColors = (color1: string, color2: string, ratio: number): string => {
+  // Parse hex colors to RGB
+  const r1 = parseInt(color1.substring(1, 3), 16);
+  const g1 = parseInt(color1.substring(3, 5), 16);
+  const b1 = parseInt(color1.substring(5, 7), 16);
+  
+  const r2 = parseInt(color2.substring(1, 3), 16);
+  const g2 = parseInt(color2.substring(3, 5), 16);
+  const b2 = parseInt(color2.substring(5, 7), 16);
+  
+  // Interpolate RGB values
+  const r = Math.round(r1 + (r2 - r1) * ratio);
+  const g = Math.round(g1 + (g2 - g1) * ratio);
+  const b = Math.round(b1 + (b2 - b1) * ratio);
+  
+  // Convert back to hex
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 };
