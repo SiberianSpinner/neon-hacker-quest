@@ -39,7 +39,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const previousTimeRef = useRef<number>();
   const [previousActive, setPreviousActive] = useState(false);
   const [keys, setKeys] = useState<{ [key: string]: boolean }>({});
-  const [cursorPosition, setCursorPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: number | null });
+  const [cursorPosition, setCursorPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: null });
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const isMobile = useIsMobile();
   
