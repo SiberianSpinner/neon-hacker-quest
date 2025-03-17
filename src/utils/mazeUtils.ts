@@ -1,4 +1,3 @@
-
 import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
 // Generate maze blocks with corridor-like patterns
@@ -95,21 +94,24 @@ export const generateMaze = (
     const y = maze.length > 0 ? 
       Math.max(...maze.map(block => block.y)) + gridSize : -gridSize;
     
-    // More frequent horizontal shifts to create a more vertical-oriented maze with corridors
-    const pathShiftProbability = 0.3 + (score / 30000); // Increased from 0.1 to 0.3
-    if (Math.random() < pathShiftProbability && pathSegments.length > 0) {
+    // Enhanced labyrinth generation with more complex patterns and long corridors
+    const pathUpdateProbability = 0.4 + (score / 20000); // Higher probability to create more complex patterns
+    
+    if (Math.random() < pathUpdateProbability && pathSegments.length > 0) {
       // Choose a random path segment to modify
       const segmentIndex = Math.floor(Math.random() * pathSegments.length);
       const segment = pathSegments[segmentIndex];
       
-      // Decide how to modify the path - more likely to shift horizontally
+      // Decide how to modify the path - more complex decision tree for better labyrinth structure
       const modType = Math.random();
       
-      if (modType < 0.7) { // Increased from 0.5 to 0.7 to make horizontal shifts more common
+      if (modType < 0.7) { // High probability for horizontal shifts to create corridors
         // Shift path (left or right)
         const direction = Math.random() > 0.5 ? 1 : -1;
-        // Make larger shifts to create more noticeable corridors
-        const shiftAmount = 1 + Math.floor(Math.random() * 2); // Shift by 1-2 columns
+        
+        // Make larger and more dramatic shifts for better labyrinth structure
+        // Larger shifts (2-4 columns) create more obvious corridors
+        const shiftAmount = 2 + Math.floor(Math.random() * 3); 
         const newStart = Math.max(0, Math.min(numCols - segment.width, segment.start + direction * shiftAmount));
         
         // Only make change if we don't overlap with other paths
@@ -128,9 +130,9 @@ export const generateMaze = (
           // Update the segment
           pathSegments[segmentIndex] = { ...segment, start: newStart };
           
-          // Create a horizontal corridor by adding connector blocks for the turn
-          // Higher probability to create corridors (70% -> 90%)
-          if (Math.random() < 0.9) {
+          // Create a proper horizontal corridor with longer extensions
+          // Higher probability to create substantial corridors (95%)
+          if (Math.random() < 0.95) {
             const minX = Math.min(segment.start, newStart);
             const maxX = Math.max(segment.start + segment.width, newStart + segment.width);
             
@@ -148,9 +150,11 @@ export const generateMaze = (
               }
             }
             
-            // Sometimes extend the corridor vertically to make it longer
-            if (Math.random() < 0.4) {
-              const corridorLength = 1 + Math.floor(Math.random() * 2); // 1-2 additional vertical segments
+            // Often extend the corridor vertically to make it longer
+            // This creates longer vertical corridors before turning
+            if (Math.random() < 0.7) {
+              // Create longer corridors (2-4 segments)
+              const corridorLength = 2 + Math.floor(Math.random() * 3);
               
               for (let i = 1; i <= corridorLength; i++) {
                 for (let col = 0; col < numCols; col++) {
@@ -165,15 +169,38 @@ export const generateMaze = (
                   }
                 }
               }
+              
+              // Sometimes create a T-junction by adding a perpendicular corridor
+              if (Math.random() < 0.3 && corridorLength > 2) {
+                const perpY = y - gridSize * (1 + Math.floor(Math.random() * corridorLength));
+                const perpStartCol = Math.floor(Math.random() * (minX - 2)) + 1;
+                const perpEndCol = Math.min(numCols - 1, perpStartCol + Math.floor(numCols * 0.6));
+                
+                for (let col = perpStartCol; col <= perpEndCol; col++) {
+                  if (col < minX || col >= maxX) {
+                    // Skip adding wall blocks where our vertical corridor already exists
+                    const isInVerticalCorridor = col >= minX && col < maxX;
+                    if (!isInVerticalCorridor) {
+                      newMaze.push({
+                        x: col * gridSize,
+                        y: perpY,
+                        width: gridSize,
+                        height: gridSize,
+                        colorPhase: 0
+                      });
+                    }
+                  }
+                }
+              }
             }
           }
         }
-      } else {
-        // Sometimes change width of the passage
+      } else if (modType < 0.9) {
+        // Narrow or widen the passage - less frequent but creates variety
         const newWidth = minPassageWidth + Math.floor(Math.random() * (maxPassageWidth - minPassageWidth + 1));
         const maxPossibleStart = numCols - newWidth;
         
-        // Try to keep the passage centered
+        // Center the new passage around the old one's center
         const center = segment.start + segment.width / 2;
         const newStart = Math.max(0, Math.min(maxPossibleStart, Math.floor(center - newWidth / 2)));
         
@@ -193,16 +220,66 @@ export const generateMaze = (
           // Update the segment
           pathSegments[segmentIndex] = { start: newStart, width: newWidth };
         }
+      } else {
+        // Create a dead-end branch (10% chance) - adds complexity to the labyrinth
+        if (pathSegments.length === 1) {
+          // If there's only one path, create a second path that's a dead end
+          const newWidth = minPassageWidth + Math.floor(Math.random() * (maxPassageWidth - minPassageWidth + 1));
+          let newStart;
+          
+          // Try to place the new passage away from the existing one
+          if (segment.start < numCols / 2) {
+            // Existing path is on the left, put new one on the right
+            newStart = Math.floor(numCols / 2) + Math.floor(Math.random() * (numCols / 4));
+          } else {
+            // Existing path is on the right, put new one on the left
+            newStart = Math.floor(Math.random() * (numCols / 4));
+          }
+          
+          // Make sure it fits
+          newStart = Math.min(newStart, numCols - newWidth);
+          
+          // Add the new path segment
+          pathSegments.push({ start: newStart, width: newWidth });
+          
+          // In 3 rows, it will become a dead end
+          setTimeout(() => {
+            // This is a placeholder - we'll handle dead ends naturally through path removal
+          }, 3);
+        }
       }
     }
     
-    // Sometimes add a new path or remove an existing one
+    // Sometimes merge two paths to create loops in the labyrinth
+    if (pathSegments.length >= 2 && Math.random() < 0.15) {
+      // Sort segments by start position
+      const sortedSegments = [...pathSegments].sort((a, b) => a.start - b.start);
+      
+      // Choose two adjacent segments
+      const idx = Math.floor(Math.random() * (sortedSegments.length - 1));
+      const seg1 = sortedSegments[idx];
+      const seg2 = sortedSegments[idx + 1];
+      
+      // If they're close enough, merge them
+      if (seg2.start - (seg1.start + seg1.width) <= 4) {
+        // Calculate the new merged segment
+        const newStart = seg1.start;
+        const newWidth = seg2.start + seg2.width - seg1.start;
+        
+        // Replace the two segments with one merged segment
+        pathSegments.splice(pathSegments.indexOf(seg1), 1);
+        pathSegments.splice(pathSegments.indexOf(seg2), 1);
+        pathSegments.push({ start: newStart, width: newWidth });
+      }
+    }
+    
+    // Sometimes add or remove paths to create more complex labyrinths
     if (Math.random() < 0.15 && pathSegments.length > 1) {
-      // Remove a random path (but not the widest one)
+      // Remove a random path (but not the widest one) to create dead ends
       const sortedSegments = [...pathSegments].sort((a, b) => a.width - b.width);
       pathSegments.splice(pathSegments.indexOf(sortedSegments[0]), 1);
     } else if (Math.random() < 0.15 && pathSegments.length < 3) {
-      // Add a new random path
+      // Add a new random path to create branching
       const newWidth = minPassageWidth + Math.floor(Math.random() * (maxPassageWidth - minPassageWidth + 1));
       const maxStart = numCols - newWidth;
       

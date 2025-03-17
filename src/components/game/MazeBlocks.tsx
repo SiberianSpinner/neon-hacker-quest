@@ -9,8 +9,8 @@ interface MazeBlocksProps {
 }
 
 const MazeBlocks: React.FC<MazeBlocksProps> = ({ blocks, score }) => {
-  // Matrix symbols pool to use for blocks - reduced character set for better performance
-  const matrixSymbols = '01アイウエオカキクケコサシス';
+  // Reduce matrix symbols pool even further for better performance
+  const matrixSymbols = '01アイウ';
   
   // Use memoization to prevent excessive re-renders
   const renderedBlocks = useMemo(() => {
@@ -26,7 +26,7 @@ const MazeBlocks: React.FC<MazeBlocksProps> = ({ blocks, score }) => {
     // Sort by Y position to render the most relevant blocks first
     const visibleBlocks = [...blocks]
       .sort((a, b) => a.y - b.y)
-      .slice(0, 200); // Limit to 200 blocks maximum for performance
+      .slice(0, 150); // Limit to 150 blocks maximum for better performance
     
     return visibleBlocks.map((block, index) => (
       <g key={`block-${index}`} filter="url(#blockGlow)">
