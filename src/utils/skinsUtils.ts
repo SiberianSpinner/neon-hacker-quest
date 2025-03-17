@@ -16,22 +16,22 @@ export const getPlayerSkins = (): PlayerSkinInfo[] => {
     },
     {
       id: PlayerSkin.PURPLE,
-      name: "Violet Trace",
-      description: "Unlocks at 25% hack completion",
+      name: "Фиолетовый",
+      description: "Доступен при взломе 25%",
       color: "#b967ff", // Purple
       unlocked: highestScore >= 25000 // 25% hack completion
     },
     {
       id: PlayerSkin.RED,
-      name: "Red Alert",
-      description: "Unlocks at 50% hack completion",
+      name: "Красный",
+      description: "Доступен при взломе 50%",
       color: "#ff3e3e", // Red
       unlocked: highestScore >= 50000 // 50% hack completion
     },
     {
       id: PlayerSkin.RAINBOW,
-      name: "Quantum Shift",
-      description: "Unlocks at 75% hack completion",
+      name: "Перелив",
+      description: "Доступен при взломе 75%",
       color: "rainbow", // Special rainbow effect
       unlocked: highestScore >= 75000 // 75% hack completion
     }
