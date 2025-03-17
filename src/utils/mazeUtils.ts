@@ -1,3 +1,4 @@
+
 import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
 // Generate maze blocks with Tetris-like shapes
@@ -29,7 +30,7 @@ export const generateMaze = (
       // Calculate how many potential columns we have
       const numCols = Math.floor(canvasWidth / gridSize);
 
-      // Create a more complex maze pattern with proper corridors
+      // Create a maze pattern
       createMazePattern(newMaze, canvasWidth, canvasHeight, gridSize);
     }
   }
@@ -57,7 +58,7 @@ export const generateMaze = (
   return { maze: newMaze, boosters };
 };
 
-// Create a more complex maze pattern with corridors and turns
+// Create a more structured maze pattern
 const createMazePattern = (
   maze: MazeBlock[],
   canvasWidth: number,
@@ -69,23 +70,23 @@ const createMazePattern = (
   const startY = -gridSize * 2; // Start above the canvas
   
   // Corridor width/height
-  const corridorWidth = gridSize * (4 + Math.floor(Math.random() * 3)); // 4-6 grid cells
+  const corridorWidth = gridSize * (3 + Math.floor(Math.random() * 2)); // 3-4 grid cells
   
   // Create a vertical main path with branches
   let currentX = startX;
   let currentY = startY;
   
-  // Generate a more complex path with turns and branches
-  const pathLength = 5 + Math.floor(Math.random() * 5); // 5-9 segments
+  // Generate a path with turns and branches
+  const pathLength = 4 + Math.floor(Math.random() * 3); // 4-6 segments
   
   for (let i = 0; i < pathLength; i++) {
     // Decide if we should create a horizontal corridor
-    const createHorizontalCorridor = Math.random() < 0.6; // 60% chance
+    const createHorizontalCorridor = Math.random() < 0.4; // 40% chance
     
     if (createHorizontalCorridor) {
       // Decide corridor direction: left or right
       const goRight = Math.random() < 0.5;
-      const corridorLength = gridSize * (2 + Math.floor(Math.random() * 3)); // 2-4 grid cells
+      const corridorLength = gridSize * (2 + Math.floor(Math.random() * 2)); // 2-3 grid cells
       
       // Create horizontal corridor
       const horizontalBlockX = goRight ? currentX : currentX - corridorLength;
@@ -106,7 +107,7 @@ const createMazePattern = (
     }
     
     // Create vertical corridor segment
-    const verticalLength = gridSize * (3 + Math.floor(Math.random() * 3)); // 3-5 grid cells
+    const verticalLength = gridSize * (2 + Math.floor(Math.random() * 2)); // 2-3 grid cells
     createBlock(maze, {
       x: currentX,
       y: currentY,
@@ -119,33 +120,14 @@ const createMazePattern = (
     currentY += verticalLength;
     
     // Randomly shift X position for the next vertical segment (create turns)
-    const shift = Math.random() < 0.4; // 40% chance to shift
+    const shift = Math.random() < 0.3; // 30% chance to shift
     if (shift) {
       const shiftDirection = Math.random() < 0.5 ? -1 : 1;
-      const shiftAmount = gridSize * (2 + Math.floor(Math.random() * 3));
+      const shiftAmount = gridSize * (1 + Math.floor(Math.random() * 2));
       currentX += shiftDirection * shiftAmount;
       
       // Ensure we stay within canvas bounds
       currentX = Math.max(0, Math.min(canvasWidth - corridorWidth, currentX));
-    }
-    
-    // Create a T-junction or branch occasionally
-    const createBranch = Math.random() < 0.3; // 30% chance
-    if (createBranch) {
-      const branchDirection = Math.random() < 0.5 ? -1 : 1;
-      const branchX = currentX + (branchDirection * corridorWidth);
-      const branchLength = gridSize * (2 + Math.floor(Math.random() * 2));
-      
-      // Only create branch if it stays within canvas bounds
-      if (branchX >= 0 && branchX + corridorWidth <= canvasWidth) {
-        createBlock(maze, {
-          x: branchX,
-          y: currentY - branchLength,
-          width: corridorWidth,
-          height: branchLength,
-          colorPhase: 0
-        });
-      }
     }
   }
 };
@@ -166,12 +148,12 @@ const generateBooster = (
   score: number,
   boosterType: BoosterType
 ): Booster | null => {
-  // Increased booster size from 30 to 60 (doubled)
-  const size = 60; // Size of the booster (doubled from 30)
+  // Booster size
+  const size = 40;
   const padding = 50; // Padding from edges
   
-  // Try up to 20 times to find a valid position (increased from 10)
-  for (let i = 0; i < 20; i++) {
+  // Try up to 10 times to find a valid position
+  for (let i = 0; i < 10; i++) {
     const x = padding + Math.random() * (canvasWidth - padding * 2 - size);
     const y = padding + Math.random() * (canvasHeight / 2 - padding * 2 - size);
     
