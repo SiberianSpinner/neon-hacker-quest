@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useMemo } from 'react';
 import { MazeBlock } from '@/utils/types';
 import { getBlockColor, getGlowColor } from '@/utils/mazeUtils';
 
@@ -8,18 +8,23 @@ interface MazeBlocksProps {
   score: number;
 }
 
-const MazeBlocks: React.FC<MazeBlocksProps> = ({ blocks, score }) => {
-  // Matrix symbols pool to use for blocks
-  const matrixSymbols = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンабвгдеёжзийклмнопрстуфхцчшщъыьэюя';
+// Use React.memo to prevent unnecessary re-renders
+const MazeBlocks: React.FC<MazeBlocksProps> = React.memo(({ blocks, score }) => {
+  // Limit the number of blocks rendered to improve performance
+  const maxVisibleBlocks = 200;
+  const visibleBlocks = blocks.slice(0, maxVisibleBlocks);
   
-  // Function to get a random matrix symbol
-  const getRandomMatrixSymbol = () => {
-    return matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
-  };
+  // Reduced character set for better performance
+  const matrixSymbols = '01アイウエオカキクケコサシスセソ';
+  
+  // Use useMemo for getRandomMatrixSymbol to avoid recreating on each render
+  const getRandomMatrixSymbol = useMemo(() => {
+    return () => matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
+  }, [matrixSymbols]);
   
   return (
     <>
-      {blocks.map((block, index) => {
+      {visibleBlocks.map((block, index) => {
         const blockColor = getBlockColor(score);
         const glowColor = getGlowColor(blockColor);
         const symbolSize = 16;
@@ -29,7 +34,7 @@ const MazeBlocks: React.FC<MazeBlocksProps> = ({ blocks, score }) => {
         const cellHeight = block.height / symbolsPerCol;
         
         return (
-          <g key={`block-${index}`} filter="url(#blockGlow)">
+          <g key={`block-${index}-${block.x}-${block.y}`} filter="url(#blockGlow)">
             {/* Render the block as matrix symbols */}
             {Array.from({ length: symbolsPerRow }).map((_, rowIndex) => (
               Array.from({ length: symbolsPerCol }).map((_, colIndex) => (
@@ -53,6 +58,8 @@ const MazeBlocks: React.FC<MazeBlocksProps> = ({ blocks, score }) => {
       })}
     </>
   );
-};
+});
+
+MazeBlocks.displayName = 'MazeBlocks';
 
 export default MazeBlocks;

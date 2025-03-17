@@ -28,61 +28,134 @@ export const generateMaze = (
       
       // Calculate how many potential columns we have
       const numCols = Math.floor(canvasWidth / gridSize);
-      
-      // Keep track of all newly created blocks to check for overlaps
-      const newBlocks: MazeBlock[] = [];
-      
-      // Choose a random starting position that's not strictly aligned to the grid
-      // but still ensures the shape stays within canvas boundaries
-      const randomOffset = Math.random() * (gridSize / 2); // 0 to half a grid cell offset
-      const col = Math.floor(Math.random() * (numCols - 2)); // Leave space for larger shapes
-      const x = col * gridSize + randomOffset;
-      const y = -gridSize * 2; // Start above the canvas
-      
-      // Randomly select one of the four shape types
-      const shapeType = getRandomShapeType();
-      
-      // Create the selected shape
-      const shapeBlocks = createShape(shapeType, x, y, gridSize);
-      
-      // Check if the entire shape can be placed without overlapping existing blocks
-      const existingBlocks = [...maze]; // All currently existing blocks
-      const canPlaceShape = !shapeBlocks.some(block => 
-        checkBlockOverlap(block, existingBlocks, gridSize) || 
-        checkBlockOverlap(block, newBlocks, gridSize)
-      );
-      
-      // Only add the shape if it can be placed without overlaps
-      if (canPlaceShape) {
-        // Add all blocks of the shape
-        shapeBlocks.forEach(block => {
-          newBlocks.push(block);
-          newMaze.push(block);
-        });
-      }
+
+      // Create a more complex maze pattern with proper corridors
+      createMazePattern(newMaze, canvasWidth, canvasHeight, gridSize);
     }
   }
   
-  // Choose only one booster type to spawn per frame
-  // Pick a random number between 0 and 1
-  const boosterRandom = Math.random();
+  // === BOOSTER GENERATION LOGIC ===
+  // Generate boosters with fixed probability
   
   // Safety Key booster (30% chance if eligible)
-  if (score > 0 && Math.round(score) % 3000 < 2 && boosterRandom < 0.3) {
+  if (score > 0 && Math.round(score) % 3000 < 20 && Math.random() < 0.3) {
     const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.SAFETY_KEY);
     if (booster) {
       boosters.push(booster);
+      console.log("Safety key booster spawned at score:", score);
     }
   } 
-  // Backdoor booster (30% chance if eligible and safety key wasn't spawned)
-  else if (score > 0 && Math.round(score) % 1400 < 2 && boosterRandom >= 0.3 && boosterRandom < 0.6) {
+  // Backdoor booster (30% chance if eligible)
+  else if (score > 0 && Math.round(score) % 1400 < 20 && Math.random() < 0.3) {
     const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.BACKDOOR);
     if (booster) {
       boosters.push(booster);
+      console.log("Backdoor booster spawned at score:", score);
     }
   }
   
   return { maze: newMaze, boosters };
+};
+
+// Create a more complex maze pattern with corridors and turns
+const createMazePattern = (
+  maze: MazeBlock[],
+  canvasWidth: number,
+  canvasHeight: number,
+  gridSize: number
+) => {
+  // Start position - randomly positioned at the top
+  const startX = Math.floor(Math.random() * (canvasWidth - gridSize * 3));
+  const startY = -gridSize * 2; // Start above the canvas
+  
+  // Corridor width/height
+  const corridorWidth = gridSize * (4 + Math.floor(Math.random() * 3)); // 4-6 grid cells
+  
+  // Create a vertical main path with branches
+  let currentX = startX;
+  let currentY = startY;
+  
+  // Generate a more complex path with turns and branches
+  const pathLength = 5 + Math.floor(Math.random() * 5); // 5-9 segments
+  
+  for (let i = 0; i < pathLength; i++) {
+    // Decide if we should create a horizontal corridor
+    const createHorizontalCorridor = Math.random() < 0.6; // 60% chance
+    
+    if (createHorizontalCorridor) {
+      // Decide corridor direction: left or right
+      const goRight = Math.random() < 0.5;
+      const corridorLength = gridSize * (2 + Math.floor(Math.random() * 3)); // 2-4 grid cells
+      
+      // Create horizontal corridor
+      const horizontalBlockX = goRight ? currentX : currentX - corridorLength;
+      createBlock(maze, {
+        x: horizontalBlockX,
+        y: currentY,
+        width: corridorLength,
+        height: corridorWidth,
+        colorPhase: 0
+      });
+      
+      // Update current position
+      if (goRight) {
+        currentX += corridorLength;
+      } else {
+        currentX -= corridorLength;
+      }
+    }
+    
+    // Create vertical corridor segment
+    const verticalLength = gridSize * (3 + Math.floor(Math.random() * 3)); // 3-5 grid cells
+    createBlock(maze, {
+      x: currentX,
+      y: currentY,
+      width: corridorWidth,
+      height: verticalLength,
+      colorPhase: 0
+    });
+    
+    // Update Y position for next segment
+    currentY += verticalLength;
+    
+    // Randomly shift X position for the next vertical segment (create turns)
+    const shift = Math.random() < 0.4; // 40% chance to shift
+    if (shift) {
+      const shiftDirection = Math.random() < 0.5 ? -1 : 1;
+      const shiftAmount = gridSize * (2 + Math.floor(Math.random() * 3));
+      currentX += shiftDirection * shiftAmount;
+      
+      // Ensure we stay within canvas bounds
+      currentX = Math.max(0, Math.min(canvasWidth - corridorWidth, currentX));
+    }
+    
+    // Create a T-junction or branch occasionally
+    const createBranch = Math.random() < 0.3; // 30% chance
+    if (createBranch) {
+      const branchDirection = Math.random() < 0.5 ? -1 : 1;
+      const branchX = currentX + (branchDirection * corridorWidth);
+      const branchLength = gridSize * (2 + Math.floor(Math.random() * 2));
+      
+      // Only create branch if it stays within canvas bounds
+      if (branchX >= 0 && branchX + corridorWidth <= canvasWidth) {
+        createBlock(maze, {
+          x: branchX,
+          y: currentY - branchLength,
+          width: corridorWidth,
+          height: branchLength,
+          colorPhase: 0
+        });
+      }
+    }
+  }
+};
+
+// Helper to create a block and add it to the maze
+const createBlock = (maze: MazeBlock[], block: MazeBlock) => {
+  // Ensure block is within canvas bounds
+  if (block.x >= 0 && block.y >= -1000) { // Allow some blocks to be off-screen at the top
+    maze.push(block);
+  }
 };
 
 // Generate a booster at a random valid position
@@ -97,10 +170,10 @@ const generateBooster = (
   const size = 60; // Size of the booster (doubled from 30)
   const padding = 50; // Padding from edges
   
-  // Try up to 10 times to find a valid position
-  for (let i = 0; i < 10; i++) {
+  // Try up to 20 times to find a valid position (increased from 10)
+  for (let i = 0; i < 20; i++) {
     const x = padding + Math.random() * (canvasWidth - padding * 2 - size);
-    const y = padding + Math.random() * (canvasHeight - padding * 2 - size);
+    const y = padding + Math.random() * (canvasHeight / 2 - padding * 2 - size);
     
     // Create a temporary block to represent the booster for collision checking
     const tempBlock: MazeBlock = { 
@@ -108,7 +181,7 @@ const generateBooster = (
       y, 
       width: size, 
       height: size, 
-      colorPhase: 0 // Add colorPhase property
+      colorPhase: 0
     };
     
     // Check if the booster would overlap with any existing block
@@ -124,8 +197,15 @@ const generateBooster = (
     }
   }
   
-  // Could not find a valid position after 10 attempts
-  return null;
+  // Could not find a valid position after tries
+  // As a fallback, place it in a fixed position with higher chance of visibility
+  return {
+    x: canvasWidth / 2 - size / 2,
+    y: canvasHeight / 4,
+    size,
+    type: boosterType,
+    active: true
+  };
 };
 
 // Get a random shape type
