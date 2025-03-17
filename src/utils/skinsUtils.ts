@@ -5,6 +5,7 @@ import { getScores } from './storageUtils';
 // Get all available player skins with unlock status
 export const getPlayerSkins = (): PlayerSkinInfo[] => {
   const highestScore = getHighestScore();
+  console.log("Current highest score:", highestScore); // Debug log
   
   return [
     {
@@ -41,6 +42,7 @@ export const getPlayerSkins = (): PlayerSkinInfo[] => {
 // Get the highest score achieved
 export const getHighestScore = (): number => {
   const scores = getScores();
+  console.log("All scores:", scores); // Debug log
   return scores.length > 0 ? Math.max(...scores) : 0;
 };
 

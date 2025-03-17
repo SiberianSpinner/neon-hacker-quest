@@ -5,7 +5,7 @@ import { Check, Lock } from 'lucide-react';
 import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
 import { PlayerSkin, PlayerSkinInfo } from '@/utils/types';
-import { getPlayerSkins, saveSelectedSkin } from '@/utils/skinsUtils';
+import { getPlayerSkins, saveSelectedSkin, getHighestScore } from '@/utils/skinsUtils';
 
 interface ScriptsProps {
   isVisible: boolean;
@@ -24,9 +24,15 @@ const Scripts: React.FC<ScriptsProps> = ({
 }) => {
   const [skins, setSkins] = useState<PlayerSkinInfo[]>([]);
   const [loadingComplete, setLoadingComplete] = useState(false);
+  const [highScore, setHighScore] = useState(0);
   
   useEffect(() => {
     if (isVisible) {
+      // Get current highest score
+      const currentHighScore = getHighestScore();
+      setHighScore(currentHighScore);
+      console.log("Scripts opened, highest score:", currentHighScore);
+      
       // Get player skins with unlock status - this will check player's score
       setSkins(getPlayerSkins());
       
@@ -64,6 +70,13 @@ const Scripts: React.FC<ScriptsProps> = ({
         <h2 className="text-2xl text-center font-bold text-cyber-primary mb-6 uppercase">
           {isTelegramWebApp ? 'СКРИПТЫ' : 'SCRIPTS'}
         </h2>
+        
+        <div className="text-center mb-4 text-cyber-foreground/70 text-sm">
+          {isTelegramWebApp 
+            ? `Ваш рекорд: ${highScore.toLocaleString()} (${(highScore / 1000).toFixed(1)}%)`
+            : `Highest score: ${highScore.toLocaleString()} (${(highScore / 1000).toFixed(1)}%)`
+          }
+        </div>
         
         <div className="grid grid-cols-2 gap-4 mb-6">
           {skins.map((skin) => (
