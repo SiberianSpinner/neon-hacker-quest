@@ -40,11 +40,15 @@ export const updateGameState = (
   canvasWidth: number, 
   canvasHeight: number,
   keys: { [key: string]: boolean },
-  cursorPosition: { x: number | null, y: number | null }
+  cursorPosition: { x: number | null, y: number | null },
+  deltaTime: number = 1 // Default to 1 for backward compatibility
 ): { newState: GameState; collision: boolean; gameWon: boolean } => {
   if (!state.gameActive) {
     return { newState: state, collision: false, gameWon: false };
   }
+  
+  // Apply deltaTime normalization to make game speed consistent
+  const timeScale = Math.min(deltaTime, 2); // Cap at 2 to prevent huge jumps
   
   // Update player position based on keyboard input and cursor position
   const newPlayer = updatePlayerMovement(
@@ -58,7 +62,7 @@ export const updateGameState = (
   
   // Decrease invulnerable timer if active
   if (newPlayer.invulnerable) {
-    newPlayer.invulnerableTimer -= 1;
+    newPlayer.invulnerableTimer -= 1 * timeScale;
     if (newPlayer.invulnerableTimer <= 0) {
       newPlayer.invulnerable = false;
     }
@@ -68,8 +72,8 @@ export const updateGameState = (
   let collision = false;
   const newMaze = state.maze
     .map(block => {
-      // Move block down
-      const newBlock = { ...block, y: block.y + state.gameSpeed };
+      // Move block down with time scaling
+      const newBlock = { ...block, y: block.y + state.gameSpeed * timeScale };
       
       // Check collision (only if player is not invulnerable)
       if (!newPlayer.invulnerable && checkCollision(newPlayer, newBlock)) {
@@ -83,8 +87,8 @@ export const updateGameState = (
   // Update boosters
   const newBoosters = state.boosters
     .map(booster => {
-      // Move booster down
-      const newBooster = { ...booster, y: booster.y + state.gameSpeed };
+      // Move booster down with time scaling
+      const newBooster = { ...booster, y: booster.y + state.gameSpeed * timeScale };
       return newBooster;
     })
     .filter(booster => booster.y < canvasHeight + 100 && booster.active); // Keep active boosters on screen
@@ -122,7 +126,7 @@ export const updateGameState = (
   );
   
   // Update score and color phase (add score boost from backdoor if collected)
-  const newScore = state.score + 2 + scoreBoost; // Doubled from 1 to 2
+  const newScore = state.score + (2 * timeScale) + scoreBoost; // Score increment with time scaling
   // Update color phase every 5000 points
   const newColorPhase = Math.floor(newScore / 5000);
   

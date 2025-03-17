@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
@@ -191,43 +190,49 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (!gameState || !containerRef.current) return;
 
     const animate = (time: number) => {
+      // Calculate time elapsed since last frame
+      let deltaTime = 1; // Default to 1 for first frame
       if (previousTimeRef.current !== undefined) {
-        if (gameState.gameActive) {
-          const width = dimensions.width;
-          const height = dimensions.height;
+        // Calculate deltaTime in seconds (60fps = deltaTime of 1)
+        deltaTime = (time - previousTimeRef.current) / (1000 / 60);
+      }
 
-          // Update game state
-          const { newState, collision, gameWon } = updateGameState(
-            gameState,
-            width,
-            height,
-            keys,
-            cursorPosition
-          );
+      if (gameState.gameActive) {
+        const width = dimensions.width;
+        const height = dimensions.height;
 
-          // Check for game win condition
-          if (gameWon) {
-            onGameWin(newState.score);
-            setGameState({
-              ...newState,
-              gameActive: false
-            });
-            return;
-          }
+        // Update game state with deltaTime
+        const { newState, collision, gameWon } = updateGameState(
+          gameState,
+          width,
+          height,
+          keys,
+          cursorPosition,
+          deltaTime
+        );
 
-          // Check for collision
-          if (collision) {
-            onGameOver(newState.score);
-            setGameState({
-              ...newState,
-              gameActive: false
-            });
-            return;
-          }
-
-          // Update game state
-          setGameState(newState);
+        // Check for game win condition
+        if (gameWon) {
+          onGameWin(newState.score);
+          setGameState({
+            ...newState,
+            gameActive: false
+          });
+          return;
         }
+
+        // Check for collision
+        if (collision) {
+          onGameOver(newState.score);
+          setGameState({
+            ...newState,
+            gameActive: false
+          });
+          return;
+        }
+
+        // Update game state
+        setGameState(newState);
       }
       
       previousTimeRef.current = time;
