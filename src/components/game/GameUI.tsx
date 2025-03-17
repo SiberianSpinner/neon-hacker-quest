@@ -9,6 +9,7 @@ interface GameUIProps {
   cursorControl: boolean;
   cursorPosition: { x: number | null; y: number | null };
   canvasWidth: number;
+  isMobile?: boolean;
 }
 
 const GameUI: React.FC<GameUIProps> = ({ 
@@ -17,7 +18,8 @@ const GameUI: React.FC<GameUIProps> = ({
   invulnerableTimer, 
   cursorControl,
   cursorPosition,
-  canvasWidth
+  canvasWidth,
+  isMobile = false
 }) => {
   // Function to get score color based on completion percentage
   const getScoreColor = (score: number): string => {
@@ -61,8 +63,8 @@ const GameUI: React.FC<GameUIProps> = ({
         </text>
       )}
       
-      {/* Cursor crosshair */}
-      {cursorControl && cursorPosition.x !== null && cursorPosition.y !== null && (
+      {/* Cursor/Touch crosshair - always show on mobile */}
+      {(cursorControl || isMobile) && cursorPosition.x !== null && cursorPosition.y !== null && (
         <g stroke="rgba(0, 255, 204, 0.6)" strokeWidth="1">
           <line 
             x1={cursorPosition.x - 10} 
@@ -82,6 +84,18 @@ const GameUI: React.FC<GameUIProps> = ({
             r={10} 
             fill="none" 
           />
+          
+          {/* Additional touch indicator for mobile */}
+          {isMobile && (
+            <circle 
+              cx={cursorPosition.x} 
+              cy={cursorPosition.y} 
+              r={20} 
+              fill="rgba(0, 255, 204, 0.1)" 
+              stroke="rgba(0, 255, 204, 0.3)"
+              strokeWidth="1"
+            />
+          )}
         </g>
       )}
     </>

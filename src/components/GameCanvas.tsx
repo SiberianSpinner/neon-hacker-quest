@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
@@ -7,6 +8,7 @@ import {
 } from '@/utils/gameLogic';
 import { GameState, PlayerSkin } from '@/utils/types';
 import MatrixRain from './MatrixRain';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Import our newly created components
 import PlayerEntity from './game/PlayerEntity';
@@ -40,6 +42,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [keys, setKeys] = useState<{ [key: string]: boolean }>({});
   const [cursorPosition, setCursorPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: null });
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const isMobile = useIsMobile();
   
   // Initialize dimensions and game state
   useEffect(() => {
@@ -50,6 +53,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       
       const initialState = initGameState(width, height);
       initialState.selectedSkin = selectedSkin; // Set initial selected skin
+      // On mobile, automatically enable cursor control at start
+      if (isMobile) {
+        initialState.cursorControl = true;
+      }
       setGameState(initialState);
 
       const handleResize = () => {
@@ -74,7 +81,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         window.removeEventListener('resize', handleResize);
       };
     }
-  }, []);
+  }, [isMobile, selectedSkin]);
 
   // Update game state when active status or selectedSkin changes
   useEffect(() => {
@@ -90,6 +97,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             if (!prevState) return null;
             const newState = startGame(prevState);
             newState.selectedSkin = selectedSkin; // Update skin on new game
+            // On mobile, ensure cursor control is enabled
+            if (isMobile) {
+              newState.cursorControl = true;
+            }
             console.log("New game state:", newState);
             return newState;
           });
@@ -119,15 +130,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         });
       }
     }
-  }, [isActive, attemptsLeft, gameState, previousActive, selectedSkin]);
+  }, [isActive, attemptsLeft, gameState, previousActive, selectedSkin, isMobile]);
 
   // Handle keyboard input
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       setKeys(prevKeys => ({ ...prevKeys, [e.key]: true }));
       
-      // Toggle cursor control with 'c' key
-      if (e.key === 'c' && gameState) {
+      // Toggle cursor control with 'c' key (only on desktop)
+      if (!isMobile && e.key === 'c' && gameState) {
         setGameState(prevState => {
           if (!prevState) return null;
           return toggleCursorControl(prevState);
@@ -146,7 +157,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [gameState]);
+  }, [gameState, isMobile]);
 
   // Handle mouse/touch movement
   useEffect(() => {
@@ -170,17 +181,30 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         e.preventDefault(); // Prevent scrolling on touch devices
       }
     };
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      if (containerRef.current && e.touches.length > 0) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setCursorPosition({
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top
+        });
+        e.preventDefault(); // Prevent default touch actions
+      }
+    };
 
     const container = containerRef.current;
     if (container) {
       container.addEventListener('mousemove', handleMouseMove);
       container.addEventListener('touchmove', handleTouchMove, { passive: false });
+      container.addEventListener('touchstart', handleTouchStart, { passive: false });
     }
 
     return () => {
       if (container) {
         container.removeEventListener('mousemove', handleMouseMove);
         container.removeEventListener('touchmove', handleTouchMove);
+        container.removeEventListener('touchstart', handleTouchStart);
       }
     };
   }, []);
@@ -208,7 +232,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           height,
           keys,
           cursorPosition,
-          deltaTime
+          deltaTime,
+          isMobile // Pass isMobile to updateGameState
         );
 
         // Check for game win condition
@@ -245,7 +270,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [gameState, keys, onGameOver, onGameWin, cursorPosition, dimensions]);
+  }, [gameState, keys, onGameOver, onGameWin, cursorPosition, dimensions, isMobile]);
 
   return (
     <>
@@ -286,13 +311,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               score={gameState.score}
               invulnerable={gameState.player.invulnerable}
               invulnerableTimer={gameState.player.invulnerableTimer}
-              cursorControl={gameState.cursorControl}
+              cursorControl={gameState.cursorControl || isMobile}
               cursorPosition={cursorPosition}
               canvasWidth={dimensions.width}
+              isMobile={isMobile}
             />
           </svg>
         )}
       </div>
+      
+      {/* Mobile control instruction (only shown at the beginning) */}
+      {isMobile && gameState && isActive && (
+        <div 
+          className="absolute bottom-8 left-0 right-0 text-center text-cyber-foreground/70 text-sm px-4 py-2 bg-cyber-background/70 backdrop-blur-sm rounded-md mx-8 z-20"
+          style={{ 
+            opacity: gameState.score < 500 ? 0.8 : 0, 
+            transition: 'opacity 0.5s ease-in-out'
+          }}
+        >
+          Коснитесь экрана, чтобы управлять движением
+        </div>
+      )}
       
       {/* Matrix Rain overlay (always visible) */}
       <MatrixRain className="z-10" />

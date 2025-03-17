@@ -8,20 +8,22 @@ export const updatePlayerMovement = (
   canvasWidth: number,
   canvasHeight: number,
   cursorControl: boolean,
-  cursorPosition: { x: number | null, y: number | null }
+  cursorPosition: { x: number | null, y: number | null },
+  isMobile: boolean
 ): Player => {
   const newPlayer = { ...player };
   const moveSpeed = 6.67; // Reduced from 10 to 6.67 (1.5x slower)
   
-  if (cursorControl && cursorPosition.x !== null && cursorPosition.y !== null) {
-    // Calculate direction vector towards cursor
+  // On mobile, always use cursor/touch control
+  if ((isMobile || cursorControl) && cursorPosition.x !== null && cursorPosition.y !== null) {
+    // Calculate direction vector towards cursor/touch
     const dx = cursorPosition.x - player.x;
     const dy = cursorPosition.y - player.y;
     
-    // Calculate distance to cursor
+    // Calculate distance to cursor/touch
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance > 5) {  // Only move if cursor is not too close
+    if (distance > 5) {  // Only move if cursor/touch is not too close
       // Normalize direction vector and multiply by move speed
       const normalizedDx = dx / distance;
       const normalizedDy = dy / distance;
@@ -29,12 +31,12 @@ export const updatePlayerMovement = (
       newPlayer.speedX = normalizedDx * moveSpeed;
       newPlayer.speedY = normalizedDy * moveSpeed;
     } else {
-      // If cursor is very close, stop movement
+      // If cursor/touch is very close, stop movement
       newPlayer.speedX = 0;
       newPlayer.speedY = 0;
     }
   } else {
-    // Keyboard controls (when cursor control is disabled)
+    // Keyboard controls (when cursor control is disabled and not on mobile)
     // Update speeds based on key presses
     if (keys.ArrowLeft || keys.a) {
       newPlayer.speedX = -moveSpeed;
