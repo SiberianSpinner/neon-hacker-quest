@@ -23,7 +23,7 @@ const Boosters: React.FC<BoostersProps> = ({ boosters, score }) => {
         const diamondSize = booster.size * 0.7; // Slightly smaller than hitbox
         
         return (
-          <g key={`booster-${index}`} filter="url(#boosterGlow)">
+          <g key={`booster-${index}-${booster.x}-${booster.y}`} filter="url(#boosterGlow)">
             {/* Draw diamond shape */}
             <path
               d={`
@@ -47,6 +47,19 @@ const Boosters: React.FC<BoostersProps> = ({ boosters, score }) => {
               dominantBaseline="middle"
             >
               {booster.type === BoosterType.SAFETY_KEY ? '🔑' : '🚪'}
+            </text>
+
+            {/* Debug indicator for booster type */}
+            <text
+              x={centerX}
+              y={centerY - diamondSize}
+              fill="#ffffff"
+              fontSize="10"
+              fontFamily='"JetBrains Mono", monospace'
+              textAnchor="middle"
+              dominantBaseline="middle"
+            >
+              {booster.type === BoosterType.SAFETY_KEY ? 'SAFETY' : 'BACKDOOR'}
             </text>
           </g>
         );

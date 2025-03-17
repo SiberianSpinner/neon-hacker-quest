@@ -10,7 +10,7 @@ export const generateMaze = (
   score: number
 ): { maze: MazeBlock[], boosters: Booster[] } => {
   const newMaze = [...maze];
-  const boosters = [];
+  const boosters: Booster[] = [];
   
   // Calculate spawn rate increase based on score (2% per 1000 points instead of 5%)
   const baseSpawnRate = 0.0125;
@@ -64,16 +64,16 @@ export const generateMaze = (
     }
   }
   
-  // Changed: Spawn "Safety Key" booster every 1500 points with 80% chance
-  if (score > 0 && score % 1500 === 0 && Math.random() < 0.8) {
+  // Fix: Spawn "Safety Key" booster - check if modulo matches exactly without rounding errors
+  if (score > 0 && Math.round(score) % 1500 < 2 && Math.random() < 0.8) {
     const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.SAFETY_KEY);
     if (booster) {
       boosters.push(booster);
     }
   }
   
-  // New: Spawn "Backdoor" booster every 700 points with 70% chance
-  if (score > 0 && score % 700 === 0 && Math.random() < 0.7) {
+  // Fix: Spawn "Backdoor" booster - check if modulo matches exactly without rounding errors
+  if (score > 0 && Math.round(score) % 700 < 2 && Math.random() < 0.7) {
     const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.BACKDOOR);
     if (booster) {
       boosters.push(booster);
