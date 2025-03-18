@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
-import { Trophy, Microchip, Cable, Code, Timer } from 'lucide-react';
+import { Trophy, Microchip, Cable, Code } from 'lucide-react';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -17,7 +17,6 @@ interface StartScreenProps {
   attemptsLeft: number;
   lastScore?: number;
   isTelegramWebApp?: boolean;
-  nextAttemptTime?: number; // New prop for next attempt time (timestamp)
 }
 
 const StartScreen: React.FC<StartScreenProps> = ({
@@ -30,11 +29,9 @@ const StartScreen: React.FC<StartScreenProps> = ({
   onShowScripts, // New prop
   attemptsLeft,
   lastScore,
-  isTelegramWebApp = false,
-  nextAttemptTime
+  isTelegramWebApp = false
 }) => {
   const [menuLoaded, setMenuLoaded] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<string>("");
   
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -43,34 +40,6 @@ const StartScreen: React.FC<StartScreenProps> = ({
     
     return () => clearTimeout(timer);
   }, []);
-  
-  // Effect for countdown timer
-  React.useEffect(() => {
-    // Only run the timer if nextAttemptTime is provided and attemptsLeft < 3
-    if (nextAttemptTime && attemptsLeft < 3) {
-      const updateTimer = () => {
-        const now = Date.now();
-        const diff = nextAttemptTime - now;
-        
-        if (diff <= 0) {
-          setTimeLeft("00:00");
-          return;
-        }
-        
-        // Format remaining time as mm:ss
-        const minutes = Math.floor(diff / 60000);
-        const seconds = Math.floor((diff % 60000) / 1000);
-        setTimeLeft(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-      };
-      
-      // Update timer immediately
-      updateTimer();
-      
-      // Set interval to update timer every second
-      const interval = setInterval(updateTimer, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [nextAttemptTime, attemptsLeft]);
   
   // Format score as percentage with three decimal places
   const formattedScore = lastScore !== undefined ? 
@@ -117,21 +86,6 @@ const StartScreen: React.FC<StartScreenProps> = ({
           >
             {isTelegramWebApp ? 'НАЙДЕНО УЯЗВИМОСТЕЙ: ' : 'VULNERABILITIES FOUND: '}{attemptsLeft === Infinity ? '∞' : attemptsLeft}
           </motion.p>
-          
-          {/* New timer section */}
-          {attemptsLeft < 3 && nextAttemptTime && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="flex items-center justify-center space-x-2 text-cyber-foreground/80"
-            >
-              <Timer className="w-4 h-4" />
-              <span className="text-sm">
-                {isTelegramWebApp ? 'НОВАЯ УЯЗВИМОСТЬ ЧЕРЕЗ: ' : 'NEW VULNERABILITY IN: '}{timeLeft}
-              </span>
-            </motion.div>
-          )}
         </div>
         
         <div className="w-full space-y-3">
@@ -141,7 +95,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
             >
               <div className="flex flex-col items-center">
                 <CustomButton 
@@ -160,7 +114,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-              transition={{ delay: 0.6, duration: 0.3 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
             >
               <div className="flex flex-col items-center">
                 <CustomButton 
@@ -179,7 +133,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-              transition={{ delay: 0.7, duration: 0.3 }}
+              transition={{ delay: 0.6, duration: 0.3 }}
             >
               <div className="flex flex-col items-center">
                 <CustomButton 
@@ -198,7 +152,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-            transition={{ delay: 0.8, duration: 0.3 }}
+            transition={{ delay: 0.7, duration: 0.3 }}
           >
             <CustomButton 
               className="w-full uppercase"
@@ -213,7 +167,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-            transition={{ delay: 0.9, duration: 0.3 }}
+            transition={{ delay: 0.8, duration: 0.3 }}
           >
             <CustomButton 
               className="w-full uppercase"
@@ -228,7 +182,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
-            transition={{ delay: 1.0, duration: 0.3 }}
+            transition={{ delay: 0.9, duration: 0.3 }}
           >
             <CustomButton 
               className="w-full uppercase"
@@ -243,7 +197,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: menuLoaded ? 0.7 : 0 }}
-          transition={{ delay: 1.1, duration: 0.5 }}
+          transition={{ delay: 1.0, duration: 0.5 }}
           className="text-xs text-cyber-foreground/50 text-center mt-4"
         >
           {isTelegramWebApp ? 'ВЗЛОМАЙ СИСТЕМУ БЕЗОПАСНОСТИ ОДНОЙ ИЗ КОРПОРАЦИЙ' : 'HACK THE SECURITY SYSTEM OF ONE OF THE CORPORATIONS'}
