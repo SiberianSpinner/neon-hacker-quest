@@ -2,9 +2,11 @@ import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin, BossCor
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
 import { checkCollision, checkBossLineCollision, checkMemoryCardCollision } from './collisionUtils';
-import { saveScore, getScores } from './storageUtils';
 import { updateAchievements } from './achievementsUtils';
 import { getSelectedSkin } from './skinsUtils';
+
+// Re-export functions from storageUtils
+export { saveScore, getScores } from './storageUtils';
 
 // Initialize game state
 export const initGameState = (canvasWidth: number, canvasHeight: number): GameState => {
@@ -32,6 +34,158 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     selectedSkin: getSelectedSkin(), // Get selected skin from localStorage
     bossCore: null
   };
+};
+
+// Format score as percentage
+export const formatScoreAsPercentage = (score: number): string => {
+  const percentage = (score / 100000) * 100;
+  return `${percentage.toFixed(2)}%`;
+};
+
+// Toggle cursor control
+export const toggleCursorControl = (state: GameState): GameState => {
+  return {
+    ...state,
+    cursorControl: !state.cursorControl
+  };
+};
+
+// Start game function
+export const startGame = (state: GameState): GameState => {
+  return {
+    ...state,
+    gameActive: true,
+    score: 0,
+    gameWon: false,
+    collectedSafetyKeys: 0,
+    collectedBackdoors: 0,
+    bossCore: null
+  };
+};
+
+// Set unlimited attempts
+export const setUnlimitedAttempts = (): void => {
+  localStorage.setItem('netrunner_unlimited_attempts', 'true');
+};
+
+// Get daily game stats
+export const getDailyGameStats = () => {
+  const today = new Date().toISOString().split('T')[0];
+  const statsKey = `netrunner_daily_stats_${today}`;
+  
+  try {
+    const statsJson = localStorage.getItem(statsKey);
+    const stats = statsJson ? JSON.parse(statsJson) : { gamesPlayed: 0, highScore: 0 };
+    return stats;
+  } catch (error) {
+    console.error('Error loading daily stats:', error);
+    return { gamesPlayed: 0, highScore: 0 };
+  }
+};
+
+// Update game state
+export const updateGameState = (
+  state: GameState,
+  canvasWidth: number,
+  canvasHeight: number,
+  keys: { [key: string]: boolean },
+  cursorPosition: { x: number | null; y: number | null },
+  deltaTime: number,
+  isMobile: boolean,
+  swipeDirection: { x: number, y: number } | null
+): { newState: GameState; collision: boolean; gameWon: boolean } => {
+  if (!state.gameActive) {
+    return { newState: state, collision: false, gameWon: false };
+  }
+
+  let newState = { ...state };
+  let collision = false;
+  let gameWon = false;
+
+  // Update player movement based on input method
+  newState = updatePlayerMovement(newState, keys, cursorPosition, isMobile, swipeDirection, canvasWidth, canvasHeight);
+
+  // Generate new maze blocks if needed
+  if (newState.maze.length === 0 || 
+      newState.maze[newState.maze.length - 1].y > -100) {
+    const newBlocks = generateMaze(canvasWidth, newState.score);
+    newState.maze = [...newState.maze, ...newBlocks];
+  }
+
+  // Update maze blocks position
+  newState.maze = newState.maze
+    .map(block => ({
+      ...block,
+      y: block.y + newState.gameSpeed * deltaTime
+    }))
+    .filter(block => block.y < canvasHeight + 100);
+
+  // Check for collisions with maze blocks
+  if (!newState.player.invulnerable) {
+    collision = newState.maze.some(block => 
+      checkCollision(newState.player, block)
+    );
+  }
+
+  // Update boosters
+  newState.boosters = newState.boosters
+    .map(booster => ({
+      ...booster,
+      y: booster.y + newState.gameSpeed * deltaTime
+    }))
+    .filter(booster => booster.y < canvasHeight + 50);
+
+  // Check for booster collisions and apply effects
+  newState = checkBoosterCollision(newState);
+
+  // Update invulnerability timer
+  if (newState.player.invulnerable) {
+    newState.player.invulnerableTimer = Math.max(0, newState.player.invulnerableTimer - deltaTime);
+    if (newState.player.invulnerableTimer === 0) {
+      newState.player.invulnerable = false;
+    }
+  }
+
+  // Update color phase
+  newState.colorPhase = (newState.colorPhase + deltaTime * 0.01) % 360;
+
+  // Update score
+  if (!collision && !gameWon) {
+    newState.score += 1.33 * deltaTime; // Adjusted for 60fps
+
+    // Check for game win condition
+    if (newState.score >= 100000) {
+      gameWon = true;
+      newState.gameWon = true;
+      newState.gameActive = false;
+    }
+  }
+
+  // Check if it's time to spawn a boss
+  if (shouldSpawnBoss(newState.score, newState.bossCore)) {
+    newState.bossCore = initBossCore(newState.score, canvasWidth, canvasHeight);
+  }
+
+  // Update boss core if active
+  if (newState.bossCore && newState.bossCore.active) {
+    const { updatedBoss, bossDefeated, collision: bossCollision } = updateBossCore(
+      newState.bossCore,
+      deltaTime,
+      newState.player
+    );
+    newState.bossCore = updatedBoss;
+    collision = collision || bossCollision;
+
+    if (bossDefeated) {
+      // Add score bonus for defeating boss
+      newState.score += 5000;
+    }
+  }
+
+  // Update achievements
+  updateAchievements(newState);
+
+  return { newState, collision, gameWon };
 };
 
 // Check if it's time to spawn a boss based on score
@@ -267,6 +421,3 @@ export const updateBossCore = (
   
   return { updatedBoss, bossDefeated, collision };
 };
-
-// Rest of the code remains the same as in the original file...
-// (updateGameState, formatScoreAsPercentage, toggleCursorControl, startGame, updateDailyGameStats, getDailyGameStats, endGame, addAttempts, setUnlimitedAttempts, and re-exports)
