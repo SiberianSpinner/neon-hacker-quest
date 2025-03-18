@@ -1,3 +1,4 @@
+
 import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin, BossCore, BossCoreLine } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -97,8 +98,16 @@ export const updateGameState = (
   let collision = false;
   let gameWon = false;
 
-  // Pass the entire state object since updatePlayerMovement expects it
-  newState = updatePlayerMovement(newState, keys, cursorPosition, isMobile, swipeDirection, canvasWidth, canvasHeight);
+  // Use the updated updatePlayerMovement function that takes GameState and returns GameState
+  newState = updatePlayerMovement(
+    newState,
+    keys,
+    cursorPosition,
+    isMobile,
+    swipeDirection,
+    canvasWidth,
+    canvasHeight
+  );
 
   // Only update score and generate maze if there's no active boss
   if (!newState.bossCore || !newState.bossCore.active) {
