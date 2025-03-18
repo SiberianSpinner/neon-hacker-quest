@@ -37,7 +37,7 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
 // Check if it's time to spawn a boss based on score
 const shouldSpawnBoss = (score: number, currentBoss: BossCore | null): boolean => {
   // Boss score thresholds
-  const bossThresholds = [33000, 66000, 99000];
+  const bossThresholds = [3000, 33000, 66000, 99000]; // Added 3000 points boss
   
   // Check if score has just crossed a threshold and there's no active boss
   for (const threshold of bossThresholds) {
