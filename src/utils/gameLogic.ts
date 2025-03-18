@@ -63,70 +63,66 @@ export const initBossCore = (score: number, canvasWidth: number, canvasHeight: n
   const x = canvasWidth / 2;
   const y = canvasHeight / 3;
   
-  // Calculate rotation speed based on level
-  const rotationSpeed = level === 1 ? 24 : level === 2 ? 30 : 36; // Degrees per second
-  
   // Calculate square sizes (making sure it fits on mobile screens)
   const maxSize = Math.min(canvasWidth, canvasHeight) * 0.4;
   const outerSquareSize = maxSize;
   const innerSquareSize = maxSize * 0.5;
   
-  // Create outer square lines
+  // Create lines for two outer squares
   const outerLines: BossCoreLine[] = [];
   
-  // Each side of the outer square
-  // Top, right, bottom, left sides
-  [
-    [[x - outerSquareSize/2, y - outerSquareSize/2], [x + outerSquareSize/2, y - outerSquareSize/2]], // Top
-    [[x + outerSquareSize/2, y - outerSquareSize/2], [x + outerSquareSize/2, y + outerSquareSize/2]], // Right
-    [[x + outerSquareSize/2, y + outerSquareSize/2], [x - outerSquareSize/2, y + outerSquareSize/2]], // Bottom
-    [[x - outerSquareSize/2, y + outerSquareSize/2], [x - outerSquareSize/2, y - outerSquareSize/2]]  // Left
-  ].forEach((points, idx) => {
-    // Split each side into 2 lines
-    const midPoint = [
-      (points[0][0] + points[1][0]) / 2,
-      (points[0][1] + points[1][1]) / 2
-    ];
+  // Function to create square lines
+  const createSquareLines = (size: number, baseId: string): BossCoreLine[] => {
+    const lines: BossCoreLine[] = [];
+    const halfSize = size / 2;
     
-    // First half
-    outerLines.push({
-      id: `outer-${idx}-1`,
-      points: [points[0], midPoint] as [number, number][],
-      isVulnerable: false,
-      destroyed: false
+    // Each side of the square
+    [
+      [[x - halfSize, y - halfSize], [x + halfSize, y - halfSize]], // Top
+      [[x + halfSize, y - halfSize], [x + halfSize, y + halfSize]], // Right
+      [[x + halfSize, y + halfSize], [x - halfSize, y + halfSize]], // Bottom
+      [[x - halfSize, y + halfSize], [x - halfSize, y - halfSize]]  // Left
+    ].forEach((points, idx) => {
+      // Split each side into 2 lines
+      const midPoint = [
+        (points[0][0] + points[1][0]) / 2,
+        (points[0][1] + points[1][1]) / 2
+      ];
+      
+      // First half
+      lines.push({
+        id: `${baseId}-${idx}-1`,
+        points: [points[0], midPoint] as [number, number][],
+        isVulnerable: false,
+        destroyed: false
+      });
+      
+      // Second half
+      lines.push({
+        id: `${baseId}-${idx}-2`,
+        points: [midPoint, points[1]] as [number, number][],
+        isVulnerable: false,
+        destroyed: false
+      });
     });
     
-    // Second half
-    outerLines.push({
-      id: `outer-${idx}-2`,
-      points: [midPoint, points[1]] as [number, number][],
-      isVulnerable: false,
-      destroyed: false
-    });
-  });
+    return lines;
+  };
   
-  // Create inner square lines
-  const innerLines: BossCoreLine[] = [];
+  // Create two outer squares (16 lines total)
+  const outerSquare1 = createSquareLines(outerSquareSize, 'outer1');
+  const outerSquare2 = createSquareLines(outerSquareSize, 'outer2');
+  const outerLines = [...outerSquare1, ...outerSquare2];
   
-  // Each side of the inner square
-  [
-    [[x - innerSquareSize/2, y - innerSquareSize/2], [x + innerSquareSize/2, y - innerSquareSize/2]], // Top
-    [[x + innerSquareSize/2, y - innerSquareSize/2], [x + innerSquareSize/2, y + innerSquareSize/2]], // Right
-    [[x + innerSquareSize/2, y + innerSquareSize/2], [x - innerSquareSize/2, y + innerSquareSize/2]], // Bottom
-    [[x - innerSquareSize/2, y + innerSquareSize/2], [x - innerSquareSize/2, y - innerSquareSize/2]]  // Left
-  ].forEach((points, idx) => {
-    innerLines.push({
-      id: `inner-${idx}`,
-      points: points as [number, number][],
-      isVulnerable: false,
-      destroyed: false
-    });
-  });
+  // Create two inner squares (8 lines total)
+  const innerSquare1 = createSquareLines(innerSquareSize, 'inner1');
+  const innerSquare2 = createSquareLines(innerSquareSize, 'inner2');
+  const innerLines = [...innerSquare1, ...innerSquare2];
   
   // Create memory card at center
-  const memoryCard: Booster = {
-    x: x - 15, // Center position (adjusted for size)
-    y: y - 15, // Center position (adjusted for size)
+  const memoryCard = {
+    x,
+    y,
     size: 30,
     type: BoosterType.MEMORY_CARD,
     active: true
@@ -144,7 +140,7 @@ export const initBossCore = (score: number, canvasWidth: number, canvasHeight: n
     outerLines,
     innerLines,
     memoryCard,
-    vulnerableLinesTimer: 0, // Will be set in update
+    vulnerableLinesTimer: 0,
     cooldownTimer: 0,
   };
 };
@@ -154,9 +150,10 @@ export const updateBossCore = (
   bossCore: BossCore, 
   deltaTime: number, 
   player: Player
-): { updatedBoss: BossCore, bossDefeated: boolean } => {
+): { updatedBoss: BossCore, bossDefeated: boolean, collision: boolean } => {
   const updatedBoss = { ...bossCore };
   let bossDefeated = false;
+  let collision = false;
   
   // Update rotation angles
   // Base rotation speeds: L1 = 15 seconds, L2 = 12 seconds, L3 = 10 seconds
@@ -208,44 +205,17 @@ export const updateBossCore = (
   }
   
   // Check player collision with vulnerable lines
-  // For outer lines
-  updatedBoss.outerLines.forEach((line, index) => {
-    if (!line.destroyed && line.isVulnerable) {
-      // Transform the line points based on the rotation
-      const transformedPoints = line.points.map(point => {
-        const [px, py] = point;
-        const dx = px - updatedBoss.x;
-        const dy = py - updatedBoss.y;
-        const angle = updatedBoss.outerRotationAngle * (Math.PI / 180);
-        const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
-        const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
-        return [rotatedX + updatedBoss.x, rotatedY + updatedBoss.y] as [number, number];
-      });
-      
-      // Create a temporary line object with transformed points for collision check
-      const tempLine: BossCoreLine = {
-        ...line,
-        points: transformedPoints
-      };
-      
-      if (checkBossLineCollision(player, tempLine)) {
-        updatedBoss.outerLines[index].destroyed = true;
-      }
-    }
-  });
-  
-  // Can only destroy inner lines if all outer lines are destroyed
-  const allOuterLinesDestroyed = updatedBoss.outerLines.every(line => line.destroyed);
-  if (allOuterLinesDestroyed) {
-    // For inner lines
-    updatedBoss.innerLines.forEach((line, index) => {
-      if (!line.destroyed && line.isVulnerable) {
+  // Helper function to check collision with lines
+  const checkLineCollisions = (lines: BossCoreLine[], rotationAngle: number) => {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line.destroyed) {
         // Transform the line points based on the rotation
         const transformedPoints = line.points.map(point => {
           const [px, py] = point;
           const dx = px - updatedBoss.x;
           const dy = py - updatedBoss.y;
-          const angle = updatedBoss.innerRotationAngle * (Math.PI / 180);
+          const angle = rotationAngle * (Math.PI / 180);
           const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
           const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
           return [rotatedX + updatedBoss.x, rotatedY + updatedBoss.y] as [number, number];
@@ -257,12 +227,25 @@ export const updateBossCore = (
           points: transformedPoints
         };
         
-        if (checkBossLineCollision(player, tempLine)) {
-          updatedBoss.innerLines[index].destroyed = true;
+        const { collision: lineCollision, isLethal } = checkBossLineCollision(player, tempLine);
+        if (lineCollision) {
+          if (isLethal) {
+            collision = true; // Set game-wide collision flag
+          } else {
+            lines[i].destroyed = true; // Destroy the line if it's vulnerable
+          }
         }
       }
-    });
-    
+    }
+  };
+  
+  // Check collisions for outer and inner lines
+  checkLineCollisions(updatedBoss.outerLines, updatedBoss.outerRotationAngle);
+  checkLineCollisions(updatedBoss.innerLines, updatedBoss.innerRotationAngle);
+  
+  // Can only destroy inner lines if all outer lines are destroyed
+  const allOuterLinesDestroyed = updatedBoss.outerLines.every(line => line.destroyed);
+  if (allOuterLinesDestroyed) {
     // Check if all inner lines are destroyed to enable memory card collection
     const allInnerLinesDestroyed = updatedBoss.innerLines.every(line => line.destroyed);
     if (allInnerLinesDestroyed && updatedBoss.memoryCard.active) {
@@ -282,7 +265,7 @@ export const updateBossCore = (
     updatedBoss.cooldownTimer -= deltaTime;
   }
   
-  return { updatedBoss, bossDefeated };
+  return { updatedBoss, bossDefeated, collision };
 };
 
 // Update game state for each frame
@@ -300,10 +283,10 @@ export const updateGameState = (
     return { newState: state, collision: false, gameWon: false };
   }
   
-  // Apply deltaTime normalization to make game speed consistent
-  const timeScale = Math.min(deltaTime, 2); // Cap at 2 to prevent huge jumps
+  // Apply deltaTime normalization
+  const timeScale = Math.min(deltaTime, 2);
   
-  // Update player position based on keyboard input and cursor position
+  // Update player position
   const newPlayer = updatePlayerMovement(
     state.player, 
     keys, 
@@ -326,6 +309,7 @@ export const updateGameState = (
   // Check if we should spawn a boss
   let bossCore = state.bossCore;
   let shouldGenerateNewBlocks = true;
+  let shouldUpdateScore = true;
   
   if (shouldSpawnBoss(state.score, bossCore)) {
     console.log(`Spawning boss at score ${state.score}`);
@@ -334,24 +318,26 @@ export const updateGameState = (
   
   // Handle boss interaction if active
   let bossDefeated = false;
+  let collision = false;
+  
   if (bossCore && bossCore.active) {
-    const { updatedBoss, bossDefeated: defeated } = updateBossCore(bossCore, timeScale, newPlayer);
+    const { updatedBoss, bossDefeated: defeated, collision: bossCollision } = 
+      updateBossCore(bossCore, timeScale, newPlayer);
     bossCore = updatedBoss;
     bossDefeated = defeated;
+    collision = bossCollision;
     
-    // Don't generate new blocks while boss is active
+    // Don't generate new blocks or update score while boss is active
     shouldGenerateNewBlocks = false;
+    shouldUpdateScore = false;
   } else if (bossCore && !bossCore.active && bossCore.cooldownTimer > 0) {
-    // Boss defeated but still in cooldown
     const { updatedBoss } = updateBossCore(bossCore, timeScale, newPlayer);
     bossCore = updatedBoss;
-    
-    // Don't generate new blocks during cooldown
     shouldGenerateNewBlocks = false;
+    shouldUpdateScore = false;
   }
   
   // Update maze blocks
-  let collision = false;
   const newMaze = state.maze
     .map(block => {
       // Move block down with time scaling
@@ -414,11 +400,14 @@ export const updateGameState = (
     newGeneratedBoosters = generatedBoosters;
   }
   
-  // Update score and color phase (add score boost from backdoor if collected)
-  // Also add bonus points if boss defeated
+  // Update score only if no active boss
   const bonusPoints = bossDefeated ? 5000 * (bossCore?.level || 1) : 0;
-  const newScore = state.score + (1.33 * timeScale) + scoreBoost + bonusPoints;
+  const newScore = shouldUpdateScore ? 
+    state.score + (1.33 * timeScale) + scoreBoost + bonusPoints :
+    state.score;
   
+  // Update color phase (add score boost from backdoor if collected)
+  // Also add bonus points if boss defeated
   // Update color phase every 5000 points
   const newColorPhase = Math.floor(newScore / 5000);
   
