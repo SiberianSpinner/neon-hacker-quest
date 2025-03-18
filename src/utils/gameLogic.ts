@@ -5,9 +5,13 @@ import { checkCollision, checkBossLineCollision, checkMemoryCardCollision } from
 import { saveScore, getScores } from './storageUtils';
 import { updateAchievements } from './achievementsUtils';
 import { getSelectedSkin } from './skinsUtils';
+import { getRemainingDailyAttempts, hasUnlimitedAttempts } from './attemptsUtils';
 
 // Initialize game state
 export const initGameState = (canvasWidth: number, canvasHeight: number): GameState => {
+  // Get daily attempts or unlimited if available
+  const dailyAttempts = hasUnlimitedAttempts() ? Infinity : getRemainingDailyAttempts();
+  
   return {
     player: { 
       x: canvasWidth / 2, 
@@ -22,7 +26,7 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     boosters: [],
     score: 0,
     gameSpeed: 2.67, // Reduced from 4 to 2.67 (1.5x slower)
-    attemptsLeft: 3,
+    attemptsLeft: dailyAttempts,
     gameActive: false,
     colorPhase: 0,
     cursorControl: false,

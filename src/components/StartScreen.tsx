@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
-import { Trophy, Microchip, Cable, Code } from 'lucide-react';
+import { Trophy, Microchip, Cable, Code, Clock } from 'lucide-react';
+import { formatTimeRemaining, getMillisecondsUntilReset } from '@/utils/attemptsUtils';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -17,6 +18,8 @@ interface StartScreenProps {
   attemptsLeft: number;
   lastScore?: number;
   isTelegramWebApp?: boolean;
+  dailyAttemptsLeft: number;
+  hasUnlimitedMode: boolean;
 }
 
 const StartScreen: React.FC<StartScreenProps> = ({
@@ -29,10 +32,14 @@ const StartScreen: React.FC<StartScreenProps> = ({
   onShowScripts, // New prop
   attemptsLeft,
   lastScore,
-  isTelegramWebApp = false
+  isTelegramWebApp = false,
+  dailyAttemptsLeft,
+  hasUnlimitedMode
 }) => {
   const [menuLoaded, setMenuLoaded] = useState(false);
+  const [timeUntilReset, setTimeUntilReset] = useState('');
   
+  // Initialize menu load effect
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setMenuLoaded(true);
@@ -40,6 +47,24 @@ const StartScreen: React.FC<StartScreenProps> = ({
     
     return () => clearTimeout(timer);
   }, []);
+  
+  // Timer for reset countdown
+  useEffect(() => {
+    if (!isVisible || hasUnlimitedMode) return;
+    
+    const updateTimer = () => {
+      const msUntilReset = getMillisecondsUntilReset();
+      setTimeUntilReset(formatTimeRemaining(msUntilReset));
+    };
+    
+    // Update immediately
+    updateTimer();
+    
+    // Then update every second
+    const intervalId = setInterval(updateTimer, 1000);
+    
+    return () => clearInterval(intervalId);
+  }, [isVisible, hasUnlimitedMode]);
   
   // Format score as percentage with three decimal places
   const formattedScore = lastScore !== undefined ? 
@@ -86,12 +111,38 @@ const StartScreen: React.FC<StartScreenProps> = ({
           >
             {isTelegramWebApp ? 'НАЙДЕНО УЯЗВИМОСТЕЙ: ' : 'VULNERABILITIES FOUND: '}{attemptsLeft === Infinity ? '∞' : attemptsLeft}
           </motion.p>
+          
+          {/* Daily attempts counter */}
+          {!hasUnlimitedMode && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="text-sm text-cyber-foreground/70"
+            >
+              {isTelegramWebApp ? 'ЕЖЕДНЕВНЫХ ПОПЫТОК: ' : 'DAILY ATTEMPTS: '}{dailyAttemptsLeft}/3
+            </motion.p>
+          )}
+          
+          {/* Timer until next reset - only show if less than 3 daily attempts and not in unlimited mode */}
+          {dailyAttemptsLeft < 3 && !hasUnlimitedMode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              className="flex items-center justify-center gap-2 text-sm text-cyber-secondary"
+            >
+              <Clock className="w-4 h-4" />
+              <span>
+                {isTelegramWebApp ? 'НОВАЯ УЯЗВИМОСТЬ ЧЕРЕЗ: ' : 'NEW VULNERABILITY IN: '}{timeUntilReset}
+              </span>
+            </motion.div>
+          )}
         </div>
         
         <div className="w-full space-y-3">
           <div className="flex justify-between items-center gap-4 mb-4">
-            {/* Chips button styled as a desktop shortcut with microchip icon 
-                This was moved to the first position (swapped with Hack) */}
+            {/* Chips button styled as a desktop shortcut with microchip icon */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
@@ -109,8 +160,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               </div>
             </motion.div>
             
-            {/* Play button styled as a desktop shortcut with LAN cable icon 
-                This was moved to the second position (swapped with Chips) */}
+            {/* Play button styled as a desktop shortcut with LAN cable icon */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
@@ -121,7 +171,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
                   className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
                   glowEffect
                   onClick={onStartGame}
-                  disabled={attemptsLeft <= 0}
+                  disabled={attemptsLeft <= 0 || dailyAttemptsLeft <= 0}
                   leftIcon={<Cable className="w-12 h-12 mb-1" />}
                 >
                   <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ВЗЛОМ' : 'HACK'}</span>

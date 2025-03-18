@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import GameCanvas from '@/components/GameCanvas';
@@ -6,9 +7,15 @@ import Leaderboard from '@/components/Leaderboard';
 import Achievements from '@/components/Achievements';
 import Scripts from '@/components/Scripts';
 import { toast } from "sonner";
-import { saveScore, getScores, setUnlimitedAttempts } from '@/utils/gameLogic';
+import { saveScore, getScores } from '@/utils/gameLogic';
 import { PlayerSkin } from '@/utils/types';
 import { getSelectedSkin, saveSelectedSkin } from '@/utils/skinsUtils';
+import { 
+  getRemainingDailyAttempts, 
+  useAttempt, 
+  enableUnlimitedAttempts,
+  hasUnlimitedAttempts
+} from '@/utils/attemptsUtils';
 
 declare global {
   interface Window {
@@ -36,10 +43,12 @@ const Index = () => {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showScripts, setShowScripts] = useState(false);
   const [attemptsLeft, setAttemptsLeft] = useState(3);
+  const [dailyAttemptsLeft, setDailyAttemptsLeft] = useState(3);
   const [lastScore, setLastScore] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [isTelegramWebApp, setIsTelegramWebApp] = useState(false);
   const [selectedSkin, setSelectedSkin] = useState<PlayerSkin>(PlayerSkin.DEFAULT);
+  const [hasUnlimitedMode, setHasUnlimitedMode] = useState(false);
 
   // Check if running in Telegram WebApp
   useEffect(() => {
@@ -50,9 +59,37 @@ const Index = () => {
     }
   }, []);
 
-  // Load selected skin
+  // Load selected skin and daily attempts
   useEffect(() => {
     setSelectedSkin(getSelectedSkin());
+    
+    // Check for unlimited mode
+    const unlimited = hasUnlimitedAttempts();
+    setHasUnlimitedMode(unlimited);
+    
+    if (unlimited) {
+      setAttemptsLeft(Infinity);
+      setDailyAttemptsLeft(Infinity);
+    } else {
+      // Get daily attempts left
+      const dailyAttempts = getRemainingDailyAttempts();
+      setDailyAttemptsLeft(dailyAttempts);
+      setAttemptsLeft(Math.min(attemptsLeft, dailyAttempts));
+    }
+    
+    // Setup interval to check daily attempts
+    const intervalId = setInterval(() => {
+      if (!hasUnlimitedAttempts()) {
+        const newDailyAttempts = getRemainingDailyAttempts();
+        setDailyAttemptsLeft(newDailyAttempts);
+        // If daily attempts increased, also increase total attempts
+        if (newDailyAttempts > dailyAttemptsLeft) {
+          setAttemptsLeft(prev => prev + (newDailyAttempts - dailyAttemptsLeft));
+        }
+      }
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(intervalId);
   }, []);
 
   // Loading sequence
@@ -127,19 +164,45 @@ const Index = () => {
   
   // Start game
   const handleStartGame = () => {
+    // Check for unlimited mode first
+    if (hasUnlimitedMode) {
+      setGameActive(true);
+      return;
+    }
+    
+    // Check if player has attempts left
     if (attemptsLeft <= 0) {
-      toast.error("Нет попыток!", {
-        description: "Посмотрите рекламу или купите безлимитные попытки.",
+      toast.error(isTelegramWebApp ? "Нет попыток!" : "No attempts left!", {
+        description: isTelegramWebApp 
+          ? "Посмотрите рекламу или купите безлимитные попытки."
+          : "Watch an ad or buy unlimited attempts."
       });
       return;
     }
     
-    // Only deduct an attempt when game is actually starting
-    if (!gameActive) {
-      setAttemptsLeft(prev => prev - 1);
+    // Check if player has daily attempts left
+    if (dailyAttemptsLeft <= 0) {
+      toast.error(isTelegramWebApp ? "Ежедневный лимит исчерпан!" : "Daily limit reached!", {
+        description: isTelegramWebApp 
+          ? "Новые попытки будут доступны в 00:01."
+          : "New attempts will be available at 00:01."
+      });
+      return;
     }
     
-    setGameActive(true);
+    // Use an attempt from daily allowance
+    const result = useAttempt();
+    if (result.success) {
+      setDailyAttemptsLeft(result.remainingAttempts);
+      setAttemptsLeft(prev => prev - 1);
+      setGameActive(true);
+    } else {
+      toast.error(isTelegramWebApp ? "Не удалось начать игру" : "Failed to start game", {
+        description: isTelegramWebApp 
+          ? "Произошла ошибка при использовании попытки."
+          : "Error using attempt."
+      });
+    }
   };
   
   // Watch ad for attempts
@@ -199,7 +262,12 @@ const Index = () => {
     });
     
     setTimeout(() => {
+      // Enable unlimited mode
+      enableUnlimitedAttempts();
+      setHasUnlimitedMode(true);
       setAttemptsLeft(Infinity);
+      setDailyAttemptsLeft(Infinity);
+      
       toast.success("Покупка успешна", {
         description: "Теперь у вас безлимитные попытки!"
       });
@@ -216,7 +284,11 @@ const Index = () => {
   
   // Set unlimited attempts (can be called from Telegram backend)
   const activateUnlimited = () => {
+    enableUnlimitedAttempts();
+    setHasUnlimitedMode(true);
     setAttemptsLeft(Infinity);
+    setDailyAttemptsLeft(Infinity);
+    
     toast.success("Безлимитный режим активирован", {
       description: "Теперь у вас безлимитные попытки!"
     });
@@ -300,6 +372,8 @@ const Index = () => {
         attemptsLeft={attemptsLeft}
         lastScore={lastScore}
         isTelegramWebApp={isTelegramWebApp}
+        dailyAttemptsLeft={dailyAttemptsLeft}
+        hasUnlimitedMode={hasUnlimitedMode}
       />
       
       {/* Leaderboard */}
@@ -326,7 +400,7 @@ const Index = () => {
       
       {/* Version tag */}
       <div className="absolute bottom-2 right-2 text-xs text-cyber-foreground/30">
-        v1.4.0
+        v1.5.0
       </div>
     </div>
   );
