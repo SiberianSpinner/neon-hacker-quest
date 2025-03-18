@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, X, Award, Medal, Trophy } from 'lucide-react';
+import { Trophy, X } from 'lucide-react';
 import { Achievement } from '@/utils/types';
 import { loadAchievements } from '@/utils/achievementsUtils';
 import { cn } from '@/lib/utils';
@@ -27,7 +27,7 @@ const Achievements: React.FC<AchievementsProps> = ({
     if (isVisible) {
       // Reload fresh achievements data
       const loadedAchievements = loadAchievements();
-      console.log('Loaded achievements:', loadedAchievements);
+      console.log('Загруженные достижения:', loadedAchievements);
       setAchievements(loadedAchievements);
     }
   }, [isVisible]);
@@ -168,7 +168,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements }) => 
                   )}
                 </>
               ) : (
-                <Award size={24} className={!achievement.unlocked ? "text-gray-500" : ""} />
+                <Trophy size={24} className={!achievement.unlocked ? "text-gray-500" : ""} />
               )}
             </div>
             

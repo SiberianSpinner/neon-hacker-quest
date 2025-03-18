@@ -75,7 +75,7 @@ const ACHIEVEMENTS: Achievement[] = [
     unlocked: false,
     imageSrc: '/achievements/determination.svg',
   },
-  // Memory core related achievements
+  // Memory core related achievements with icons
   {
     id: 'defeat_first_core',
     name: 'Взломщик Памяти',
