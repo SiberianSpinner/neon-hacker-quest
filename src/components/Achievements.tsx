@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, X } from 'lucide-react';
+import { Shield, X, Award, Medal, Trophy } from 'lucide-react';
 import { Achievement } from '@/utils/types';
 import { loadAchievements } from '@/utils/achievementsUtils';
 import { cn } from '@/lib/utils';
@@ -26,7 +26,9 @@ const Achievements: React.FC<AchievementsProps> = ({
   useEffect(() => {
     if (isVisible) {
       // Reload fresh achievements data
-      setAchievements(loadAchievements());
+      const loadedAchievements = loadAchievements();
+      console.log('Loaded achievements:', loadedAchievements);
+      setAchievements(loadedAchievements);
     }
   }, [isVisible]);
   
@@ -58,8 +60,8 @@ const Achievements: React.FC<AchievementsProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-cyber-primary/20 p-4">
           <h2 className="text-xl font-bold text-cyber-primary flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            {isTelegramWebApp ? 'ЧИПЫ' : 'CHIPS'} 
+            <Trophy className="h-5 w-5" />
+            ЧИПЫ
             <span className="text-sm text-cyber-foreground/60">
               ({unlockedCount}/{totalCount})
             </span>
@@ -77,26 +79,26 @@ const Achievements: React.FC<AchievementsProps> = ({
           <Tabs defaultValue="all" onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-3 bg-cyber-background border border-cyber-primary/20">
               <TabsTrigger value="all">
-                {isTelegramWebApp ? 'ВСЕ' : 'ALL'}
+                ВСЕ
               </TabsTrigger>
               <TabsTrigger value="unlocked">
-                {isTelegramWebApp ? 'ОТКРЫТЫ' : 'UNLOCKED'}
+                ОТКРЫТЫ
               </TabsTrigger>
               <TabsTrigger value="locked">
-                {isTelegramWebApp ? 'ЗАКРЫТЫ' : 'LOCKED'}
+                ЗАКРЫТЫ
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="all" className="mt-0">
-              <AchievementsList achievements={filteredAchievements} isTelegramWebApp={isTelegramWebApp} />
+              <AchievementsList achievements={filteredAchievements} />
             </TabsContent>
             
             <TabsContent value="unlocked" className="mt-0">
-              <AchievementsList achievements={filteredAchievements} isTelegramWebApp={isTelegramWebApp} />
+              <AchievementsList achievements={filteredAchievements} />
             </TabsContent>
             
             <TabsContent value="locked" className="mt-0">
-              <AchievementsList achievements={filteredAchievements} isTelegramWebApp={isTelegramWebApp} />
+              <AchievementsList achievements={filteredAchievements} />
             </TabsContent>
           </Tabs>
         </div>
@@ -109,7 +111,7 @@ const Achievements: React.FC<AchievementsProps> = ({
             className="w-full"
             glowEffect
           >
-            {isTelegramWebApp ? 'ЗАКРЫТЬ' : 'CLOSE'}
+            ЗАКРЫТЬ
           </CustomButton>
         </div>
       </motion.div>
@@ -119,35 +121,9 @@ const Achievements: React.FC<AchievementsProps> = ({
 
 interface AchievementsListProps {
   achievements: Achievement[];
-  isTelegramWebApp?: boolean;
 }
 
-// Translation helpers for memory core achievements
-const translateAchievementName = (name: string, isTelegramWebApp: boolean): string => {
-  if (!isTelegramWebApp) return name;
-  
-  // Russian translations for memory core achievements
-  switch (name) {
-    case 'Memory Crasher': return 'Взломщик Памяти';
-    case 'Data Corruptor': return 'Разрушитель Данных';
-    case 'System Annihilator': return 'Системный Аннигилятор';
-    default: return name;
-  }
-};
-
-const translateAchievementDescription = (description: string, isTelegramWebApp: boolean): string => {
-  if (!isTelegramWebApp) return description;
-  
-  // Russian translations for memory core achievement descriptions
-  switch (description) {
-    case 'Defeat your first Memory Core': return 'Уничтожь своё первое Ядро Памяти';
-    case 'Defeat a Level 2 Memory Core': return 'Уничтожь Ядро Памяти 2-го уровня';
-    case 'Defeat a Level 3 Memory Core': return 'Уничтожь Ядро Памяти 3-го уровня';
-    default: return description;
-  }
-};
-
-const AchievementsList: React.FC<AchievementsListProps> = ({ achievements, isTelegramWebApp = false }) => {
+const AchievementsList: React.FC<AchievementsListProps> = ({ achievements }) => {
   return (
     <div className="grid grid-cols-1 gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
       {achievements.map((achievement) => (
@@ -192,7 +168,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements, isTel
                   )}
                 </>
               ) : (
-                <Shield size={24} className={!achievement.unlocked ? "text-gray-500" : ""} />
+                <Award size={24} className={!achievement.unlocked ? "text-gray-500" : ""} />
               )}
             </div>
             
@@ -203,7 +179,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements, isTel
                   ? "text-cyber-primary" 
                   : "text-gray-400"
               )}>
-                {translateAchievementName(achievement.name, isTelegramWebApp)}
+                {achievement.name}
               </h3>
               <p className={cn(
                 "text-sm",
@@ -211,7 +187,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements, isTel
                   ? "text-cyber-foreground/80" 
                   : "text-gray-500"
               )}>
-                {translateAchievementDescription(achievement.description, isTelegramWebApp)}
+                {achievement.description}
               </p>
             </div>
             

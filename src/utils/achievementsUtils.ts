@@ -3,97 +3,97 @@ import { Achievement, GameState } from './types';
 import { getScores } from './storageUtils';
 import { getDailyGameStats } from './gameLogic';
 
-// Define all achievements
+// Define all achievements with Russian translations
 const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first_run',
-    name: 'First Boot',
-    description: 'Start your first hack attempt',
+    name: 'Первая Загрузка',
+    description: 'Начните свою первую попытку взлома',
     unlocked: false,
     imageSrc: '/achievements/first-boot.svg',
   },
   {
     id: 'reach_10percent',
-    name: '10% Access',
-    description: 'Reach 10% hack completion',
+    name: '10% Доступа',
+    description: 'Достигните 10% завершения взлома',
     unlocked: false,
     imageSrc: '/achievements/ten-percent.svg',
   },
   {
     id: 'reach_25percent',
-    name: '25% Access',
-    description: 'Reach 25% hack completion',
+    name: '25% Доступа',
+    description: 'Достигните 25% завершения взлома',
     unlocked: false,
     imageSrc: '/achievements/twenty-five-percent.svg',
   },
   {
     id: 'reach_50percent',
-    name: '50% Access',
-    description: 'Reach 50% hack completion',
+    name: '50% Доступа',
+    description: 'Достигните 50% завершения взлома',
     unlocked: false,
     imageSrc: '/achievements/fifty-percent.svg',
   },
   {
     id: 'reach_75percent',
-    name: '75% Access',
-    description: 'Reach 75% hack completion',
+    name: '75% Доступа',
+    description: 'Достигните 75% завершения взлома',
     unlocked: false,
     imageSrc: '/achievements/seventy-five-percent.svg',
   },
   {
     id: 'reach_100percent',
-    name: '100% Access',
-    description: 'Complete the hack at 100%',
+    name: '100% Доступа',
+    description: 'Завершите взлом на 100%',
     unlocked: false,
     imageSrc: '/achievements/hundred-percent.svg',
   },
   {
     id: 'collect_key',
-    name: 'Security Bypass',
-    description: 'Collect your first Safety Key',
+    name: 'Обход Защиты',
+    description: 'Соберите свой первый Ключ Безопасности',
     unlocked: false,
     imageSrc: '/achievements/security-bypass.svg',
   },
   {
     id: 'collect_backdoor',
-    name: 'Backdoor Found',
-    description: 'Collect your first Backdoor',
+    name: 'Бэкдор Найден',
+    description: 'Соберите свой первый Бэкдор',
     unlocked: false,
     imageSrc: '/achievements/backdoor.svg',
   },
   {
     id: 'play_3_times',
-    name: 'Persistence',
-    description: 'Play the game 3 times in one day',
+    name: 'Настойчивость',
+    description: 'Сыграйте в игру 3 раза за один день',
     unlocked: false,
     imageSrc: '/achievements/persistence.svg',
   },
   {
     id: 'play_10_times',
-    name: 'Determination',
-    description: 'Play the game 10 times in one day',
+    name: 'Целеустремленность',
+    description: 'Сыграйте в игру 10 раз за один день',
     unlocked: false,
     imageSrc: '/achievements/determination.svg',
   },
-  // New memory core related achievements
+  // Memory core related achievements
   {
     id: 'defeat_first_core',
-    name: 'Memory Crasher',
-    description: 'Defeat your first Memory Core',
+    name: 'Взломщик Памяти',
+    description: 'Уничтожьте своё первое Ядро Памяти',
     unlocked: false,
     imageSrc: '/achievements/memory-crasher.svg',
   },
   {
     id: 'defeat_level2_core',
-    name: 'Data Corruptor',
-    description: 'Defeat a Level 2 Memory Core',
+    name: 'Разрушитель Данных',
+    description: 'Уничтожьте Ядро Памяти 2-го уровня',
     unlocked: false,
     imageSrc: '/achievements/data-corruptor.svg',
   },
   {
     id: 'defeat_level3_core',
-    name: 'System Annihilator',
-    description: 'Defeat a Level 3 Memory Core',
+    name: 'Системный Аннигилятор',
+    description: 'Уничтожьте Ядро Памяти 3-го уровня',
     unlocked: false,
     imageSrc: '/achievements/system-annihilator.svg',
   }
@@ -117,7 +117,7 @@ export const loadAchievements = (): Achievement[] => {
       } : defaultAchievement;
     });
   } catch (e) {
-    console.error('Error loading achievements', e);
+    console.error('Ошибка загрузки достижений', e);
     return [...ACHIEVEMENTS];
   }
 };
@@ -126,9 +126,9 @@ export const loadAchievements = (): Achievement[] => {
 const saveAchievements = (achievements: Achievement[]): void => {
   try {
     localStorage.setItem('netrunner_achievements', JSON.stringify(achievements));
-    console.log('Achievements saved:', achievements);
+    console.log('Достижения сохранены:', achievements);
   } catch (e) {
-    console.error('Error saving achievements', e);
+    console.error('Ошибка сохранения достижений', e);
   }
 };
 
@@ -141,7 +141,7 @@ export const isAchievementUnlocked = (id: string): boolean => {
 
 // Update achievements based on game state and current score
 export const updateAchievements = (state: GameState): void => {
-  console.log('Updating achievements with state:', state);
+  console.log('Обновление достижений с состоянием:', state);
   const achievements = loadAchievements();
   let updated = false;
   
@@ -151,7 +151,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: First Boot');
+      console.log('Достижение разблокировано: Первая Загрузка');
     }
   }
   
@@ -164,7 +164,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: 10% Access');
+      console.log('Достижение разблокировано: 10% Доступа');
     }
   }
   
@@ -174,7 +174,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: 25% Access');
+      console.log('Достижение разблокировано: 25% Доступа');
     }
   }
   
@@ -184,7 +184,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: 50% Access');
+      console.log('Достижение разблокировано: 50% Доступа');
     }
   }
   
@@ -194,7 +194,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: 75% Access');
+      console.log('Достижение разблокировано: 75% Доступа');
     }
   }
   
@@ -204,7 +204,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: 100% Access');
+      console.log('Достижение разблокировано: 100% Доступа');
     }
   }
   
@@ -214,7 +214,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: Security Bypass');
+      console.log('Достижение разблокировано: Обход Защиты');
     }
   }
   
@@ -224,13 +224,13 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: Backdoor Found');
+      console.log('Достижение разблокировано: Бэкдор Найден');
     }
   }
   
   // Daily games played - check for play count achievements
   const dailyStats = getDailyGameStats();
-  console.log('Daily stats for achievements:', dailyStats);
+  console.log('Статистика дня для достижений:', dailyStats);
   
   // 3 games in a day
   if (!isAchievementUnlocked('play_3_times') && dailyStats.gamesPlayed >= 3) {
@@ -238,7 +238,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: Persistence');
+      console.log('Достижение разблокировано: Настойчивость');
     }
   }
   
@@ -248,7 +248,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: Determination');
+      console.log('Достижение разблокировано: Целеустремленность');
     }
   }
 
@@ -259,7 +259,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: Memory Crasher');
+      console.log('Достижение разблокировано: Взломщик Памяти');
     }
   }
   
@@ -269,7 +269,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: Data Corruptor');
+      console.log('Достижение разблокировано: Разрушитель Данных');
     }
   }
   
@@ -279,7 +279,7 @@ export const updateAchievements = (state: GameState): void => {
     if (achievementIndex !== -1) {
       achievements[achievementIndex].unlocked = true;
       updated = true;
-      console.log('Achievement unlocked: System Annihilator');
+      console.log('Достижение разблокировано: Системный Аннигилятор');
     }
   }
   

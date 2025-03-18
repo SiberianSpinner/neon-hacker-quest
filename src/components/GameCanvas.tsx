@@ -3,7 +3,8 @@ import {
   initGameState, 
   updateGameState, 
   startGame,
-  toggleCursorControl
+  toggleCursorControl,
+  endGame
 } from '@/utils/gameLogic';
 import { GameState, PlayerSkin } from '@/utils/types';
 import MatrixRain from './MatrixRain';
@@ -275,9 +276,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
         // Check for game win condition
         if (gameWon) {
-          onGameWin(newState.score);
+          // Call endGame to ensure achievements are updated
+          const finalState = endGame(newState);
+          onGameWin(finalState.score);
           setGameState({
-            ...newState,
+            ...finalState,
             gameActive: false
           });
           return;
@@ -285,9 +288,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
         // Check for collision
         if (collision) {
-          onGameOver(newState.score);
+          // Call endGame to ensure achievements are updated
+          const finalState = endGame(newState);
+          onGameOver(finalState.score);
           setGameState({
-            ...newState,
+            ...finalState,
             gameActive: false
           });
           return;

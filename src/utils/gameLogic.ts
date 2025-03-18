@@ -1,4 +1,3 @@
-
 import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin, BossCore, BossCoreLine } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -316,7 +315,7 @@ export const updateGameState = (
   
   // Check if we need to spawn a new boss
   if (shouldSpawnBoss(state.score, bossCore)) {
-    console.log(`Spawning boss at score ${state.score}`);
+    console.log(`Появляется босс при счете ${state.score}`);
     bossCore = initBossCore(state.score, canvasWidth, canvasHeight);
   }
 
@@ -416,7 +415,7 @@ export const updateGameState = (
   if (bossDefeated && bossCore) {
     newBossDefeatsCount += 1;
     newHighestBossLevelDefeated = Math.max(newHighestBossLevelDefeated, bossCore.level);
-    console.log(`Boss defeated! Level: ${bossCore.level}, Total defeats: ${newBossDefeatsCount}`);
+    console.log(`Босс побежден! Уровень: ${bossCore.level}, Всего побед: ${newBossDefeatsCount}`);
   }
 
   // Add fixed 2000 points bonus when boss is defeated
@@ -443,6 +442,15 @@ export const updateGameState = (
     highestBossLevelDefeated: newHighestBossLevelDefeated
   };
   
+  // Check for achievements during gameplay - run every ~5 seconds (300 frames at 60fps)
+  if (Math.floor(Date.now() / 5000) !== Math.floor((Date.now() - (deltaTime * 16.67)) / 5000)) {
+    // Only check during active gameplay
+    if (newState.gameActive) {
+      console.log('Проверка достижений во время игры, счет:', newScore);
+      updateAchievements(newState);
+    }
+  }
+  
   return {
     newState,
     collision,
@@ -466,10 +474,11 @@ export const toggleCursorControl = (state: GameState): GameState => {
 
 // Start a new game
 export const startGame = (state: GameState): GameState => {
-  console.log("Starting game with state:", state);
+  console.log("Запуск игры с состоянием:", state);
   updateDailyGameStats();
   
-  return {
+  // Check first run achievement immediately on game start
+  const newState = {
     ...state,
     gameActive: true,
     score: 0,
@@ -489,6 +498,11 @@ export const startGame = (state: GameState): GameState => {
     bossDefeatsCount: 0,
     highestBossLevelDefeated: 0
   };
+  
+  // Update achievements immediately when the game starts (for first_run achievement)
+  updateAchievements(newState);
+  
+  return newState;
 };
 
 // Track daily game plays
@@ -527,10 +541,10 @@ export const getDailyGameStats = (): { date: string, gamesPlayed: number } => {
 
 // End game and save score
 export const endGame = (state: GameState): GameState => {
-  console.log("Ending game, saving score:", state.score);
+  console.log("Конец игры, сохранение счета:", state.score);
   saveScore(state.score);
   
-  console.log("Game over, updating achievements");
+  console.log("Игра окончена, обновление достижений");
   updateAchievements(state);
   
   return {
