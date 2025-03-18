@@ -1,4 +1,4 @@
-import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin, BossCore, BossCoreLine } from './types';
+import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin, BossCore } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
 import { checkCollision, checkBossLineCollision, checkMemoryCardCollision } from './collisionUtils';
@@ -105,22 +105,30 @@ export const updateGameState = (
   // Update player movement based on input method
   newState = updatePlayerMovement(newState, keys, cursorPosition, isMobile, swipeDirection, canvasWidth, canvasHeight);
 
-  // Generate new maze blocks if needed
-  if (newState.maze.length === 0 || 
-      newState.maze[newState.maze.length - 1].y > -100) {
-    const newBlocks = generateMaze(canvasWidth, newState.score);
-    newState.maze = [...newState.maze, ...newBlocks];
+  // Only update score and generate maze if there's no active boss
+  if (!newState.bossCore || !newState.bossCore.active) {
+    // Generate new maze blocks if needed
+    const { maze: newBlocks, boosters: newBoosters } = generateMaze(canvasWidth, newState.score);
+    if (newBlocks.length > 0) {
+      newState.maze = [...newState.maze, ...newBlocks];
+    }
+    if (newBoosters.length > 0) {
+      newState.boosters = [...newState.boosters, ...newBoosters];
+    }
+
+    // Update maze blocks position
+    newState.maze = newState.maze
+      .filter(block => block.y < canvasHeight + 100)
+      .map(block => ({
+        ...block,
+        y: block.y + newState.gameSpeed * deltaTime
+      }));
+
+    // Update score if no collision and no boss active
+    newState.score += 1.33 * deltaTime;
   }
 
-  // Update maze blocks position
-  newState.maze = newState.maze
-    .map(block => ({
-      ...block,
-      y: block.y + newState.gameSpeed * deltaTime
-    }))
-    .filter(block => block.y < canvasHeight + 100);
-
-  // Check for collisions with maze blocks
+  // Check for collisions with maze blocks when not invulnerable
   if (!newState.player.invulnerable) {
     collision = newState.maze.some(block => 
       checkCollision(newState.player, block)
@@ -135,8 +143,8 @@ export const updateGameState = (
     }))
     .filter(booster => booster.y < canvasHeight + 50);
 
-  // Check for booster collisions and apply effects
-  newState = checkBoosterCollision(newState);
+  // Check for booster collisions
+  newState = checkBoosterCollisions(newState);
 
   // Update invulnerability timer
   if (newState.player.invulnerable) {
@@ -146,27 +154,12 @@ export const updateGameState = (
     }
   }
 
-  // Update color phase
-  newState.colorPhase = (newState.colorPhase + deltaTime * 0.01) % 360;
-
-  // Update score
-  if (!collision && !gameWon) {
-    newState.score += 1.33 * deltaTime; // Adjusted for 60fps
-
-    // Check for game win condition
-    if (newState.score >= 100000) {
-      gameWon = true;
-      newState.gameWon = true;
-      newState.gameActive = false;
-    }
-  }
-
-  // Check if it's time to spawn a boss
+  // Check for boss spawn conditions
   if (shouldSpawnBoss(newState.score, newState.bossCore)) {
     newState.bossCore = initBossCore(newState.score, canvasWidth, canvasHeight);
   }
 
-  // Update boss core if active
+  // Update boss if active
   if (newState.bossCore && newState.bossCore.active) {
     const { updatedBoss, bossDefeated, collision: bossCollision } = updateBossCore(
       newState.bossCore,
@@ -177,10 +170,19 @@ export const updateGameState = (
     collision = collision || bossCollision;
 
     if (bossDefeated) {
-      // Add score bonus for defeating boss
-      newState.score += 5000;
+      newState.score += 5000; // Score bonus for defeating boss
     }
   }
+
+  // Check for game win condition
+  if (newState.score >= 100000) {
+    gameWon = true;
+    newState.gameWon = true;
+    newState.gameActive = false;
+  }
+
+  // Update color phase
+  newState.colorPhase = (newState.colorPhase + deltaTime * 0.01) % 360;
 
   // Update achievements
   updateAchievements(newState);
@@ -420,4 +422,42 @@ export const updateBossCore = (
   }
   
   return { updatedBoss, bossDefeated, collision };
+};
+
+// Check for booster collisions and apply effects
+const checkBoosterCollisions = (state: GameState): GameState => {
+  const newState = { ...state };
+  
+  // Check for collisions with boosters
+  newState.boosters = newState.boosters.filter(booster => {
+    if (booster.active && checkBoosterCollision(
+      newState.player.x,
+      newState.player.y,
+      newState.player.size,
+      booster
+    )) {
+      // Apply booster effect
+      switch (booster.type) {
+        case BoosterType.SAFETY_KEY:
+          newState.player.invulnerable = true;
+          newState.player.invulnerableTimer = 600; // 10 seconds at 60fps
+          newState.collectedSafetyKeys += 1;
+          break;
+        case BoosterType.BACKDOOR:
+          // Clear all blocks on screen
+          newState.maze = [];
+          newState.collectedBackdoors += 1;
+          break;
+        case BoosterType.MEMORY_CARD:
+          // Memory cards are handled in boss logic
+          break;
+      }
+      
+      // Booster collected, remove it
+      return false;
+    }
+    return true;
+  });
+  
+  return newState;
 };
