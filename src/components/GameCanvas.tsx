@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
@@ -16,6 +17,7 @@ import Boosters from './game/Boosters';
 import GameUI from './game/GameUI';
 import GameGrid from './game/GameGrid';
 import SVGFilters from './game/SVGFilters';
+import BossCore from './game/BossCore'; // Import the new BossCore component
 
 interface GameCanvasProps {
   isActive: boolean;
@@ -335,6 +337,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             {/* Boosters */}
             <Boosters boosters={gameState.boosters} score={gameState.score} />
             
+            {/* Boss Core (if active) */}
+            {gameState.bossCore && (
+              <BossCore 
+                bossCore={gameState.bossCore} 
+                time={previousTimeRef.current || 0} 
+              />
+            )}
+            
             {/* Player */}
             <PlayerEntity 
               player={gameState.player} 
@@ -369,8 +379,32 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         </div>
       )}
       
+      {/* Boss encounter notification */}
+      {gameState && gameState.bossCore && gameState.bossCore.active && (
+        <div 
+          className="absolute top-1/3 left-0 right-0 text-center text-cyber-foreground text-2xl px-4 py-2 bg-cyber-background/70 backdrop-blur-sm rounded-md mx-8 z-20 animate-fade-in"
+          style={{ 
+            opacity: 0.9,
+            animation: 'fadeIn 1s ease-in, fadeOut 1s ease-out 3s forwards'
+          }}
+        >
+          ОБНАРУЖЕНО ИНФОРМАЦИОННОЕ ЯДРО!
+        </div>
+      )}
+      
       {/* Matrix Rain overlay (always visible) */}
       <MatrixRain className="z-10" />
+      
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 0.9; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+          from { opacity: 0.9; }
+          to { opacity: 0; }
+        }
+      `}</style>
     </>
   );
 };

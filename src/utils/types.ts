@@ -20,7 +20,8 @@ export interface MazeBlock {
 
 export enum BoosterType {
   SAFETY_KEY = 'SAFETY_KEY',
-  BACKDOOR = 'BACKDOOR'
+  BACKDOOR = 'BACKDOOR',
+  MEMORY_CARD = 'MEMORY_CARD'
 }
 
 export interface Booster {
@@ -46,6 +47,31 @@ export interface PlayerSkinInfo {
   unlocked: boolean;
 }
 
+// New interface for boss core lines
+export interface BossCoreLine {
+  id: string;
+  points: [number, number][]; // Array of x,y coordinates for the line
+  isVulnerable: boolean;
+  destroyed: boolean;
+}
+
+// New interface for boss core
+export interface BossCore {
+  active: boolean;
+  x: number;
+  y: number;
+  level: 1 | 2 | 3; // 1 = 33k, 2 = 66k, 3 = 99k
+  outerSquareSize: number;
+  innerSquareSize: number;
+  outerRotationAngle: number;
+  innerRotationAngle: number;
+  outerLines: BossCoreLine[];
+  innerLines: BossCoreLine[];
+  memoryCard: Booster;
+  vulnerableLinesTimer: number;
+  cooldownTimer: number; // Timer after boss is defeated
+}
+
 export interface GameState {
   player: Player;
   maze: MazeBlock[];
@@ -60,6 +86,8 @@ export interface GameState {
   collectedSafetyKeys: number;
   collectedBackdoors: number;
   selectedSkin: PlayerSkin;
+  // Add boss core to game state
+  bossCore: BossCore | null;
 }
 
 // Achievements
