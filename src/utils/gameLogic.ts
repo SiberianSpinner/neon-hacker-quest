@@ -159,10 +159,8 @@ export const updateBossCore = (
   let bossDefeated = false;
   
   // Update rotation angles
-  // Base rotation speeds: L1 = 15 seconds, L2 = 12 seconds, L3 = 10 seconds
-  // Convert to degrees per frame (60fps assumed)
-  const outerRotationSpeed = (360 / (bossCore.level === 1 ? 15 : bossCore.level === 2 ? 12 : bossCore.level === 3 ? 10 : 15)) / 60;
-  const innerRotationSpeed = -1.5 * outerRotationSpeed; // Inner rotates in opposite direction, faster
+  const outerRotationSpeed = (360 / (15)) / 60; // 15 seconds for full rotation
+  const innerRotationSpeed = -1.5 * outerRotationSpeed;
   
   updatedBoss.outerRotationAngle += outerRotationSpeed * deltaTime;
   updatedBoss.innerRotationAngle += innerRotationSpeed * deltaTime;
@@ -174,27 +172,25 @@ export const updateBossCore = (
   // Update vulnerable lines timer
   updatedBoss.vulnerableLinesTimer -= deltaTime;
   if (updatedBoss.vulnerableLinesTimer <= 0) {
-    // Time to refresh vulnerable lines
-    updatedBoss.vulnerableLinesTimer = 300; // 5 seconds (at 60fps)
+    // Reset timer to 5 seconds (300 frames at 60fps)
+    updatedBoss.vulnerableLinesTimer = 300;
     
     // Reset vulnerability status for all lines
     [...updatedBoss.outerLines, ...updatedBoss.innerLines].forEach(line => {
       line.isVulnerable = false;
     });
     
-    // Select random lines to make vulnerable
+    // Select 4 random lines to make vulnerable
     const allLines = [
       ...updatedBoss.outerLines.filter(line => !line.destroyed),
       ...updatedBoss.innerLines.filter(line => !line.destroyed)
     ];
     
-    // Make 4 random lines vulnerable (or fewer if not enough lines left)
     const linesToMakeVulnerable = Math.min(4, allLines.length);
     const shuffledLines = [...allLines].sort(() => Math.random() - 0.5);
     
     for (let i = 0; i < linesToMakeVulnerable; i++) {
       const lineIndex = shuffledLines[i].id;
-      // Find and update the actual line in our boss object
       const outerLineIndex = updatedBoss.outerLines.findIndex(l => l.id === lineIndex);
       if (outerLineIndex >= 0) {
         updatedBoss.outerLines[outerLineIndex].isVulnerable = true;
@@ -207,76 +203,66 @@ export const updateBossCore = (
     }
   }
   
-  // For outer lines
-  updatedBoss.outerLines.forEach((line, index) => {
-    if (!line.destroyed && line.isVulnerable) {
-      const transformedPoints = line.points.map(point => {
-        const [px, py] = point;
-        const dx = px - updatedBoss.x;
-        const dy = py - updatedBoss.y;
-        const angle = updatedBoss.outerRotationAngle * (Math.PI / 180);
-        const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
-        const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
-        return [rotatedX + updatedBoss.x, rotatedY + updatedBoss.y] as [number, number];
-      });
-      
-      const tempLine = {
-        ...line,
-        points: transformedPoints
-      };
-      
-      if (checkBossLineCollision(player, tempLine)) {
-        updatedBoss.outerLines[index].destroyed = true;
-      }
-    }
-  });
-
-  // Check if all outer lines are destroyed to enable inner line interaction
-  const allOuterLinesDestroyed = updatedBoss.outerLines.every(line => line.destroyed);
-  
-  if (allOuterLinesDestroyed) {
-    // For inner lines - now with the same collision mechanics as outer lines
-    updatedBoss.innerLines.forEach((line, index) => {
-      if (!line.destroyed && line.isVulnerable) {
+  // Check collisions with both outer and inner lines
+  const checkLineCollisions = (lines: BossCoreLine[], rotation: number) => {
+    lines.forEach((line, index) => {
+      if (!line.destroyed) {
         const transformedPoints = line.points.map(point => {
           const [px, py] = point;
           const dx = px - updatedBoss.x;
           const dy = py - updatedBoss.y;
-          const angle = updatedBoss.innerRotationAngle * (Math.PI / 180);
+          const angle = rotation * (Math.PI / 180);
           const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
           const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
           return [rotatedX + updatedBoss.x, rotatedY + updatedBoss.y] as [number, number];
         });
         
-        const tempLine = {
-          ...line,
-          points: transformedPoints
-        };
+        const tempLine = { ...line, points: transformedPoints };
         
         if (checkBossLineCollision(player, tempLine)) {
-          updatedBoss.innerLines[index].destroyed = true;
+          if (line.isVulnerable) {
+            // If line is vulnerable (green), destroy it
+            lines[index].destroyed = true;
+          } else {
+            // If line is not vulnerable (red), player loses
+            if (!player.invulnerable) {
+              throw new Error("collision");
+            }
+          }
         }
       }
     });
-
-    // Check for memory card collision if all inner lines are destroyed
-    const allInnerLinesDestroyed = updatedBoss.innerLines.every(line => line.destroyed);
+  };
+  
+  // Check collisions for both outer and inner lines
+  try {
+    checkLineCollisions(updatedBoss.outerLines, updatedBoss.outerRotationAngle);
+    checkLineCollisions(updatedBoss.innerLines, updatedBoss.innerRotationAngle);
     
-    if (allInnerLinesDestroyed && updatedBoss.memoryCard.active) {
-      if (checkMemoryCardCollision(player, updatedBoss.memoryCard)) {
-        updatedBoss.memoryCard.active = false;
-        updatedBoss.active = false;
-        updatedBoss.cooldownTimer = 120; // 2 seconds cooldown at 60fps
-        bossDefeated = true;
-      }
+    // Check for collision with memory core center
+    const coreSize = 30;
+    const dx = player.x - updatedBoss.x;
+    const dy = player.y - updatedBoss.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < player.size + coreSize/2) {
+      // Player touched the memory core center, boss is defeated
+      updatedBoss.active = false;
+      updatedBoss.cooldownTimer = 120; // 2 seconds cooldown at 60fps
+      bossDefeated = true;
+    }
+    
+  } catch (error) {
+    if (error.message === "collision" && !player.invulnerable) {
+      throw error; // Re-throw collision error for game over handling
     }
   }
-
+  
   // If boss is inactive but in cooldown, update timer
   if (!updatedBoss.active && updatedBoss.cooldownTimer > 0) {
     updatedBoss.cooldownTimer -= deltaTime;
   }
-
+  
   return { updatedBoss, bossDefeated };
 };
 
@@ -325,11 +311,17 @@ export const updateGameState = (
 
   let bossDefeated = false;
   if (bossCore && bossCore.active) {
-    const { updatedBoss, bossDefeated: defeated } = updateBossCore(bossCore, timeScale, newPlayer);
-    bossCore = updatedBoss;
-    bossDefeated = defeated;
-    shouldGenerateNewBlocks = false;
-    shouldUpdateScore = false;
+    try {
+      const { updatedBoss, bossDefeated: defeated } = updateBossCore(bossCore, timeScale, newPlayer);
+      bossCore = updatedBoss;
+      bossDefeated = defeated;
+      shouldGenerateNewBlocks = false;
+      shouldUpdateScore = false;
+    } catch (error: any) {
+      if (error.message === "collision") {
+        return { newState: state, collision: true, gameWon: false };
+      }
+    }
   } else if (bossCore && !bossCore.active && bossCore.cooldownTimer > 0) {
     const { updatedBoss } = updateBossCore(bossCore, timeScale, newPlayer);
     bossCore = updatedBoss;
