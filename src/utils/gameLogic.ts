@@ -398,7 +398,8 @@ export const updateGameState = (
     newGeneratedBoosters = generatedBoosters;
   }
 
-  const bonusPoints = bossDefeated ? 5000 * (bossCore?.level || 1) : 0;
+  // Add fixed 1000 points bonus when boss is defeated
+  const bonusPoints = bossDefeated ? 1000 : 0;
   const newScore = shouldUpdateScore ? state.score + (1.33 * timeScale) + scoreBoost + bonusPoints : state.score;
   
   const newColorPhase = Math.floor(newScore / 5000);
