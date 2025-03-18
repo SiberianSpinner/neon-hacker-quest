@@ -1,4 +1,4 @@
-import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin, BossCore } from './types';
+import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin, BossCore, BossCoreLine } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
 import { checkCollision, checkBossLineCollision, checkMemoryCardCollision } from './collisionUtils';
@@ -8,7 +8,7 @@ import { getSelectedSkin } from './skinsUtils';
 // Re-export functions from storageUtils
 export { saveScore, getScores } from './storageUtils';
 
-// Initialize game state
+// Game state management functions
 export const initGameState = (canvasWidth: number, canvasHeight: number): GameState => {
   return {
     player: { 
@@ -36,13 +36,11 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
   };
 };
 
-// Format score as percentage
 export const formatScoreAsPercentage = (score: number): string => {
   const percentage = (score / 100000) * 100;
   return `${percentage.toFixed(2)}%`;
 };
 
-// Toggle cursor control
 export const toggleCursorControl = (state: GameState): GameState => {
   return {
     ...state,
@@ -50,7 +48,6 @@ export const toggleCursorControl = (state: GameState): GameState => {
   };
 };
 
-// Start game function
 export const startGame = (state: GameState): GameState => {
   return {
     ...state,
@@ -63,12 +60,10 @@ export const startGame = (state: GameState): GameState => {
   };
 };
 
-// Set unlimited attempts
 export const setUnlimitedAttempts = (): void => {
   localStorage.setItem('netrunner_unlimited_attempts', 'true');
 };
 
-// Get daily game stats
 export const getDailyGameStats = () => {
   const today = new Date().toISOString().split('T')[0];
   const statsKey = `netrunner_daily_stats_${today}`;
@@ -102,7 +97,7 @@ export const updateGameState = (
   let collision = false;
   let gameWon = false;
 
-  // Update player movement based on input method
+  // Pass the entire state object since updatePlayerMovement expects it
   newState = updatePlayerMovement(newState, keys, cursorPosition, isMobile, swipeDirection, canvasWidth, canvasHeight);
 
   // Only update score and generate maze if there's no active boss
@@ -190,7 +185,7 @@ export const updateGameState = (
   return { newState, collision, gameWon };
 };
 
-// Check if it's time to spawn a boss based on score
+// Boss-related functions
 const shouldSpawnBoss = (score: number, currentBoss: BossCore | null): boolean => {
   // Boss score thresholds
   const bossThresholds = [33000, 66000, 99000];
@@ -207,7 +202,6 @@ const shouldSpawnBoss = (score: number, currentBoss: BossCore | null): boolean =
   return false;
 };
 
-// Initialize boss core based on score
 export const initBossCore = (score: number, canvasWidth: number, canvasHeight: number): BossCore => {
   // Determine boss level based on score
   let level: 1 | 2 | 3;
@@ -301,7 +295,6 @@ export const initBossCore = (score: number, canvasWidth: number, canvasHeight: n
   };
 };
 
-// Update boss core state
 export const updateBossCore = (
   bossCore: BossCore, 
   deltaTime: number, 
@@ -424,7 +417,7 @@ export const updateBossCore = (
   return { updatedBoss, bossDefeated, collision };
 };
 
-// Check for booster collisions and apply effects
+// Booster collision checking
 const checkBoosterCollisions = (state: GameState): GameState => {
   const newState = { ...state };
   
