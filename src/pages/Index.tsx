@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { saveScore, getScores, setUnlimitedAttempts } from '@/utils/gameLogic';
 import { PlayerSkin } from '@/utils/types';
 import { getSelectedSkin, saveSelectedSkin } from '@/utils/skinsUtils';
+import { getNextAttemptTime, checkAndRestoreAttempts } from '@/utils/attemptsUtils';
 
 declare global {
   interface Window {
@@ -40,6 +41,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isTelegramWebApp, setIsTelegramWebApp] = useState(false);
   const [selectedSkin, setSelectedSkin] = useState<PlayerSkin>(PlayerSkin.DEFAULT);
+  const [nextAttemptTime, setNextAttemptTime] = useState<number | undefined>(undefined);
 
   // Check if running in Telegram WebApp
   useEffect(() => {
@@ -54,6 +56,35 @@ const Index = () => {
   useEffect(() => {
     setSelectedSkin(getSelectedSkin());
   }, []);
+
+  // Check and restore attempts based on time
+  useEffect(() => {
+    // Only run if attemptsLeft is below the maximum (3) and not infinity
+    if (attemptsLeft !== Infinity && attemptsLeft < 3) {
+      const { attempts, nextTime } = checkAndRestoreAttempts();
+      setAttemptsLeft(attempts);
+      setNextAttemptTime(nextTime);
+      
+      // Set interval to check for new attempts every minute
+      const interval = setInterval(() => {
+        const { attempts: newAttempts, nextTime: newNextTime } = checkAndRestoreAttempts();
+        setAttemptsLeft(newAttempts);
+        setNextAttemptTime(newNextTime);
+        
+        // If attempts restored, show notification
+        if (newAttempts > attemptsLeft) {
+          toast.success(isTelegramWebApp ? "Новая уязвимость найдена!" : "New vulnerability found!", {
+            description: isTelegramWebApp ? "Вы можете использовать её для взлома." : "You can use it for hacking."
+          });
+        }
+      }, 60000); // Check every minute
+      
+      return () => clearInterval(interval);
+    } else {
+      // If attemptsLeft is at max or infinity, no need for next attempt time
+      setNextAttemptTime(undefined);
+    }
+  }, [attemptsLeft, isTelegramWebApp]);
 
   // Loading sequence
   useEffect(() => {
@@ -136,7 +167,14 @@ const Index = () => {
     
     // Only deduct an attempt when game is actually starting
     if (!gameActive) {
-      setAttemptsLeft(prev => prev - 1);
+      setAttemptsLeft(prev => {
+        const newAttempts = prev === Infinity ? Infinity : prev - 1;
+        // Update next attempt time if attempts reduced
+        if (newAttempts < 3 && newAttempts !== Infinity) {
+          setNextAttemptTime(getNextAttemptTime());
+        }
+        return newAttempts;
+      });
     }
     
     setGameActive(true);
@@ -167,7 +205,17 @@ const Index = () => {
     });
     
     setTimeout(() => {
-      setAttemptsLeft(prev => prev + 1);
+      setAttemptsLeft(prev => {
+        const newAttempts = prev === Infinity ? Infinity : prev + 1;
+        // If we just added an attempt but still below max, update next attempt time
+        if (newAttempts < 3 && newAttempts !== Infinity) {
+          setNextAttemptTime(getNextAttemptTime());
+        } else {
+          setNextAttemptTime(undefined);
+        }
+        return newAttempts;
+      });
+      
       toast.success("Реклама завершена", {
         description: "Вы получили дополнительную попытку!"
       });
@@ -200,6 +248,7 @@ const Index = () => {
     
     setTimeout(() => {
       setAttemptsLeft(Infinity);
+      setNextAttemptTime(undefined); // Clear timer when unlimited is activated
       toast.success("Покупка успешна", {
         description: "Теперь у вас безлимитные попытки!"
       });
@@ -208,7 +257,17 @@ const Index = () => {
   
   // Add attempts (can be called from Telegram backend)
   const addAttempts = (count: number) => {
-    setAttemptsLeft(prev => prev + count);
+    setAttemptsLeft(prev => {
+      const newAttempts = prev === Infinity ? Infinity : prev + count;
+      // Update next attempt time if still below max and not infinity
+      if (newAttempts < 3 && newAttempts !== Infinity) {
+        setNextAttemptTime(getNextAttemptTime());
+      } else {
+        setNextAttemptTime(undefined);
+      }
+      return newAttempts;
+    });
+    
     toast.success("Попытки добавлены", {
       description: `Вы получили ${count} новых попыток!`
     });
@@ -217,6 +276,7 @@ const Index = () => {
   // Set unlimited attempts (can be called from Telegram backend)
   const activateUnlimited = () => {
     setAttemptsLeft(Infinity);
+    setNextAttemptTime(undefined); // Clear timer when unlimited is activated
     toast.success("Безлимитный режим активирован", {
       description: "Теперь у вас безлимитные попытки!"
     });
@@ -300,6 +360,7 @@ const Index = () => {
         attemptsLeft={attemptsLeft}
         lastScore={lastScore}
         isTelegramWebApp={isTelegramWebApp}
+        nextAttemptTime={nextAttemptTime}
       />
       
       {/* Leaderboard */}
