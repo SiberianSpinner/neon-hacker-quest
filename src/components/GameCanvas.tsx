@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
@@ -395,16 +394,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       {/* Matrix Rain overlay (always visible) */}
       <MatrixRain className="z-10" />
       
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-20px); }
-          to { opacity: 0.9; transform: translateY(0); }
-        }
-        @keyframes fadeOut {
-          from { opacity: 0.9; }
-          to { opacity: 0; }
-        }
-      `}</style>
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 0.9; transform: translateY(0); }
+          }
+          @keyframes fadeOut {
+            from { opacity: 0.9; }
+            to { opacity: 0; }
+          }
+        `}
+      </style>
     </>
   );
 };

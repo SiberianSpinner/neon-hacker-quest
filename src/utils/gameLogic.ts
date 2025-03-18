@@ -207,11 +207,9 @@ export const updateBossCore = (
     }
   }
   
-  // Check player collision with vulnerable lines
   // For outer lines
   updatedBoss.outerLines.forEach((line, index) => {
     if (!line.destroyed && line.isVulnerable) {
-      // Transform the line points based on the rotation
       const transformedPoints = line.points.map(point => {
         const [px, py] = point;
         const dx = px - updatedBoss.x;
@@ -222,8 +220,7 @@ export const updateBossCore = (
         return [rotatedX + updatedBoss.x, rotatedY + updatedBoss.y] as [number, number];
       });
       
-      // Create a temporary line object with transformed points for collision check
-      const tempLine: BossCoreLine = {
+      const tempLine = {
         ...line,
         points: transformedPoints
       };
@@ -233,14 +230,14 @@ export const updateBossCore = (
       }
     }
   });
-  
-  // Can only destroy inner lines if all outer lines are destroyed
+
+  // Can only interact with inner lines and memory card if all outer lines are destroyed
   const allOuterLinesDestroyed = updatedBoss.outerLines.every(line => line.destroyed);
+  
   if (allOuterLinesDestroyed) {
     // For inner lines
     updatedBoss.innerLines.forEach((line, index) => {
       if (!line.destroyed && line.isVulnerable) {
-        // Transform the line points based on the rotation
         const transformedPoints = line.points.map(point => {
           const [px, py] = point;
           const dx = px - updatedBoss.x;
@@ -251,8 +248,7 @@ export const updateBossCore = (
           return [rotatedX + updatedBoss.x, rotatedY + updatedBoss.y] as [number, number];
         });
         
-        // Create a temporary line object with transformed points for collision check
-        const tempLine: BossCoreLine = {
+        const tempLine = {
           ...line,
           points: transformedPoints
         };
@@ -262,26 +258,25 @@ export const updateBossCore = (
         }
       }
     });
-    
-    // Check if all inner lines are destroyed to enable memory card collection
+
+    // Check for memory card collision if all inner lines are destroyed
     const allInnerLinesDestroyed = updatedBoss.innerLines.every(line => line.destroyed);
+    
     if (allInnerLinesDestroyed && updatedBoss.memoryCard.active) {
-      // Check if player collides with memory card
       if (checkMemoryCardCollision(player, updatedBoss.memoryCard)) {
-        // Memory card collected, boss defeated!
         updatedBoss.memoryCard.active = false;
         updatedBoss.active = false;
-        updatedBoss.cooldownTimer = 180; // 3 seconds cooldown at 60fps
+        updatedBoss.cooldownTimer = 120; // 2 seconds cooldown at 60fps
         bossDefeated = true;
       }
     }
   }
-  
+
   // If boss is inactive but in cooldown, update timer
   if (!updatedBoss.active && updatedBoss.cooldownTimer > 0) {
     updatedBoss.cooldownTimer -= deltaTime;
   }
-  
+
   return { updatedBoss, bossDefeated };
 };
 
@@ -292,18 +287,15 @@ export const updateGameState = (
   canvasHeight: number,
   keys: { [key: string]: boolean },
   cursorPosition: { x: number | null, y: number | null },
-  deltaTime: number = 1, // Default to 1 for backward compatibility
+  deltaTime: number = 1,
   isMobile: boolean = false,
   swipeDirection: { x: number, y: number } | null = null
 ): { newState: GameState; collision: boolean; gameWon: boolean } => {
   if (!state.gameActive) {
     return { newState: state, collision: false, gameWon: false };
   }
-  
-  // Apply deltaTime normalization to make game speed consistent
-  const timeScale = Math.min(deltaTime, 2); // Cap at 2 to prevent huge jumps
-  
-  // Update player position based on keyboard input and cursor position
+
+  const timeScale = Math.min(deltaTime, 2);
   const newPlayer = updatePlayerMovement(
     state.player, 
     keys, 
@@ -314,68 +306,57 @@ export const updateGameState = (
     isMobile,
     swipeDirection
   );
-  
-  // Decrease invulnerable timer if active
+
   if (newPlayer.invulnerable) {
     newPlayer.invulnerableTimer -= 1 * timeScale;
     if (newPlayer.invulnerableTimer <= 0) {
       newPlayer.invulnerable = false;
     }
   }
-  
-  // Check if we should spawn a boss
+
   let bossCore = state.bossCore;
   let shouldGenerateNewBlocks = true;
-  
+  let shouldUpdateScore = true;
+
   if (shouldSpawnBoss(state.score, bossCore)) {
     console.log(`Spawning boss at score ${state.score}`);
     bossCore = initBossCore(state.score, canvasWidth, canvasHeight);
   }
-  
-  // Handle boss interaction if active
+
   let bossDefeated = false;
   if (bossCore && bossCore.active) {
     const { updatedBoss, bossDefeated: defeated } = updateBossCore(bossCore, timeScale, newPlayer);
     bossCore = updatedBoss;
     bossDefeated = defeated;
-    
-    // Don't generate new blocks while boss is active
     shouldGenerateNewBlocks = false;
+    shouldUpdateScore = false;
   } else if (bossCore && !bossCore.active && bossCore.cooldownTimer > 0) {
-    // Boss defeated but still in cooldown
     const { updatedBoss } = updateBossCore(bossCore, timeScale, newPlayer);
     bossCore = updatedBoss;
-    
-    // Don't generate new blocks during cooldown
     shouldGenerateNewBlocks = false;
+    shouldUpdateScore = false;
   }
-  
-  // Update maze blocks
+
   let collision = false;
   const newMaze = state.maze
     .map(block => {
-      // Move block down with time scaling
       const newBlock = { ...block, y: block.y + state.gameSpeed * timeScale };
       
-      // Check collision (only if player is not invulnerable)
       if (!newPlayer.invulnerable && checkCollision(newPlayer, newBlock)) {
         collision = true;
       }
       
       return newBlock;
     })
-    .filter(block => block.y < canvasHeight + 100); // Keep blocks that are still on or near screen
-  
-  // Update boosters
+    .filter(block => block.y < canvasHeight + 100);
+
   const newBoosters = state.boosters
     .map(booster => {
-      // Move booster down with time scaling
       const newBooster = { ...booster, y: booster.y + state.gameSpeed * timeScale };
       return newBooster;
     })
-    .filter(booster => booster.y < canvasHeight + 100 && booster.active); // Keep active boosters on screen
+    .filter(booster => booster.y < canvasHeight + 100 && booster.active);
     
-  // Check for booster collisions
   let collectedBooster = false;
   let newCollectedSafetyKeys = state.collectedSafetyKeys;
   let newCollectedBackdoors = state.collectedBackdoors;
@@ -383,22 +364,20 @@ export const updateGameState = (
   
   newBoosters.forEach(booster => {
     if (booster.active && checkBoosterCollision(newPlayer.x, newPlayer.y, newPlayer.size, booster)) {
-      booster.active = false; // Deactivate collected booster
+      booster.active = false;
       collectedBooster = true;
       
       if (booster.type === BoosterType.SAFETY_KEY) {
         newPlayer.invulnerable = true;
-        newPlayer.invulnerableTimer = 1800; // 30 seconds at 60 FPS (60 * 30 = 1800)
-        newCollectedSafetyKeys += 1; // Increment collected safety keys count
+        newPlayer.invulnerableTimer = 1800;
+        newCollectedSafetyKeys += 1;
       } else if (booster.type === BoosterType.BACKDOOR) {
-        // Add 3000 points when collecting a Backdoor
         scoreBoost = 3000;
-        newCollectedBackdoors += 1; // Increment collected backdoors count
+        newCollectedBackdoors += 1;
       }
     }
   });
-  
-  // Generate new blocks and potentially boosters, but only if no boss is active
+
   let updatedMaze = newMaze;
   let newGeneratedBoosters: Booster[] = [];
   
@@ -413,16 +392,12 @@ export const updateGameState = (
     updatedMaze = generatedMaze;
     newGeneratedBoosters = generatedBoosters;
   }
-  
-  // Update score and color phase (add score boost from backdoor if collected)
-  // Also add bonus points if boss defeated
+
   const bonusPoints = bossDefeated ? 5000 * (bossCore?.level || 1) : 0;
-  const newScore = state.score + (1.33 * timeScale) + scoreBoost + bonusPoints;
+  const newScore = shouldUpdateScore ? state.score + (1.33 * timeScale) + scoreBoost + bonusPoints : state.score;
   
-  // Update color phase every 5000 points
   const newColorPhase = Math.floor(newScore / 5000);
   
-  // Check if player has won (reached 100,000 points - 100% hack completion)
   const gameWon = newScore >= 100000;
   
   const newState = {
@@ -432,7 +407,7 @@ export const updateGameState = (
     boosters: [...newBoosters.filter(b => b.active), ...newGeneratedBoosters],
     score: newScore,
     colorPhase: newColorPhase,
-    gameSpeed: Math.min(10, 2.67 + Math.floor(newScore / 2000)), // Reduced base speed from 4 to 2.67 (1.5x slower)
+    gameSpeed: Math.min(10, 2.67 + Math.floor(newScore / 2000)),
     gameWon,
     collectedSafetyKeys: newCollectedSafetyKeys,
     collectedBackdoors: newCollectedBackdoors,
@@ -448,10 +423,7 @@ export const updateGameState = (
 
 // Format score as hack percentage
 export const formatScoreAsPercentage = (score: number): string => {
-  // 1000 points = 1% hack completion
   const percentage = score / 1000;
-  
-  // Format with 3 decimal places
   return percentage.toFixed(3) + '%';
 };
 
@@ -466,7 +438,6 @@ export const toggleCursorControl = (state: GameState): GameState => {
 // Start a new game
 export const startGame = (state: GameState): GameState => {
   console.log("Starting game with state:", state);
-  // Track daily game plays
   updateDailyGameStats();
   
   return {
@@ -484,31 +455,27 @@ export const startGame = (state: GameState): GameState => {
       invulnerable: false,
       invulnerableTimer: 0
     },
-    selectedSkin: state.selectedSkin, // Preserve selected skin
-    bossCore: null // Reset boss core
+    selectedSkin: state.selectedSkin,
+    bossCore: null
   };
 };
 
 // Track daily game plays
 export const updateDailyGameStats = (): void => {
-  const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0];
   const DAILY_STATS_KEY = 'netrunner_daily_stats';
   
-  // Get existing stats
   const statsJson = localStorage.getItem(DAILY_STATS_KEY);
   let stats = statsJson ? JSON.parse(statsJson) : { date: today, gamesPlayed: 0 };
   
-  // If it's a new day, reset counter
   if (stats.date !== today) {
     stats = { date: today, gamesPlayed: 0 };
   }
   
-  // Increment games played today
   stats.gamesPlayed += 1;
   
   console.log(`Daily game stats updated: ${stats.gamesPlayed} games played today`);
   
-  // Save back to storage
   localStorage.setItem(DAILY_STATS_KEY, JSON.stringify(stats));
 };
 
@@ -521,7 +488,6 @@ export const getDailyGameStats = (): { date: string, gamesPlayed: number } => {
     return JSON.parse(statsJson);
   }
   
-  // Default if no stats exist
   return { 
     date: new Date().toISOString().split('T')[0], 
     gamesPlayed: 0 
@@ -530,11 +496,9 @@ export const getDailyGameStats = (): { date: string, gamesPlayed: number } => {
 
 // End game and save score
 export const endGame = (state: GameState): GameState => {
-  // Save the score to local storage
   console.log("Ending game, saving score:", state.score);
   saveScore(state.score);
   
-  // Update achievements with final game state
   console.log("Game over, updating achievements");
   updateAchievements(state);
   
@@ -560,7 +524,6 @@ export const setUnlimitedAttempts = (state: GameState): GameState => {
   };
 };
 
-// Re-export everything from the separate modules for backward compatibility
 export { updatePlayerMovement } from './playerUtils';
 export { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
 export { checkCollision } from './collisionUtils';
