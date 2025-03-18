@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -112,17 +111,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
             {isTelegramWebApp ? 'НАЙДЕНО УЯЗВИМОСТЕЙ: ' : 'VULNERABILITIES FOUND: '}{attemptsLeft === Infinity ? '∞' : attemptsLeft}
           </motion.p>
           
-          {/* Daily attempts counter */}
-          {!hasUnlimitedMode && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="text-sm text-cyber-foreground/70"
-            >
-              {isTelegramWebApp ? 'ЕЖЕДНЕВНЫХ ПОПЫТОК: ' : 'DAILY ATTEMPTS: '}{dailyAttemptsLeft}/3
-            </motion.p>
-          )}
+          {/* Removed the Daily attempts counter block as requested */}
           
           {/* Timer until next reset - only show if less than 3 daily attempts and not in unlimited mode */}
           {dailyAttemptsLeft < 3 && !hasUnlimitedMode && (
@@ -134,7 +123,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
             >
               <Clock className="w-4 h-4" />
               <span>
-                {isTelegramWebApp ? 'НОВАЯ УЯЗВИМОСТЬ ЧЕРЕЗ: ' : 'NEW VULNERABILITY IN: '}{timeUntilReset}
+                {isTelegramWebApp ? 'НОВЫЕ УЯЗВИМОСТИ ЧЕРЕЗ: ' : 'NEW VULNERABILITIES IN: '}{timeUntilReset}
               </span>
             </motion.div>
           )}
