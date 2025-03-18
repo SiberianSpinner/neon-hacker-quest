@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BossCore as BossCoreType, BossCoreLine } from '@/utils/types';
 
@@ -54,9 +53,9 @@ const BossCore: React.FC<BossCoreProps> = ({ bossCore }) => {
               // Number of symbols to place based on distance
               const symbolsCount = Math.max(1, Math.floor(distance / 15));
               
-              return Array.from({ length: symbolsCount }).map((_, symbolIndex) => {
+              return Array.from({ length: symbolsCount }).map((_, i) => {
                 // Calculate position for each symbol
-                const t = symbolIndex / (symbolsCount - 1 || 1);
+                const t = i / (symbolsCount - 1 || 1);
                 const symbolX = x1 + (x2 - x1) * t;
                 const symbolY = y1 + (y2 - y1) * t;
                 
@@ -64,11 +63,11 @@ const BossCore: React.FC<BossCoreProps> = ({ bossCore }) => {
                 const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
                 
                 // Use a fixed symbol for each position instead of random
-                const symbolIndex = (Math.floor(symbolX * 3.7) + Math.floor(symbolY * 5.3)) % matrixSymbols.length;
+                const matrixSymbolIndex = (Math.floor(symbolX * 3.7) + Math.floor(symbolY * 5.3)) % matrixSymbols.length;
                 
                 return (
                   <text
-                    key={`symbol-${pointIndex}-${symbolIndex}`}
+                    key={`symbol-${pointIndex}-${i}`}
                     x={symbolX}
                     y={symbolY}
                     fill={color}
@@ -80,7 +79,7 @@ const BossCore: React.FC<BossCoreProps> = ({ bossCore }) => {
                     transform={`rotate(${angle}, ${symbolX}, ${symbolY})`}
                     filter="url(#glow)"
                   >
-                    {matrixSymbols[symbolIndex]}
+                    {matrixSymbols[matrixSymbolIndex]}
                   </text>
                 );
               });
