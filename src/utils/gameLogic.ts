@@ -231,11 +231,11 @@ export const updateBossCore = (
     }
   });
 
-  // Can only interact with inner lines and memory card if all outer lines are destroyed
+  // Check if all outer lines are destroyed to enable inner line interaction
   const allOuterLinesDestroyed = updatedBoss.outerLines.every(line => line.destroyed);
   
   if (allOuterLinesDestroyed) {
-    // For inner lines
+    // For inner lines - now with the same collision mechanics as outer lines
     updatedBoss.innerLines.forEach((line, index) => {
       if (!line.destroyed && line.isVulnerable) {
         const transformedPoints = line.points.map(point => {
