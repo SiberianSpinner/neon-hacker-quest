@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { BossCore as BossCoreType, BossCoreLine } from '@/utils/types';
+import { BossCore as BossCoreType, BossCoreLine, Booster, BoosterType } from '@/utils/types';
 
 interface BossCoreProps {
   bossCore: BossCoreType;

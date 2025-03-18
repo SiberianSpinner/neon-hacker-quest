@@ -1,3 +1,4 @@
+
 import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin, BossCore, BossCoreLine } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -37,7 +38,7 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
 // Check if it's time to spawn a boss based on score
 const shouldSpawnBoss = (score: number, currentBoss: BossCore | null): boolean => {
   // Boss score thresholds
-  const bossThresholds = [3000, 33000, 66000, 99000]; // Added 3000 points boss
+  const bossThresholds = [3000, 33000, 66000, 99000];
   
   // Check if score has just crossed a threshold and there's no active boss
   for (const threshold of bossThresholds) {
@@ -190,14 +191,20 @@ export const updateBossCore = (
     const shuffledLines = [...allLines].sort(() => Math.random() - 0.5);
     
     for (let i = 0; i < linesToMakeVulnerable; i++) {
-      const lineIndex = shuffledLines[i].id;
-      const outerLineIndex = updatedBoss.outerLines.findIndex(l => l.id === lineIndex);
-      if (outerLineIndex >= 0) {
-        updatedBoss.outerLines[outerLineIndex].isVulnerable = true;
-      } else {
-        const innerLineIndex = updatedBoss.innerLines.findIndex(l => l.id === lineIndex);
-        if (innerLineIndex >= 0) {
-          updatedBoss.innerLines[innerLineIndex].isVulnerable = true;
+      if (i < shuffledLines.length) {
+        const line = shuffledLines[i];
+        const isOuter = updatedBoss.outerLines.some(l => l.id === line.id);
+        
+        if (isOuter) {
+          const index = updatedBoss.outerLines.findIndex(l => l.id === line.id);
+          if (index >= 0) {
+            updatedBoss.outerLines[index].isVulnerable = true;
+          }
+        } else {
+          const index = updatedBoss.innerLines.findIndex(l => l.id === line.id);
+          if (index >= 0) {
+            updatedBoss.innerLines[index].isVulnerable = true;
+          }
         }
       }
     }
@@ -248,7 +255,7 @@ export const updateBossCore = (
     if (distance < player.size + coreSize/2) {
       // Player touched the memory core center, boss is defeated
       updatedBoss.active = false;
-      updatedBoss.cooldownTimer = 120; // 2 seconds cooldown at 60fps
+      updatedBoss.cooldownTimer = 2; // 2 seconds cooldown
       bossDefeated = true;
     }
     
@@ -260,7 +267,7 @@ export const updateBossCore = (
   
   // If boss is inactive but in cooldown, update timer
   if (!updatedBoss.active && updatedBoss.cooldownTimer > 0) {
-    updatedBoss.cooldownTimer -= deltaTime;
+    updatedBoss.cooldownTimer -= deltaTime / 60; // Convert to seconds
   }
   
   return { updatedBoss, bossDefeated };
@@ -327,6 +334,13 @@ export const updateGameState = (
     bossCore = updatedBoss;
     shouldGenerateNewBlocks = false;
     shouldUpdateScore = false;
+  }
+
+  // If boss cooldown timer reached 0, immediately resume gameplay and clear boss
+  if (bossCore && !bossCore.active && bossCore.cooldownTimer <= 0) {
+    bossCore = null;
+    shouldGenerateNewBlocks = true;
+    shouldUpdateScore = true;
   }
 
   let collision = false;
