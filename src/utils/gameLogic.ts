@@ -1,3 +1,4 @@
+
 import { GameState, Player, MazeBlock, Booster, BoosterType, PlayerSkin, BossCore, BossCoreLine } from './types';
 import { updatePlayerMovement } from './playerUtils';
 import { generateMaze, getBlockColor, checkBoosterCollision } from './mazeUtils';
@@ -309,18 +310,22 @@ export const updateGameState = (
   let bossCore = state.bossCore;
   let shouldGenerateNewBlocks = true;
   let shouldUpdateScore = true;
-
+  let bossDefeated = false;
+  
+  // Check if we need to spawn a new boss
   if (shouldSpawnBoss(state.score, bossCore)) {
     console.log(`Spawning boss at score ${state.score}`);
     bossCore = initBossCore(state.score, canvasWidth, canvasHeight);
   }
 
-  let bossDefeated = false;
+  // Handle boss core updates if it exists
   if (bossCore && bossCore.active) {
     try {
-      const { updatedBoss, bossDefeated: defeated } = updateBossCore(bossCore, timeScale, newPlayer);
-      bossCore = updatedBoss;
-      bossDefeated = defeated;
+      const bossResult = updateBossCore(bossCore, timeScale, newPlayer);
+      bossCore = bossResult.updatedBoss;
+      bossDefeated = bossResult.bossDefeated;
+      
+      // Only pause regular gameplay while boss is active
       shouldGenerateNewBlocks = false;
       shouldUpdateScore = false;
     } catch (error: any) {
@@ -328,18 +333,21 @@ export const updateGameState = (
         return { newState: state, collision: true, gameWon: false };
       }
     }
-  } else if (bossCore && !bossCore.active && bossCore.cooldownTimer > 0) {
+  } 
+  
+  // Handle recently defeated boss that's in cooldown
+  else if (bossCore && !bossCore.active && bossCore.cooldownTimer > 0) {
     const { updatedBoss } = updateBossCore(bossCore, timeScale, newPlayer);
     bossCore = updatedBoss;
-    shouldGenerateNewBlocks = false;
-    shouldUpdateScore = false;
-  }
-
-  // If boss cooldown timer reached 0, immediately resume gameplay and clear boss
-  if (bossCore && !bossCore.active && bossCore.cooldownTimer <= 0) {
-    bossCore = null;
+    
+    // Allow regular gameplay to resume immediately after boss is defeated
     shouldGenerateNewBlocks = true;
     shouldUpdateScore = true;
+  }
+
+  // If boss cooldown timer reached 0, clear the boss
+  if (bossCore && !bossCore.active && bossCore.cooldownTimer <= 0) {
+    bossCore = null;
   }
 
   let collision = false;
@@ -399,8 +407,8 @@ export const updateGameState = (
   }
 
   // Add fixed 1000 points bonus when boss is defeated
-  const bonusPoints = bossDefeated ? 1000 : 0;
-  const newScore = shouldUpdateScore ? state.score + (1.33 * timeScale) + scoreBoost + bonusPoints : state.score;
+  const bonusPoints = bossDefeated ? 2000 : 0;
+  const newScore = shouldUpdateScore || bossDefeated ? state.score + (1.33 * timeScale) + scoreBoost + bonusPoints : state.score;
   
   const newColorPhase = Math.floor(newScore / 5000);
   
