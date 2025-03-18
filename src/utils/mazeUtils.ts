@@ -2,10 +2,13 @@ import { MazeBlock, ShapeType, Booster, BoosterType } from './types';
 
 // Generate maze blocks with Tetris-like shapes
 export const generateMaze = (
+  maze: MazeBlock[], 
   canvasWidth: number,
+  canvasHeight: number,
+  gameSpeed: number,
   score: number
 ): { maze: MazeBlock[], boosters: Booster[] } => {
-  const maze: MazeBlock[] = [];
+  const newMaze = [...maze];
   const boosters: Booster[] = [];
   
   // Calculate spawn rate increase based on score (2% per 1000 points instead of 5%)
@@ -19,7 +22,7 @@ export const generateMaze = (
   const shapesToSpawn = Math.max(1, Math.floor(baseShapeCount * (1 + shapeCountIncrease)));
   
   // Generate new maze blocks with adjusted probability and increased shape count
-  if (Math.random() < currentSpawnRate) {
+  if (Math.random() < currentSpawnRate || maze.length === 0) {
     for (let i = 0; i < shapesToSpawn; i++) {
       const gridSize = 50; // Base size for each block cube
       
@@ -43,15 +46,18 @@ export const generateMaze = (
       const shapeBlocks = createShape(shapeType, x, y, gridSize);
       
       // Check if the entire shape can be placed without overlapping existing blocks
+      const existingBlocks = [...maze]; // All currently existing blocks
       const canPlaceShape = !shapeBlocks.some(block => 
-        checkBlockOverlap(block, [...maze, ...newBlocks], gridSize)
+        checkBlockOverlap(block, existingBlocks, gridSize) || 
+        checkBlockOverlap(block, newBlocks, gridSize)
       );
       
       // Only add the shape if it can be placed without overlaps
       if (canPlaceShape) {
+        // Add all blocks of the shape
         shapeBlocks.forEach(block => {
           newBlocks.push(block);
-          maze.push(block);
+          newMaze.push(block);
         });
       }
     }
@@ -63,25 +69,27 @@ export const generateMaze = (
   
   // Safety Key booster (30% chance if eligible)
   if (score > 0 && Math.round(score) % 3000 < 2 && boosterRandom < 0.3) {
-    const booster = generateBooster(canvasWidth, score, BoosterType.SAFETY_KEY);
+    const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.SAFETY_KEY);
     if (booster) {
       boosters.push(booster);
     }
   } 
   // Backdoor booster (30% chance if eligible and safety key wasn't spawned)
   else if (score > 0 && Math.round(score) % 1400 < 2 && boosterRandom >= 0.3 && boosterRandom < 0.6) {
-    const booster = generateBooster(canvasWidth, score, BoosterType.BACKDOOR);
+    const booster = generateBooster(canvasWidth, canvasHeight, [...newMaze], score, BoosterType.BACKDOOR);
     if (booster) {
       boosters.push(booster);
     }
   }
   
-  return { maze, boosters };
+  return { maze: newMaze, boosters };
 };
 
 // Generate a booster at a random valid position
 const generateBooster = (
   canvasWidth: number,
+  canvasHeight: number,
+  existingBlocks: MazeBlock[],
   score: number,
   boosterType: BoosterType
 ): Booster | null => {
@@ -92,16 +100,28 @@ const generateBooster = (
   // Try up to 10 times to find a valid position
   for (let i = 0; i < 10; i++) {
     const x = padding + Math.random() * (canvasWidth - padding * 2 - size);
-    const y = -size - Math.random() * 100; // Position above the canvas
+    const y = padding + Math.random() * (canvasHeight - padding * 2 - size);
     
-    // Create the booster
-    return {
-      x,
-      y,
-      size,
-      type: boosterType,
-      active: true
+    // Create a temporary block to represent the booster for collision checking
+    const tempBlock: MazeBlock = { 
+      x, 
+      y, 
+      width: size, 
+      height: size, 
+      colorPhase: 0 // Add colorPhase property
     };
+    
+    // Check if the booster would overlap with any existing block
+    if (!checkBlockOverlap(tempBlock, existingBlocks, 10)) {
+      // Valid position found, create the booster
+      return {
+        x,
+        y,
+        size,
+        type: boosterType,
+        active: true
+      };
+    }
   }
   
   // Could not find a valid position after 10 attempts

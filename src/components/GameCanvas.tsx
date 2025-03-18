@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { 
   initGameState, 
@@ -317,69 +318,51 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         style={{ opacity: isActive ? 1 : 0 }}
       >
         {gameState && (
-          <>
-            {/* Debug button for boss testing */}
-            {process.env.NODE_ENV === 'development' && (
-              <button
-                className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded z-50"
-                onClick={() => {
-                  if (gameState) {
-                    setGameState(prev => ({
-                      ...prev,
-                      score: 33000
-                    }));
-                  }
-                }}
-              >
-                Spawn Boss (DEBUG)
-              </button>
+          <svg 
+            ref={svgRef}
+            width={dimensions.width}
+            height={dimensions.height}
+            className="absolute inset-0"
+            style={{ background: '#0a0a0a' }}
+          >
+            {/* SVG filters for glow effects */}
+            <SVGFilters />
+            
+            {/* Background grid */}
+            <GameGrid canvasWidth={dimensions.width} canvasHeight={dimensions.height} />
+            
+            {/* Maze blocks */}
+            <MazeBlocks blocks={gameState.maze} score={gameState.score} />
+            
+            {/* Boosters */}
+            <Boosters boosters={gameState.boosters} score={gameState.score} />
+            
+            {/* Boss Core (if active) */}
+            {gameState.bossCore && (
+              <BossCore 
+                bossCore={gameState.bossCore} 
+                time={previousTimeRef.current || 0} 
+              />
             )}
             
-            <svg 
-              ref={svgRef}
-              width={dimensions.width}
-              height={dimensions.height}
-              className="absolute inset-0"
-              style={{ background: '#0a0a0a' }}
-            >
-              {/* SVG filters for glow effects */}
-              <SVGFilters />
-              
-              {/* Background grid */}
-              <GameGrid canvasWidth={dimensions.width} canvasHeight={dimensions.height} />
-              
-              {/* Maze blocks */}
-              <MazeBlocks blocks={gameState.maze} score={gameState.score} />
-              
-              {/* Boosters */}
-              <Boosters boosters={gameState.boosters} score={gameState.score} />
-              
-              {/* Boss Core (if active) */}
-              {gameState.bossCore && (
-                <BossCore 
-                  bossCore={gameState.bossCore} 
-                />
-              )}
-              
-              {/* Player */}
-              <PlayerEntity 
-                player={gameState.player} 
-                time={previousTimeRef.current || 0} 
-                selectedSkin={gameState.selectedSkin} 
-              />
-              
-              {/* Game UI (score, invulnerability timer, etc.) */}
-              <GameUI 
-                score={gameState.score}
-                invulnerable={gameState.player.invulnerable}
-                invulnerableTimer={gameState.player.invulnerableTimer}
-                cursorControl={gameState.cursorControl || isMobile}
-                cursorPosition={cursorPosition}
-                canvasWidth={dimensions.width}
-                isMobile={isMobile}
-              />
-            </svg>
-          </>
+            {/* Player */}
+            <PlayerEntity 
+              player={gameState.player} 
+              time={previousTimeRef.current || 0} 
+              selectedSkin={gameState.selectedSkin} 
+            />
+            
+            {/* Game UI (score, invulnerability timer, etc.) */}
+            <GameUI 
+              score={gameState.score}
+              invulnerable={gameState.player.invulnerable}
+              invulnerableTimer={gameState.player.invulnerableTimer}
+              cursorControl={gameState.cursorControl || isMobile}
+              cursorPosition={cursorPosition}
+              canvasWidth={dimensions.width}
+              isMobile={isMobile}
+            />
+          </svg>
         )}
       </div>
       
@@ -412,18 +395,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       {/* Matrix Rain overlay (always visible) */}
       <MatrixRain className="z-10" />
       
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 0.9; transform: translateY(0); }
-          }
-          @keyframes fadeOut {
-            from { opacity: 0.9; }
-            to { opacity: 0; }
-          }
-        `}
-      </style>
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 0.9; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+          from { opacity: 0.9; }
+          to { opacity: 0; }
+        }
+      `}</style>
     </>
   );
 };

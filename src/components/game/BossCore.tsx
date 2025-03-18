@@ -1,13 +1,20 @@
-import React from 'react';
+
+import React, { useMemo } from 'react';
 import { BossCore as BossCoreType, BossCoreLine } from '@/utils/types';
 
 interface BossCoreProps {
   bossCore: BossCoreType;
+  time: number;
 }
 
-const BossCore: React.FC<BossCoreProps> = ({ bossCore }) => {
+const BossCore: React.FC<BossCoreProps> = ({ bossCore, time }) => {
   // Matrix symbols pool to use for boss lines
   const matrixSymbols = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンабвгдеёжзийклмнопрстуфхцчшщъыьэюя';
+  
+  // Generate random matrix symbol
+  const getRandomMatrixSymbol = () => {
+    return matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
+  };
   
   // Get boss color based on level
   const getBossColor = () => {
@@ -28,7 +35,10 @@ const BossCore: React.FC<BossCoreProps> = ({ bossCore }) => {
       default: return '#ff00ff';
     }
   };
-
+  
+  // Update symbols every second for animation effect
+  const symbolKey = Math.floor(time / 1000);
+  
   // Render the boss lines
   const renderLines = (lines: BossCoreLine[], isOuter: boolean) => {
     const baseColor = getBossColor();
@@ -47,27 +57,28 @@ const BossCore: React.FC<BossCoreProps> = ({ bossCore }) => {
               const [x1, y1] = point;
               const [x2, y2] = line.points[pointIndex + 1];
               
+              // Calculate midpoint for text positioning
+              const midX = (x1 + x2) / 2;
+              const midY = (y1 + y2) / 2;
+              
+              // Calculate angle for proper text rotation
+              const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+              
               // Calculate distance between points
               const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
               
-              // Number of symbols to place based on distance
+              // Number of symbols to place based on distance (1 symbol per 15px)
               const symbolsCount = Math.max(1, Math.floor(distance / 15));
               
-              return Array.from({ length: symbolsCount }).map((_, i) => {
+              return Array.from({ length: symbolsCount }).map((_, symbolIndex) => {
                 // Calculate position for each symbol
-                const t = i / (symbolsCount - 1 || 1);
+                const t = symbolIndex / (symbolsCount - 1 || 1);
                 const symbolX = x1 + (x2 - x1) * t;
                 const symbolY = y1 + (y2 - y1) * t;
                 
-                // Calculate angle for proper text rotation
-                const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
-                
-                // Use a fixed symbol for each position instead of random
-                const matrixSymbolIndex = (Math.floor(symbolX * 3.7) + Math.floor(symbolY * 5.3)) % matrixSymbols.length;
-                
                 return (
                   <text
-                    key={`symbol-${pointIndex}-${i}`}
+                    key={`symbol-${pointIndex}-${symbolIndex}-${symbolKey}`}
                     x={symbolX}
                     y={symbolY}
                     fill={color}
@@ -79,7 +90,7 @@ const BossCore: React.FC<BossCoreProps> = ({ bossCore }) => {
                     transform={`rotate(${angle}, ${symbolX}, ${symbolY})`}
                     filter="url(#glow)"
                   >
-                    {matrixSymbols[matrixSymbolIndex]}
+                    {getRandomMatrixSymbol()}
                   </text>
                 );
               });
@@ -99,14 +110,14 @@ const BossCore: React.FC<BossCoreProps> = ({ bossCore }) => {
       return (
         <g filter="url(#boosterGlow)">
           <circle
-            cx={bossCore.x}
-            cy={bossCore.y}
-            r={15}
+            cx={bossCore.memoryCard.x + bossCore.memoryCard.size / 2}
+            cy={bossCore.memoryCard.y + bossCore.memoryCard.size / 2}
+            r={bossCore.memoryCard.size / 2}
             fill="#ffffff"
           />
           <text
-            x={bossCore.x}
-            y={bossCore.y}
+            x={bossCore.memoryCard.x + bossCore.memoryCard.size / 2}
+            y={bossCore.memoryCard.y + bossCore.memoryCard.size / 2}
             fill="#000000"
             fontSize="10"
             fontFamily='"JetBrains Mono", monospace'
@@ -127,20 +138,14 @@ const BossCore: React.FC<BossCoreProps> = ({ bossCore }) => {
   
   return (
     <g>
-      {/* Outer squares (2) */}
+      {/* Outer square lines */}
       <g transform={`rotate(${bossCore.outerRotationAngle}, ${bossCore.x}, ${bossCore.y})`}>
-        {renderLines(bossCore.outerLines.slice(0, 8), true)}
-      </g>
-      <g transform={`rotate(${-bossCore.outerRotationAngle + 45}, ${bossCore.x}, ${bossCore.y})`}>
-        {renderLines(bossCore.outerLines.slice(8), true)}
+        {renderLines(bossCore.outerLines, true)}
       </g>
       
-      {/* Inner squares (2) */}
+      {/* Inner square lines */}
       <g transform={`rotate(${bossCore.innerRotationAngle}, ${bossCore.x}, ${bossCore.y})`}>
-        {renderLines(bossCore.innerLines.slice(0, 4), false)}
-      </g>
-      <g transform={`rotate(${-bossCore.innerRotationAngle + 45}, ${bossCore.x}, ${bossCore.y})`}>
-        {renderLines(bossCore.innerLines.slice(4), false)}
+        {renderLines(bossCore.innerLines, false)}
       </g>
       
       {/* Memory card */}

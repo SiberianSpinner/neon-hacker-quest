@@ -1,3 +1,4 @@
+
 import { Player, MazeBlock, BossCoreLine, Booster } from './types';
 
 // Check if player collides with a maze block
@@ -10,11 +11,8 @@ export const checkCollision = (player: Player, block: MazeBlock): boolean => {
   );
 };
 
-// Update boss core collision check to handle regular and vulnerable lines separately
-export const checkBossLineCollision = (
-  player: Player, 
-  line: BossCoreLine
-): { collision: boolean, isLethal: boolean } => {
+// Check if player collides with a boss core line
+export const checkBossLineCollision = (player: Player, line: BossCoreLine): boolean => {
   // Check collision with each segment of the line
   for (let i = 0; i < line.points.length - 1; i++) {
     const [x1, y1] = line.points[i];
@@ -29,14 +27,11 @@ export const checkBossLineCollision = (
     
     // If distance is less than player size, there's a collision
     if (distance < player.size) {
-      return {
-        collision: true,
-        isLethal: !line.isVulnerable // Collision is lethal if line is not vulnerable
-      };
+      return true;
     }
   }
   
-  return { collision: false, isLethal: false };
+  return false;
 };
 
 // Calculate distance from point to line segment
@@ -67,8 +62,8 @@ const pointLineDistance = (
 // Check if player collides with the memory card (final boss component)
 export const checkMemoryCardCollision = (player: Player, memoryCard: Booster): boolean => {
   // Calculate distance between player center and memory card center
-  const dx = player.x - memoryCard.x;
-  const dy = player.y - memoryCard.y;
+  const dx = player.x - (memoryCard.x + memoryCard.size / 2);
+  const dy = player.y - (memoryCard.y + memoryCard.size / 2);
   const distance = Math.sqrt(dx * dx + dy * dy);
   
   // If distance is less than sum of player radius and memory card radius, there's a collision
