@@ -74,6 +74,28 @@ const ACHIEVEMENTS: Achievement[] = [
     description: 'Play the game 10 times in one day',
     unlocked: false,
     imageSrc: '/achievements/determination.svg',
+  },
+  // New memory core related achievements
+  {
+    id: 'defeat_first_core',
+    name: 'Memory Crasher',
+    description: 'Defeat your first Memory Core',
+    unlocked: false,
+    imageSrc: '/achievements/memory-crasher.svg',
+  },
+  {
+    id: 'defeat_level2_core',
+    name: 'Data Corruptor',
+    description: 'Defeat a Level 2 Memory Core',
+    unlocked: false,
+    imageSrc: '/achievements/data-corruptor.svg',
+  },
+  {
+    id: 'defeat_level3_core',
+    name: 'System Annihilator',
+    description: 'Defeat a Level 3 Memory Core',
+    unlocked: false,
+    imageSrc: '/achievements/system-annihilator.svg',
   }
 ];
 
@@ -227,6 +249,37 @@ export const updateAchievements = (state: GameState): void => {
       achievements[achievementIndex].unlocked = true;
       updated = true;
       console.log('Achievement unlocked: Determination');
+    }
+  }
+
+  // Memory Core achievements - track boss defeats by level
+  // First Memory Core defeat
+  if (!isAchievementUnlocked('defeat_first_core') && state.bossDefeatsCount > 0) {
+    const achievementIndex = achievements.findIndex(a => a.id === 'defeat_first_core');
+    if (achievementIndex !== -1) {
+      achievements[achievementIndex].unlocked = true;
+      updated = true;
+      console.log('Achievement unlocked: Memory Crasher');
+    }
+  }
+  
+  // Level 2 Memory Core defeat (needs to have defeated a level 2 boss)
+  if (!isAchievementUnlocked('defeat_level2_core') && state.highestBossLevelDefeated >= 2) {
+    const achievementIndex = achievements.findIndex(a => a.id === 'defeat_level2_core');
+    if (achievementIndex !== -1) {
+      achievements[achievementIndex].unlocked = true;
+      updated = true;
+      console.log('Achievement unlocked: Data Corruptor');
+    }
+  }
+  
+  // Level 3 Memory Core defeat (needs to have defeated a level 3 boss)
+  if (!isAchievementUnlocked('defeat_level3_core') && state.highestBossLevelDefeated >= 3) {
+    const achievementIndex = achievements.findIndex(a => a.id === 'defeat_level3_core');
+    if (achievementIndex !== -1) {
+      achievements[achievementIndex].unlocked = true;
+      updated = true;
+      console.log('Achievement unlocked: System Annihilator');
     }
   }
   

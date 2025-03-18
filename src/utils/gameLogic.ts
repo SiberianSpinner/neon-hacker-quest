@@ -31,7 +31,9 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
     collectedSafetyKeys: 0,
     collectedBackdoors: 0,
     selectedSkin: getSelectedSkin(), // Get selected skin from localStorage
-    bossCore: null
+    bossCore: null,
+    bossDefeatsCount: 0,
+    highestBossLevelDefeated: 0
   };
 };
 
@@ -406,7 +408,18 @@ export const updateGameState = (
     newGeneratedBoosters = generatedBoosters;
   }
 
-  // Add fixed 1000 points bonus when boss is defeated
+  // Calculate boss defeat stats
+  let newBossDefeatsCount = state.bossDefeatsCount;
+  let newHighestBossLevelDefeated = state.highestBossLevelDefeated;
+  
+  // Add boss defeat tracking
+  if (bossDefeated && bossCore) {
+    newBossDefeatsCount += 1;
+    newHighestBossLevelDefeated = Math.max(newHighestBossLevelDefeated, bossCore.level);
+    console.log(`Boss defeated! Level: ${bossCore.level}, Total defeats: ${newBossDefeatsCount}`);
+  }
+
+  // Add fixed 2000 points bonus when boss is defeated
   const bonusPoints = bossDefeated ? 2000 : 0;
   const newScore = shouldUpdateScore || bossDefeated ? state.score + (1.33 * timeScale) + scoreBoost + bonusPoints : state.score;
   
@@ -425,7 +438,9 @@ export const updateGameState = (
     gameWon,
     collectedSafetyKeys: newCollectedSafetyKeys,
     collectedBackdoors: newCollectedBackdoors,
-    bossCore
+    bossCore,
+    bossDefeatsCount: newBossDefeatsCount,
+    highestBossLevelDefeated: newHighestBossLevelDefeated
   };
   
   return {
@@ -470,7 +485,9 @@ export const startGame = (state: GameState): GameState => {
       invulnerableTimer: 0
     },
     selectedSkin: state.selectedSkin,
-    bossCore: null
+    bossCore: null,
+    bossDefeatsCount: 0,
+    highestBossLevelDefeated: 0
   };
 };
 

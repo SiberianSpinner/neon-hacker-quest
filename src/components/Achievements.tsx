@@ -88,15 +88,15 @@ const Achievements: React.FC<AchievementsProps> = ({
             </TabsList>
             
             <TabsContent value="all" className="mt-0">
-              <AchievementsList achievements={filteredAchievements} />
+              <AchievementsList achievements={filteredAchievements} isTelegramWebApp={isTelegramWebApp} />
             </TabsContent>
             
             <TabsContent value="unlocked" className="mt-0">
-              <AchievementsList achievements={filteredAchievements} />
+              <AchievementsList achievements={filteredAchievements} isTelegramWebApp={isTelegramWebApp} />
             </TabsContent>
             
             <TabsContent value="locked" className="mt-0">
-              <AchievementsList achievements={filteredAchievements} />
+              <AchievementsList achievements={filteredAchievements} isTelegramWebApp={isTelegramWebApp} />
             </TabsContent>
           </Tabs>
         </div>
@@ -119,9 +119,35 @@ const Achievements: React.FC<AchievementsProps> = ({
 
 interface AchievementsListProps {
   achievements: Achievement[];
+  isTelegramWebApp?: boolean;
 }
 
-const AchievementsList: React.FC<AchievementsListProps> = ({ achievements }) => {
+// Translation helpers for memory core achievements
+const translateAchievementName = (name: string, isTelegramWebApp: boolean): string => {
+  if (!isTelegramWebApp) return name;
+  
+  // Russian translations for memory core achievements
+  switch (name) {
+    case 'Memory Crasher': return 'Взломщик Памяти';
+    case 'Data Corruptor': return 'Разрушитель Данных';
+    case 'System Annihilator': return 'Системный Аннигилятор';
+    default: return name;
+  }
+};
+
+const translateAchievementDescription = (description: string, isTelegramWebApp: boolean): string => {
+  if (!isTelegramWebApp) return description;
+  
+  // Russian translations for memory core achievement descriptions
+  switch (description) {
+    case 'Defeat your first Memory Core': return 'Уничтожь своё первое Ядро Памяти';
+    case 'Defeat a Level 2 Memory Core': return 'Уничтожь Ядро Памяти 2-го уровня';
+    case 'Defeat a Level 3 Memory Core': return 'Уничтожь Ядро Памяти 3-го уровня';
+    default: return description;
+  }
+};
+
+const AchievementsList: React.FC<AchievementsListProps> = ({ achievements, isTelegramWebApp = false }) => {
   return (
     <div className="grid grid-cols-1 gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
       {achievements.map((achievement) => (
@@ -177,7 +203,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements }) => 
                   ? "text-cyber-primary" 
                   : "text-gray-400"
               )}>
-                {achievement.name}
+                {translateAchievementName(achievement.name, isTelegramWebApp)}
               </h3>
               <p className={cn(
                 "text-sm",
@@ -185,7 +211,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements }) => 
                   ? "text-cyber-foreground/80" 
                   : "text-gray-500"
               )}>
-                {achievement.description}
+                {translateAchievementDescription(achievement.description, isTelegramWebApp)}
               </p>
             </div>
             

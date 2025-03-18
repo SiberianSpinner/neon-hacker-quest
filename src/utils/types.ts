@@ -88,6 +88,9 @@ export interface GameState {
   selectedSkin: PlayerSkin;
   // Add boss core to game state
   bossCore: BossCore | null;
+  // New fields for tracking boss defeats
+  bossDefeatsCount: number;
+  highestBossLevelDefeated: number;
 }
 
 // Achievements
