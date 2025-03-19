@@ -16,10 +16,17 @@ export function useIsMobile() {
                                navigator.maxTouchPoints > 0 ||
                                (navigator as any).msMaxTouchPoints > 0;
       
-      // Consider it mobile if either condition is met
-      // This helps with tablets or touch-enabled laptops
-      setIsMobile(isMobileByWidth || hasTouchCapability);
+      // Check for Telegram mobile app
+      const isTelegramMobile = isTelegramWebApp() && window.innerWidth < MOBILE_BREAKPOINT;
+      
+      // Consider it mobile if any condition is met
+      setIsMobile(isMobileByWidth || hasTouchCapability || isTelegramMobile);
     };
+
+    // Check if we're in a Telegram WebApp environment
+    function isTelegramWebApp() {
+      return window.Telegram && window.Telegram.WebApp;
+    }
 
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
     const onChange = () => {

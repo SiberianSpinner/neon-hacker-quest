@@ -287,7 +287,8 @@ export const updateGameState = (
   cursorPosition: { x: number | null, y: number | null },
   deltaTime: number = 1,
   isMobile: boolean = false,
-  swipeDirection: { x: number, y: number } | null = null
+  swipeDirection: { x: number, y: number } | null = null,
+  isTelegramWebApp: boolean = false
 ): { newState: GameState; collision: boolean; gameWon: boolean } => {
   if (!state.gameActive) {
     return { newState: state, collision: false, gameWon: false };
@@ -302,7 +303,8 @@ export const updateGameState = (
     state.cursorControl,
     cursorPosition,
     isMobile,
-    swipeDirection
+    swipeDirection,
+    isTelegramWebApp
   );
 
   if (newPlayer.invulnerable) {
