@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import GameCanvas from '@/components/GameCanvas';
@@ -358,6 +357,7 @@ const Index = () => {
         onGameWin={handleGameWin}
         attemptsLeft={attemptsLeft}
         selectedSkin={selectedSkin}
+        isTelegramWebApp={isTelegramWebApp}
       />
       
       {/* Start Screen */}
