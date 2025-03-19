@@ -25,6 +25,7 @@ interface GameCanvasProps {
   onGameWin: (score: number) => void;
   attemptsLeft: number;
   selectedSkin: PlayerSkin;
+  isTelegramWebApp?: boolean; // Add the isTelegramWebApp prop
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
@@ -32,7 +33,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onGameOver,
   onGameWin,
   attemptsLeft,
-  selectedSkin
+  selectedSkin,
+  isTelegramWebApp = false // Default to false
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -45,7 +47,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const isMobile = useIsMobile();
   
-  // Для управления свайпом
+  // For swipe control
   const [swipeDirection, setSwipeDirection] = useState<{ x: number, y: number } | null>(null);
   const [touchStartPosition, setTouchStartPosition] = useState<{ x: number, y: number } | null>(null);
   const [isFingerOnScreen, setIsFingerOnScreen] = useState(false);
@@ -271,7 +273,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           cursorPosition,
           deltaTime,
           isMobile,
-          swipeDirection
+          swipeDirection,
+          isTelegramWebApp // Pass the isTelegramWebApp prop
         );
 
         // Check for game win condition
@@ -312,7 +315,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [gameState, keys, onGameOver, onGameWin, cursorPosition, dimensions, isMobile, swipeDirection]);
+  }, [gameState, keys, onGameOver, onGameWin, cursorPosition, dimensions, isMobile, swipeDirection, isTelegramWebApp]);
 
   return (
     <>
@@ -380,6 +383,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           }}
         >
           Проведите пальцем по экрану, чтобы задать направление движения
+        </div>
+      )}
+      
+      {/* Keyboard control instruction (only shown for Telegram desktop at the beginning) */}
+      {!isMobile && isTelegramWebApp && gameState && isActive && (
+        <div 
+          className="absolute bottom-8 left-0 right-0 text-center text-cyber-foreground/70 text-sm px-4 py-2 bg-cyber-background/70 backdrop-blur-sm rounded-md mx-8 z-20"
+          style={{ 
+            opacity: gameState.score < 500 ? 0.8 : 0, 
+            transition: 'opacity 0.5s ease-in-out'
+          }}
+        >
+          Используйте стрелки или WASD для управления
         </div>
       )}
       

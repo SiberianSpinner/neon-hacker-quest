@@ -10,24 +10,46 @@ export const updatePlayerMovement = (
   cursorControl: boolean,
   cursorPosition: { x: number | null, y: number | null },
   isMobile: boolean = false,
-  swipeDirection: { x: number, y: number } | null = null
+  swipeDirection: { x: number, y: number } | null = null,
+  isTelegramWebApp: boolean = false
 ): Player => {
   const newPlayer = { ...player };
   const moveSpeed = 6.67; // Reduced from 10 to 6.67 (1.5x slower)
   
-  // На мобильных устройствах используем свайп-направление
-  if (isMobile) {
+  // Handle Telegram desktop app specifically - always use keyboard controls
+  if (isTelegramWebApp && !isMobile) {
+    // Always use keyboard controls for Telegram desktop
+    if (keys.ArrowLeft || keys.a) {
+      newPlayer.speedX = -moveSpeed;
+    } else if (keys.ArrowRight || keys.d) {
+      newPlayer.speedX = moveSpeed;
+    } else {
+      // Decelerate X movement when no keys pressed
+      newPlayer.speedX = 0;
+    }
+    
+    if (keys.ArrowUp || keys.w) {
+      newPlayer.speedY = -moveSpeed;
+    } else if (keys.ArrowDown || keys.s) {
+      newPlayer.speedY = moveSpeed;
+    } else {
+      // Decelerate Y movement when no keys pressed
+      newPlayer.speedY = 0;
+    }
+  }
+  // Mobile controls (including Telegram mobile)
+  else if (isMobile) {
     if (swipeDirection) {
-      // Если есть активное свайп-направление, двигаемся в этом направлении
+      // If there's an active swipe direction, move in that direction
       newPlayer.speedX = swipeDirection.x * moveSpeed;
       newPlayer.speedY = swipeDirection.y * moveSpeed;
     } else {
-      // Если свайп-направления нет (палец не движется или отпущен), останавливаемся
+      // If no swipe direction (finger not moving or released), stop
       newPlayer.speedX = 0;
       newPlayer.speedY = 0;
     }
   }
-  // Desktop cursor control
+  // Desktop cursor control (for non-Telegram desktop)
   else if (cursorControl && !isMobile && cursorPosition.x !== null && cursorPosition.y !== null) {
     // Calculate direction vector towards cursor
     const dx = cursorPosition.x - player.x;
@@ -49,8 +71,7 @@ export const updatePlayerMovement = (
       newPlayer.speedY = 0;
     }
   } else {
-    // Keyboard controls (when cursor control is disabled and not on mobile)
-    // Update speeds based on key presses
+    // Standard keyboard controls (for non-Telegram desktop when cursor control is disabled)
     if (keys.ArrowLeft || keys.a) {
       newPlayer.speedX = -moveSpeed;
     } else if (keys.ArrowRight || keys.d) {
