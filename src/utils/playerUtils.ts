@@ -16,7 +16,7 @@ export const updatePlayerMovement = (
   const newPlayer = { ...player };
   const moveSpeed = 6.67; // Reduced from 10 to 6.67 (1.5x slower)
   
-  // Handle Telegram desktop app specifically - always use keyboard controls
+  // Handle Telegram WebApp - override with keyboard controls on desktop
   if (isTelegramWebApp && !isMobile) {
     // Always use keyboard controls for Telegram desktop
     if (keys.ArrowLeft || keys.a) {

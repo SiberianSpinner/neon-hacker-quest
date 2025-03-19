@@ -16,17 +16,24 @@ export function useIsMobile() {
                                navigator.maxTouchPoints > 0 ||
                                (navigator as any).msMaxTouchPoints > 0;
       
-      // Check for Telegram mobile app
-      const isTelegramMobile = isTelegramWebApp() && window.innerWidth < MOBILE_BREAKPOINT;
+      // Check for Telegram WebApp
+      const isTelegramWebApp = window.Telegram && window.Telegram.WebApp;
       
-      // Consider it mobile if any condition is met
-      setIsMobile(isMobileByWidth || hasTouchCapability || isTelegramMobile);
+      // For Telegram, explicitly determine if it's mobile or desktop
+      let isTelegramMobile = false;
+      if (isTelegramWebApp) {
+        // Check if it's a mobile platform based on platform info or userAgent
+        const platform = window.Telegram.WebApp.platform;
+        // Known mobile platforms in Telegram WebApp
+        isTelegramMobile = platform === 'android' || 
+                          platform === 'ios' || 
+                          /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      }
+      
+      // Consider it mobile if any condition is met for non-Telegram
+      // Or specifically for Telegram, only if we've determined it's a mobile device
+      setIsMobile(isTelegramWebApp ? isTelegramMobile : (isMobileByWidth || hasTouchCapability));
     };
-
-    // Check if we're in a Telegram WebApp environment
-    function isTelegramWebApp() {
-      return window.Telegram && window.Telegram.WebApp;
-    }
 
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
     const onChange = () => {
