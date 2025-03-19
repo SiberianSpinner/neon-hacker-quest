@@ -22,12 +22,15 @@ export function useIsMobile() {
       // For Telegram, explicitly determine if it's mobile or desktop
       let isTelegramMobile = false;
       if (isTelegramWebApp) {
-        // Check if it's a mobile platform based on platform info or userAgent
-        const platform = window.Telegram.WebApp.platform;
-        // Known mobile platforms in Telegram WebApp
-        isTelegramMobile = platform === 'android' || 
-                          platform === 'ios' || 
-                          /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+        // Since 'platform' property might not exist in all Telegram WebApp versions,
+        // we'll rely primarily on userAgent detection for Telegram clients
+        isTelegramMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+        
+        // Additionally, check window dimensions as a fallback
+        if (!isTelegramMobile) {
+          isTelegramMobile = window.innerWidth < MOBILE_BREAKPOINT && 
+                            'ontouchstart' in window;
+        }
       }
       
       // Consider it mobile if any condition is met for non-Telegram
