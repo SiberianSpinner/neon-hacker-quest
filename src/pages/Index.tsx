@@ -36,6 +36,8 @@ declare global {
         openInvoice: (url: string) => void;
       };
     };
+    // Ad extra function for displaying ads
+    p_adextra?: (successCallback: () => void, errorCallback: () => void) => void;
   }
 }
 
@@ -220,6 +222,34 @@ const Index = () => {
   
   // Watch ad for attempts
   const handleWatchAd = () => {
+    // Call p_adextra function if it exists
+    try {
+      window.p_adextra(
+        // Success callback
+        () => {
+          console.log("Ad displayed successfully");
+          setAttemptsLeft(prev => prev + 1);
+          toast.success("Реклама завершена", {
+            description: "Вы получили дополнительную попытку!"
+          });
+        },
+        // Error callback
+        () => {
+          console.log("Ad failed to display");
+          toast.error("Ошибка показа рекламы", {
+            description: "Попробуйте еще раз позже."
+          });
+        }
+      );
+      
+      toast.info("Загрузка рекламы...", {
+        description: "Пожалуйста, подождите пока реклама загрузится.",
+      });
+      return;
+    } catch (err) {
+      console.error('Error calling p_adextra:', err);
+    }
+    
     // If in Telegram, send event to show ad
     if (isTelegramWebApp && window.Telegram?.WebApp) {
       try {
