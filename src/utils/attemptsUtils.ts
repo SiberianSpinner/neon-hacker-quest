@@ -1,8 +1,9 @@
 
 // Daily attempts management
 
-// Key for storing daily attempts data
+// Key for storing daily attempts and unlimited status
 const DAILY_ATTEMPTS_KEY = 'netrunner_daily_attempts';
+const UNLIMITED_ATTEMPTS_KEY = 'netrunner_unlimited_attempts';
 
 // Daily attempts interface
 interface DailyAttemptsData {
@@ -74,6 +75,11 @@ const saveDailyAttemptsData = (data: DailyAttemptsData): void => {
 
 // Check if we need to reset daily attempts
 const checkAndResetDailyAttempts = (): void => {
+  // First check if unlimited attempts are enabled - if so, no need to reset
+  if (hasUnlimitedAttempts()) {
+    return;
+  }
+  
   const data = getDailyAttemptsData();
   const today = getTodayDate();
   
@@ -94,6 +100,11 @@ const checkAndResetDailyAttempts = (): void => {
 
 // Get remaining daily attempts
 export const getRemainingDailyAttempts = (): number => {
+  // If unlimited mode is enabled, return Infinity
+  if (hasUnlimitedAttempts()) {
+    return Infinity;
+  }
+  
   // First check if we need to reset
   checkAndResetDailyAttempts();
   
@@ -104,6 +115,11 @@ export const getRemainingDailyAttempts = (): number => {
 
 // Use an attempt
 export const useAttempt = (): { success: boolean, remainingAttempts: number } => {
+  // If unlimited mode is enabled, always return success and Infinity
+  if (hasUnlimitedAttempts()) {
+    return { success: true, remainingAttempts: Infinity };
+  }
+  
   // First check if we need to reset
   checkAndResetDailyAttempts();
   
@@ -142,7 +158,7 @@ export const getNextResetTime = (): Date => {
 // Check if unlimited attempts are enabled
 export const hasUnlimitedAttempts = (): boolean => {
   try {
-    return localStorage.getItem('netrunner_unlimited_attempts') === 'true';
+    return localStorage.getItem(UNLIMITED_ATTEMPTS_KEY) === 'true';
   } catch (error) {
     return false;
   }
@@ -151,7 +167,8 @@ export const hasUnlimitedAttempts = (): boolean => {
 // Enable unlimited attempts
 export const enableUnlimitedAttempts = (): void => {
   try {
-    localStorage.setItem('netrunner_unlimited_attempts', 'true');
+    localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+    console.log('Unlimited attempts enabled permanently');
   } catch (error) {
     console.error('Error enabling unlimited attempts:', error);
   }
@@ -160,8 +177,15 @@ export const enableUnlimitedAttempts = (): void => {
 // Disable unlimited attempts
 export const disableUnlimitedAttempts = (): void => {
   try {
-    localStorage.removeItem('netrunner_unlimited_attempts');
+    localStorage.removeItem(UNLIMITED_ATTEMPTS_KEY);
+    console.log('Unlimited attempts disabled');
   } catch (error) {
     console.error('Error disabling unlimited attempts:', error);
   }
 };
+
+// Generate a random number between min and max for unlimited attempts display
+export const getRandomAttemptsNumber = (min: number = 3, max: number = 13): number => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+

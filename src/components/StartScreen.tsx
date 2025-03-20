@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
 import { Trophy, Microchip, Cable, Code, Clock } from 'lucide-react';
-import { formatTimeRemaining, getMillisecondsUntilReset } from '@/utils/attemptsUtils';
+import { formatTimeRemaining, getMillisecondsUntilReset, getRandomAttemptsNumber } from '@/utils/attemptsUtils';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -37,6 +38,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
 }) => {
   const [menuLoaded, setMenuLoaded] = useState(false);
   const [timeUntilReset, setTimeUntilReset] = useState('');
+  const [unlimitedAttemptsDisplay, setUnlimitedAttemptsDisplay] = useState(3);
   
   // Initialize menu load effect
   React.useEffect(() => {
@@ -65,9 +67,31 @@ const StartScreen: React.FC<StartScreenProps> = ({
     return () => clearInterval(intervalId);
   }, [isVisible, hasUnlimitedMode]);
   
+  // Timer for flashing unlimited attempts counter
+  useEffect(() => {
+    if (!isVisible || !hasUnlimitedMode) return;
+    
+    // Update the display number every second
+    const intervalId = setInterval(() => {
+      setUnlimitedAttemptsDisplay(getRandomAttemptsNumber());
+    }, 1000);
+    
+    return () => clearInterval(intervalId);
+  }, [isVisible, hasUnlimitedMode]);
+  
   // Format score as percentage with three decimal places
   const formattedScore = lastScore !== undefined ? 
     `${(lastScore / 1000).toFixed(3)}%` : undefined;
+  
+  // Determine if we should show infinity symbol or a number for attempts
+  const attemptsDisplay = hasUnlimitedMode 
+    ? unlimitedAttemptsDisplay 
+    : (attemptsLeft === Infinity ? '∞' : attemptsLeft);
+  
+  // Set text color for attempts display
+  const attemptsTextColor = hasUnlimitedMode 
+    ? "text-red-500 font-bold animate-pulse" 
+    : "text-cyber-primary font-bold";
   
   return (
     <div
@@ -106,12 +130,10 @@ const StartScreen: React.FC<StartScreenProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-lg text-cyber-primary font-bold"
+            className={`text-lg ${attemptsTextColor}`}
           >
-            {isTelegramWebApp ? 'НАЙДЕНО УЯЗВИМОСТЕЙ: ' : 'VULNERABILITIES FOUND: '}{attemptsLeft === Infinity ? '∞' : attemptsLeft}
+            {isTelegramWebApp ? 'НАЙДЕНО УЯЗВИМОСТЕЙ: ' : 'VULNERABILITIES FOUND: '}{attemptsDisplay}
           </motion.p>
-          
-          {/* Removed the Daily attempts counter block as requested */}
           
           {/* Timer until next reset - only show if less than 3 daily attempts and not in unlimited mode */}
           {dailyAttemptsLeft < 3 && !hasUnlimitedMode && (
@@ -160,7 +182,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
                   className="w-24 h-24 flex flex-col justify-center items-center rounded-md p-2 text-center"
                   glowEffect
                   onClick={onStartGame}
-                  disabled={attemptsLeft <= 0 || dailyAttemptsLeft <= 0}
+                  disabled={!hasUnlimitedMode && (attemptsLeft <= 0 || dailyAttemptsLeft <= 0)}
                   leftIcon={<Cable className="w-12 h-12 mb-1" />}
                 >
                   <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ВЗЛОМ' : 'HACK'}</span>
@@ -209,11 +231,11 @@ const StartScreen: React.FC<StartScreenProps> = ({
             transition={{ delay: 0.8, duration: 0.3 }}
           >
             <CustomButton 
-              className="w-full uppercase"
-              variant="tertiary"
+              className={`w-full uppercase ${hasUnlimitedMode ? 'bg-red-900/60 hover:bg-red-900/80' : ''}`}
+              variant={hasUnlimitedMode ? "destructive" : "tertiary"}
               onClick={onBuyUnlimited}
             >
-              {isTelegramWebApp ? 'ПРОТОКОЛ "ДЕМОН"' : 'DAEMON PROTOCOL'}
+              {isTelegramWebApp ? (hasUnlimitedMode ? 'ПРОТОКОЛ "ДЕМОН" АКТИВЕН' : 'ПРОТОКОЛ "ДЕМОН"') : (hasUnlimitedMode ? 'DAEMON PROTOCOL ACTIVE' : 'DAEMON PROTOCOL')}
             </CustomButton>
           </motion.div>
           
