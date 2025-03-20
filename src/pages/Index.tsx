@@ -299,7 +299,7 @@ const Index = () => {
             },
             body: JSON.stringify({
               title: "Протокол демон",
-              price_amount: 5
+              price_amount: 1
             }),
             referrerPolicy: 'strict-origin-when-cross-origin'
           });
