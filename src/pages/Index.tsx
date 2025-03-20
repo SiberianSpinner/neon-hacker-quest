@@ -364,6 +364,21 @@ const Index = () => {
       }
     };
   }, [isTelegramWebApp]);
+  
+  // Load ad script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://partner.adextra.io/jt/01cac2bf3cf062e1ca4de1ca9b54eebdc16ad762.js';
+    script.async = true;
+    document.body.appendChild(script);
+    
+    return () => {
+      // Clean up script when component unmounts
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -454,6 +469,11 @@ const Index = () => {
         selectedSkin={selectedSkin}
         isTelegramWebApp={isTelegramWebApp}
       />
+      
+      {/* Ad script */}
+      <div className="absolute bottom-10 left-0 right-0 z-10">
+        <div id="01cac2bf3cf062e1ca4de1ca9b54eebdc16ad762"></div>
+      </div>
       
       {/* Version tag */}
       <div className="absolute bottom-2 right-2 text-xs text-cyber-foreground/30">
