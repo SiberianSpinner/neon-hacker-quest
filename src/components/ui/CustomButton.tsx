@@ -12,6 +12,7 @@ const buttonVariants = cva(
         secondary: "cyber-border border-cyber-secondary/30 bg-transparent text-cyber-secondary hover:bg-cyber-secondary/10 active:bg-cyber-secondary/20",
         tertiary: "cyber-border border-cyber-tertiary/30 bg-transparent text-cyber-tertiary hover:bg-cyber-tertiary/10 active:bg-cyber-tertiary/20",
         ghost: "bg-transparent text-cyber-primary hover:text-glow hover:bg-cyber-primary/5 transition-all",
+        destructive: "cyber-border border-red-500/30 bg-transparent text-red-500 hover:bg-red-900/20 active:bg-red-900/30 transition-colors",
       },
       size: {
         default: "h-12 px-8 py-5",
