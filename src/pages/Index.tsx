@@ -31,6 +31,8 @@ declare global {
         };
         onEvent: (eventType: string, callback: () => void) => void;
         sendData: (data: string) => void;
+        initData: string;
+        openInvoice: (url: string) => void;
       };
     };
   }
@@ -238,15 +240,70 @@ const Index = () => {
   
   // Buy unlimited attempts
   const handleBuyUnlimited = () => {
-    // If in Telegram, send event to process payment
+    // If in Telegram, make API call to create invoice
     if (isTelegramWebApp && window.Telegram?.WebApp) {
       try {
-        window.Telegram.WebApp.sendData(JSON.stringify({ action: 'buyUnlimited' }));
-        toast.info("Обработка платежа...", {
-          description: "Пожалуйста, завершите оплату в Telegram.",
+        toast.info("Создание счета...", {
+          description: "Пожалуйста, подождите...",
+        });
+        
+        // Make API call to create invoice
+        fetch('https://autobrain.ai/api/v1/invoice', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'token': window.Telegram.WebApp.initData,
+            'Content-Type': 'application/json',
+            'hash': '820d7678089ba5ecfcdd146a2ebb9b5cadc4b74d6655d824ee2ec30f867736b9'
+          },
+          body: JSON.stringify({
+            title: "Протокол демон",
+            price_amount: 5
+          }),
+          referrerPolicy: 'strict-origin-when-cross-origin'
+        })
+        .then(response => response.json())
+        .then(responseData => {
+          console.log("Invoice response:", responseData);
+          
+          // Extract the URL from the response
+          let invoiceUrl;
+          
+          if (typeof responseData === 'string') {
+            // If response is a direct string
+            invoiceUrl = responseData;
+          } else if (responseData && responseData.data) {
+            // If response has a data property (as shown in the feedback)
+            invoiceUrl = responseData.data;
+          } else if (responseData && responseData.link) {
+            // Fallback for link property
+            invoiceUrl = responseData.link;
+          } else {
+            console.error("Unexpected response format:", responseData);
+            throw new Error('Invalid response format from server');
+          }
+          
+          // Clean the URL if needed (remove quotes, etc.)
+          if (invoiceUrl && typeof invoiceUrl === 'string') {
+            invoiceUrl = invoiceUrl.replace(/^"|"$/g, '').trim();
+            
+            console.log("Using invoice URL:", invoiceUrl);
+            
+            // Open the invoice
+            window.Telegram.WebApp.openInvoice(invoiceUrl);
+          } else {
+            throw new Error('Invalid URL format');
+          }
+        })
+        .catch(error => {
+          console.error('Error creating invoice:', error);
+          toast.error("Ошибка создания счета", {
+            description: "Пожалуйста, попробуйте позже.",
+          });
+          simulatePurchase(); // Fallback to simulation
         });
       } catch (err) {
-        console.error('Error sending data to Telegram:', err);
+        console.error('Error in payment process:', err);
         simulatePurchase();
       }
     } else {
