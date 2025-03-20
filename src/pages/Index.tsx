@@ -252,7 +252,8 @@ const Index = () => {
   
   // Buy unlimited attempts
   const handleBuyUnlimited = () => {
-    // If unlimited mode is already active
+    // If unlimited mode is already active, show a message and exit early
+    // to avoid making unnecessary API calls to /api/v1/invoice
     if (hasUnlimitedMode) {
       toast.info(isTelegramWebApp ? "Протокол 'Демон' уже активен" : "Daemon Protocol already active", {
         description: isTelegramWebApp
@@ -265,25 +266,47 @@ const Index = () => {
     // If in Telegram, send event to process payment
     if (isTelegramWebApp && window.Telegram?.WebApp) {
       try {
+        // Double-check unlimited mode status before proceeding
+        // This ensures we don't make the API call if unlimited mode was activated
+        // between the initial check and this point
+        if (hasUnlimitedAttempts()) {
+          console.log("Unlimited mode activated during processing, aborting invoice creation");
+          setHasUnlimitedMode(true);
+          return;
+        }
+        
         toast.info("Создание счета...", {
           description: "Пожалуйста, подождите...",
         });
 
-        // Make API call to create invoice
-        fetch('https://autobrain.ai/api/v1/invoice', {
-          method: 'POST',
-          headers: {
-            'accept': 'application/json',
-            'token': window.Telegram.WebApp.initData,
-            'Content-Type': 'application/json',
-            'hash': '820d7678089ba5ecfcdd146a2ebb9b5cadc4b74d6655d824ee2ec30f867736b9'
-          },
-          body: JSON.stringify({
-            title: "Протокол демон",
-            price_amount: 5
-          }),
-          referrerPolicy: 'strict-origin-when-cross-origin'
-        })
+        // Create a function to make the API call, so we can add a final check
+        const createInvoice = () => {
+          // Final check before making the API call
+          if (hasUnlimitedAttempts()) {
+            console.log("Unlimited mode detected right before API call, aborting");
+            setHasUnlimitedMode(true);
+            return Promise.reject(new Error("Unlimited mode already active"));
+          }
+          
+          // Make API call to create invoice
+          return fetch('https://autobrain.ai/api/v1/invoice', {
+            method: 'POST',
+            headers: {
+              'accept': 'application/json',
+              'token': window.Telegram.WebApp.initData,
+              'Content-Type': 'application/json',
+              'hash': '820d7678089ba5ecfcdd146a2ebb9b5cadc4b74d6655d824ee2ec30f867736b9'
+            },
+            body: JSON.stringify({
+              title: "Протокол демон",
+              price_amount: 5
+            }),
+            referrerPolicy: 'strict-origin-when-cross-origin'
+          });
+        };
+        
+        // Execute the API call
+        createInvoice()
         .then(response => response.json())
         .then(responseData => {
           console.log("Invoice response:", responseData);
@@ -319,6 +342,19 @@ const Index = () => {
         })
         .catch(error => {
           console.error('Error creating invoice:', error);
+          
+          // Check if the error was due to unlimited mode being active
+          if (error.message === "Unlimited mode already active" || hasUnlimitedAttempts()) {
+            // Update UI to reflect unlimited mode
+            setHasUnlimitedMode(true);
+            toast.info(isTelegramWebApp ? "Протокол 'Демон' уже активен" : "Daemon Protocol already active", {
+              description: isTelegramWebApp
+                ? "У вас уже есть безлимитные попытки."
+                : "You already have unlimited attempts."
+            });
+            return;
+          }
+          
           toast.error("Ошибка создания счета", {
             description: "Пожалуйста, попробуйте позже.",
           });

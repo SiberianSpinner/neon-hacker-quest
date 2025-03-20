@@ -230,10 +230,12 @@ const StartScreen: React.FC<StartScreenProps> = ({
             animate={{ opacity: menuLoaded ? 1 : 0, y: menuLoaded ? 0 : 10 }}
             transition={{ delay: 0.8, duration: 0.3 }}
           >
-            <CustomButton 
+            <CustomButton
               className={`w-full uppercase ${hasUnlimitedMode ? 'bg-red-900/60 hover:bg-red-900/80' : ''}`}
               variant={hasUnlimitedMode ? "destructive" : "tertiary"}
               onClick={onBuyUnlimited}
+              disabled={hasUnlimitedMode} // Disable the button when unlimited mode is active
+              title={hasUnlimitedMode ? (isTelegramWebApp ? 'Протокол "Демон" уже активен' : 'Daemon Protocol already active') : ''}
             >
               {isTelegramWebApp ? (hasUnlimitedMode ? 'ПРОТОКОЛ "ДЕМОН" АКТИВЕН' : 'ПРОТОКОЛ "ДЕМОН"') : (hasUnlimitedMode ? 'DAEMON PROTOCOL ACTIVE' : 'DAEMON PROTOCOL')}
             </CustomButton>
