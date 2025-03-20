@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import GameCanvas from '@/components/GameCanvas';
@@ -80,7 +81,18 @@ const Index = () => {
     
     // Setup interval to check daily attempts
     const intervalId = setInterval(() => {
-      if (!hasUnlimitedAttempts()) {
+      const unlimited = hasUnlimitedAttempts();
+
+      // If unlimited status has changed, update state
+      if (unlimited !== hasUnlimitedMode) {
+        setHasUnlimitedMode(unlimited);
+        if (unlimited) {
+          setAttemptsLeft(Infinity);
+          setDailyAttemptsLeft(Infinity);
+        }
+      }
+
+      if (!unlimited) {
         const newDailyAttempts = getRemainingDailyAttempts();
         setDailyAttemptsLeft(newDailyAttempts);
         // If daily attempts increased, also increase total attempts
@@ -88,10 +100,10 @@ const Index = () => {
           setAttemptsLeft(prev => prev + (newDailyAttempts - dailyAttemptsLeft));
         }
       }
-    }, 30000); // Check every 30 seconds
+    }, 5000); // Check every 5 seconds
     
     return () => clearInterval(intervalId);
-  }, []);
+  }, [hasUnlimitedMode, dailyAttemptsLeft]);
 
   // Loading sequence
   useEffect(() => {
@@ -240,13 +252,23 @@ const Index = () => {
   
   // Buy unlimited attempts
   const handleBuyUnlimited = () => {
-    // If in Telegram, make API call to create invoice
+    // If unlimited mode is already active
+    if (hasUnlimitedMode) {
+      toast.info(isTelegramWebApp ? "Протокол 'Демон' уже активен" : "Daemon Protocol already active", {
+        description: isTelegramWebApp
+          ? "У вас уже есть безлимитные попытки."
+          : "You already have unlimited attempts."
+      });
+      return;
+    }
+
+    // If in Telegram, send event to process payment
     if (isTelegramWebApp && window.Telegram?.WebApp) {
       try {
         toast.info("Создание счета...", {
           description: "Пожалуйста, подождите...",
         });
-        
+
         // Make API call to create invoice
         fetch('https://autobrain.ai/api/v1/invoice', {
           method: 'POST',
@@ -265,10 +287,10 @@ const Index = () => {
         .then(response => response.json())
         .then(responseData => {
           console.log("Invoice response:", responseData);
-          
+
           // Extract the URL from the response
           let invoiceUrl;
-          
+
           if (typeof responseData === 'string') {
             // If response is a direct string
             invoiceUrl = responseData;
@@ -282,13 +304,13 @@ const Index = () => {
             console.error("Unexpected response format:", responseData);
             throw new Error('Invalid response format from server');
           }
-          
+
           // Clean the URL if needed (remove quotes, etc.)
           if (invoiceUrl && typeof invoiceUrl === 'string') {
             invoiceUrl = invoiceUrl.replace(/^"|"$/g, '').trim();
-            
+
             console.log("Using invoice URL:", invoiceUrl);
-            
+
             // Open the invoice
             window.Telegram.WebApp.openInvoice(invoiceUrl);
           } else {
@@ -325,7 +347,7 @@ const Index = () => {
       setDailyAttemptsLeft(Infinity);
       
       toast.success("Покупка успешна", {
-        description: "Теперь у вас безлимитные попытки!"
+        description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
       });
     }, 2000);
   };
@@ -346,7 +368,7 @@ const Index = () => {
     setDailyAttemptsLeft(Infinity);
     
     toast.success("Безлимитный режим активирован", {
-      description: "Теперь у вас безлимитные попытки!"
+      description: "Протокол 'Демон' успешно запущен! Теперь у вас безлимитные попытки!"
     });
   };
 
@@ -364,14 +386,14 @@ const Index = () => {
       }
     };
   }, [isTelegramWebApp]);
-  
+
   // Load ad script
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://partner.adextra.io/jt/01cac2bf3cf062e1ca4de1ca9b54eebdc16ad762.js';
     script.async = true;
     document.body.appendChild(script);
-    
+
     return () => {
       // Clean up script when component unmounts
       if (document.body.contains(script)) {
@@ -474,10 +496,10 @@ const Index = () => {
       <div className="absolute bottom-10 left-0 right-0 z-10">
         <div id="01cac2bf3cf062e1ca4de1ca9b54eebdc16ad762"></div>
       </div>
-      
+
       {/* Version tag */}
       <div className="absolute bottom-2 right-2 text-xs text-cyber-foreground/30">
-        v1.5.0
+        v1.6.0
       </div>
     </div>
   );

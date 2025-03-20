@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatScoreAsPercentage } from '@/utils/gameLogic';
+import { hasUnlimitedAttempts, getRandomAttemptsNumber } from '@/utils/attemptsUtils';
 
 interface GameUIProps {
   score: number;
@@ -21,6 +22,21 @@ const GameUI: React.FC<GameUIProps> = ({
   canvasWidth,
   isMobile = false
 }) => {
+  const [unlimitedDisplay, setUnlimitedDisplay] = useState<number | null>(null);
+  const isUnlimited = hasUnlimitedAttempts();
+  
+  // Flash random numbers for unlimited mode
+  useEffect(() => {
+    if (!isUnlimited) return;
+    
+    // Update number every second
+    const interval = setInterval(() => {
+      setUnlimitedDisplay(getRandomAttemptsNumber());
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [isUnlimited]);
+
   // Function to get score color based on completion percentage
   const getScoreColor = (score: number): string => {
     const percentage = score / 1000; // 1000 points = 1%
@@ -48,6 +64,20 @@ const GameUI: React.FC<GameUIProps> = ({
       >
         ВЗЛОМ: {formattedScore}
       </text>
+      
+      {/* Unlimited mode indicator */}
+      {isUnlimited && (
+        <text
+          x={canvasWidth - 90}
+          y={30}
+          fill="#ff0000"
+          fontSize="17.6px"
+          fontFamily='"JetBrains Mono", monospace'
+          textAnchor="middle"
+        >
+          ДЕМОН: {unlimitedDisplay}
+        </text>
+      )}
       
       {/* Invulnerability timer */}
       {invulnerable && (
