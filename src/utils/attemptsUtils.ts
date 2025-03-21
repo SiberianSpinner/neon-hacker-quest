@@ -155,32 +155,102 @@ export const getNextResetTime = (): Date => {
   return getTomorrowResetTime();
 };
 
-// Check if unlimited attempts are enabled
+// Check if unlimited attempts are enabled - теперь используем несколько источников хранения для надежности
 export const hasUnlimitedAttempts = (): boolean => {
   try {
-    return localStorage.getItem(UNLIMITED_ATTEMPTS_KEY) === 'true';
-  } catch (error) {
+    // Проверка в localStorage
+    if (localStorage.getItem(UNLIMITED_ATTEMPTS_KEY) === 'true') {
+      return true;
+    }
+    
+    // Резервная проверка в sessionStorage
+    try {
+      if (sessionStorage.getItem(UNLIMITED_ATTEMPTS_KEY) === 'true') {
+        // Если нашли в sessionStorage, восстановим в localStorage
+        localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+        return true;
+      }
+    } catch (e) {
+      console.error('Error checking unlimited status in sessionStorage:', e);
+    }
+    
     return false;
+  } catch (error) {
+    console.error('Error checking unlimited attempts:', error);
+    // Пробуем использовать sessionStorage как запасной вариант
+    try {
+      return sessionStorage.getItem(UNLIMITED_ATTEMPTS_KEY) === 'true';
+    } catch (e) {
+      console.error('Error checking unlimited attempts in sessionStorage:', e);
+      return false;
+    }
   }
 };
 
-// Enable unlimited attempts
+// Enable unlimited attempts - сохраняем в нескольких местах для надежности
 export const enableUnlimitedAttempts = (): void => {
   try {
     localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
-    console.log('Unlimited attempts enabled permanently');
+    console.log('Unlimited attempts enabled in localStorage');
+    
+    // Для большей надежности сделаем несколько дополнительных попыток сохранения
+    setTimeout(() => {
+      try {
+        if (localStorage.getItem(UNLIMITED_ATTEMPTS_KEY) !== 'true') {
+          localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+          console.log('Unlimited mode retry 1 completed');
+        }
+      } catch (e) {
+        console.error('Error in unlimited mode retry 1:', e);
+      }
+    }, 300);
+    
+    setTimeout(() => {
+      try {
+        if (localStorage.getItem(UNLIMITED_ATTEMPTS_KEY) !== 'true') {
+          localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+          console.log('Unlimited mode retry 2 completed');
+        }
+      } catch (e) {
+        console.error('Error in unlimited mode retry 2:', e);
+      }
+    }, 1000);
+    
+    // Также сохраняем в sessionStorage для резервного варианта
+    try {
+      sessionStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+      console.log('Unlimited attempts enabled in sessionStorage (backup)');
+    } catch (e) {
+      console.error('Error enabling unlimited attempts in sessionStorage:', e);
+    }
   } catch (error) {
-    console.error('Error enabling unlimited attempts:', error);
+    console.error('Error enabling unlimited attempts in localStorage:', error);
+    
+    // Пробуем использовать sessionStorage как запасной вариант
+    try {
+      sessionStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+      console.log('Unlimited attempts enabled in sessionStorage (fallback)');
+    } catch (e) {
+      console.error('Error enabling unlimited attempts in sessionStorage:', e);
+    }
   }
 };
 
-// Disable unlimited attempts
+// Disable unlimited attempts - удаляем из всех хранилищ
 export const disableUnlimitedAttempts = (): void => {
   try {
     localStorage.removeItem(UNLIMITED_ATTEMPTS_KEY);
-    console.log('Unlimited attempts disabled');
+    console.log('Unlimited attempts disabled in localStorage');
+    
+    // Также удаляем из sessionStorage
+    try {
+      sessionStorage.removeItem(UNLIMITED_ATTEMPTS_KEY);
+      console.log('Unlimited attempts disabled in sessionStorage');
+    } catch (e) {
+      console.error('Error disabling unlimited attempts in sessionStorage:', e);
+    }
   } catch (error) {
-    console.error('Error disabling unlimited attempts:', error);
+    console.error('Error disabling unlimited attempts in localStorage:', error);
   }
 };
 
@@ -188,4 +258,3 @@ export const disableUnlimitedAttempts = (): void => {
 export const getRandomAttemptsNumber = (min: number = 3, max: number = 13): number => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
-
