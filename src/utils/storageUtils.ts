@@ -162,7 +162,7 @@ export const setPaymentVerified = (): void => {
   console.log('Setting payment as verified - start');
   
   // Array to track success of each storage method
-  const storageResults = {
+  const storageResults: Record<string, boolean | string> = {
     localStorage: false,
     sessionStorage: false,
     localStorageRetry1: false,

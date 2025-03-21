@@ -264,7 +264,7 @@ export const enableUnlimitedAttempts = (): void => {
   console.log('Enabling unlimited attempts - start');
   
   // Array to track success of each storage method
-  const storageResults = {
+  const storageResults: Record<string, boolean | string> = {
     localStorage: false,
     sessionStorage: false,
     cookieStorage: false,
