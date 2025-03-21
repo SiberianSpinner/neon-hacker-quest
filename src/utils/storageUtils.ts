@@ -100,99 +100,173 @@ export const setTestHighScore = (score: number): void => {
   }
 };
 
-// Payment verification storage
+// Payment verification storage - changed to be recognized across browser refreshes
 export const PAYMENT_VERIFIED_KEY = 'netrunner_payment_verified';
 
-// Check if payment has been verified
+// Check if payment has been verified - now uses multiple sources for reliability
 export const isPaymentVerified = (): boolean => {
   try {
-    return localStorage.getItem(PAYMENT_VERIFIED_KEY) === 'true';
+    // Check in localStorage first
+    const localStorageValue = localStorage.getItem(PAYMENT_VERIFIED_KEY);
+    if (localStorageValue === 'true') {
+      console.log('Payment verified: found in localStorage');
+      return true;
+    }
+    
+    // Check in sessionStorage as fallback
+    try {
+      const sessionStorageValue = sessionStorage.getItem(PAYMENT_VERIFIED_KEY);
+      if (sessionStorageValue === 'true') {
+        console.log('Payment verified: found in sessionStorage');
+        // Sync to localStorage for future checks
+        try {
+          localStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
+        } catch (e) {
+          console.error('Error syncing payment verification to localStorage:', e);
+        }
+        return true;
+      }
+    } catch (e) {
+      console.error('Error checking payment verification in sessionStorage:', e);
+    }
+    
+    // Also check if unlimited attempts are already enabled (indirect verification)
+    try {
+      const unlimitedKey = 'netrunner_unlimited_attempts';
+      if (localStorage.getItem(unlimitedKey) === 'true' || 
+          sessionStorage.getItem(unlimitedKey) === 'true') {
+        console.log('Payment verified: unlimited attempts already enabled');
+        // Sync verification status to storage
+        try {
+          localStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
+          sessionStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
+        } catch (e) {
+          console.error('Error syncing payment verification from unlimited status:', e);
+        }
+        return true;
+      }
+    } catch (e) {
+      console.error('Error checking unlimited attempts status:', e);
+    }
+    
+    console.log('Payment verification not found in any storage');
+    return false;
   } catch (error) {
     console.error('Error checking payment verification:', error);
     return false;
   }
 };
 
-// Set payment as verified
+// Set payment as verified with multiple redundant approaches
 export const setPaymentVerified = (): void => {
+  console.log('Setting payment as verified - start');
+  
+  // Array to track success of each storage method
+  const storageResults = {
+    localStorage: false,
+    sessionStorage: false,
+    localStorageRetry1: false,
+    localStorageRetry2: false,
+    cookieStorage: false
+  };
+  
+  // Function to log verification status
+  const logVerificationStatus = () => {
+    console.log('Payment verification status:', storageResults);
+  };
+  
+  // Try localStorage
   try {
     localStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
-    console.log('Payment marked as verified');
-    
-    // Для большей надежности сделаем несколько дополнительных попыток сохранения
-    // Иногда в TMA могут быть проблемы с localStorage
-    setTimeout(() => {
-      try {
-        if (localStorage.getItem(PAYMENT_VERIFIED_KEY) !== 'true') {
-          localStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
-          console.log('Payment verification retry 1 completed');
-        }
-      } catch (e) {
-        console.error('Error in retry 1:', e);
-      }
-    }, 300);
-    
-    setTimeout(() => {
-      try {
-        if (localStorage.getItem(PAYMENT_VERIFIED_KEY) !== 'true') {
-          localStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
-          console.log('Payment verification retry 2 completed');
-        }
-      } catch (e) {
-        console.error('Error in retry 2:', e);
-      }
-    }, 1000);
+    storageResults.localStorage = true;
+    console.log('Payment marked as verified in localStorage');
   } catch (error) {
-    console.error('Error setting payment verification:', error);
-    // Попытка использовать альтернативный метод хранения (sessionStorage)
-    try {
-      sessionStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
-      console.log('Payment marked as verified in sessionStorage (fallback)');
-    } catch (e) {
-      console.error('Error setting payment verification in sessionStorage:', e);
-    }
+    console.error('Error setting payment verification in localStorage:', error);
   }
+  
+  // Try sessionStorage as fallback
+  try {
+    sessionStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
+    storageResults.sessionStorage = true;
+    console.log('Payment marked as verified in sessionStorage');
+  } catch (error) {
+    console.error('Error setting payment verification in sessionStorage:', error);
+  }
+  
+  // Try to set a cookie as another fallback
+  try {
+    document.cookie = `${PAYMENT_VERIFIED_KEY}=true; max-age=31536000; path=/`;
+    storageResults.cookieStorage = true;
+    console.log('Payment marked as verified in cookie');
+  } catch (error) {
+    console.error('Error setting payment verification in cookie:', error);
+  }
+  
+  // First retry for localStorage after short delay
+  setTimeout(() => {
+    try {
+      if (localStorage.getItem(PAYMENT_VERIFIED_KEY) !== 'true') {
+        localStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
+        storageResults.localStorageRetry1 = true;
+        console.log('Payment verification localStorage retry 1 completed');
+      } else {
+        storageResults.localStorageRetry1 = 'already-set';
+      }
+      logVerificationStatus();
+    } catch (error) {
+      console.error('Error in payment verification localStorage retry 1:', error);
+    }
+  }, 300);
+  
+  // Second retry for localStorage after longer delay
+  setTimeout(() => {
+    try {
+      if (localStorage.getItem(PAYMENT_VERIFIED_KEY) !== 'true') {
+        localStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
+        storageResults.localStorageRetry2 = true;
+        console.log('Payment verification localStorage retry 2 completed');
+      } else {
+        storageResults.localStorageRetry2 = 'already-set';
+      }
+      logVerificationStatus();
+      
+      // Final verification check
+      const verified = isPaymentVerified();
+      console.log('Final payment verification check:', verified);
+    } catch (error) {
+      console.error('Error in payment verification localStorage retry 2:', error);
+    }
+  }, 1000);
+  
+  // Check for success
+  const initialVerification = storageResults.localStorage || storageResults.sessionStorage || storageResults.cookieStorage;
+  console.log('Initial payment verification success:', initialVerification);
 };
 
-// Read payment verification status from multiple sources for reliability
+// Read payment verification status from multiple sources
 export const readPaymentVerification = (): boolean => {
-  try {
-    // Проверяем localStorage
-    const localStorageValue = localStorage.getItem(PAYMENT_VERIFIED_KEY);
-    if (localStorageValue === 'true') {
-      return true;
-    }
-    
-    // Пробуем sessionStorage как резервный вариант
-    try {
-      const sessionStorageValue = sessionStorage.getItem(PAYMENT_VERIFIED_KEY);
-      if (sessionStorageValue === 'true') {
-        // Если нашли в sessionStorage, восстановим значение в localStorage
-        localStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
-        return true;
-      }
-    } catch (e) {
-      console.error('Error reading from sessionStorage:', e);
-    }
-    
-    return false;
-  } catch (error) {
-    console.error('Error reading payment verification:', error);
-    return false;
-  }
+  return isPaymentVerified();
 };
 
 // Clear payment verification (for testing)
 export const clearPaymentVerification = (): void => {
   try {
     localStorage.removeItem(PAYMENT_VERIFIED_KEY);
-    // Также очищаем в sessionStorage
+    console.log('Payment verification cleared from localStorage');
+    
     try {
       sessionStorage.removeItem(PAYMENT_VERIFIED_KEY);
+      console.log('Payment verification cleared from sessionStorage');
     } catch (e) {
       console.error('Error clearing payment verification from sessionStorage:', e);
     }
-    console.log('Payment verification cleared');
+    
+    try {
+      document.cookie = `${PAYMENT_VERIFIED_KEY}=; max-age=0; path=/`;
+      console.log('Payment verification cleared from cookie');
+    } catch (e) {
+      console.error('Error clearing payment verification from cookie:', e);
+    }
   } catch (error) {
     console.error('Error clearing payment verification:', error);
   }

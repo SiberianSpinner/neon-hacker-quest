@@ -155,102 +155,217 @@ export const getNextResetTime = (): Date => {
   return getTomorrowResetTime();
 };
 
-// Check if unlimited attempts are enabled - теперь используем несколько источников хранения для надежности
-export const hasUnlimitedAttempts = (): boolean => {
+// Check for unlimited attempts cookie
+const checkUnlimitedCookie = (): boolean => {
   try {
-    // Проверка в localStorage
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.startsWith(`${UNLIMITED_ATTEMPTS_KEY}=`)) {
+        return cookie.substring(UNLIMITED_ATTEMPTS_KEY.length + 1) === 'true';
+      }
+    }
+    return false;
+  } catch (e) {
+    console.error('Error checking unlimited attempts cookie:', e);
+    return false;
+  }
+};
+
+// Check if unlimited attempts are enabled - now with improved reliability
+export const hasUnlimitedAttempts = (): boolean => {
+  console.log('Checking for unlimited attempts...');
+  
+  try {
+    // Check in localStorage
     if (localStorage.getItem(UNLIMITED_ATTEMPTS_KEY) === 'true') {
+      console.log('Unlimited attempts enabled: found in localStorage');
       return true;
     }
     
-    // Резервная проверка в sessionStorage
+    // Check in sessionStorage as fallback
     try {
       if (sessionStorage.getItem(UNLIMITED_ATTEMPTS_KEY) === 'true') {
-        // Если нашли в sessionStorage, восстановим в localStorage
-        localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+        console.log('Unlimited attempts enabled: found in sessionStorage');
+        // Sync to localStorage for future checks
+        try {
+          localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+        } catch (e) {
+          console.error('Error syncing unlimited status to localStorage:', e);
+        }
         return true;
       }
     } catch (e) {
       console.error('Error checking unlimited status in sessionStorage:', e);
     }
     
-    return false;
-  } catch (error) {
-    console.error('Error checking unlimited attempts:', error);
-    // Пробуем использовать sessionStorage как запасной вариант
+    // Check in cookies as another fallback
+    if (checkUnlimitedCookie()) {
+      console.log('Unlimited attempts enabled: found in cookie');
+      // Sync to other storage methods
+      try {
+        localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+        sessionStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+      } catch (e) {
+        console.error('Error syncing unlimited status from cookie:', e);
+      }
+      return true;
+    }
+    
+    // Check payment verification as an indirect indicator
     try {
-      return sessionStorage.getItem(UNLIMITED_ATTEMPTS_KEY) === 'true';
+      const PAYMENT_VERIFIED_KEY = 'netrunner_payment_verified';
+      if (localStorage.getItem(PAYMENT_VERIFIED_KEY) === 'true' || 
+          sessionStorage.getItem(PAYMENT_VERIFIED_KEY) === 'true') {
+        console.log('Unlimited attempts should be enabled: payment was verified');
+        // Enable unlimited attempts since payment was verified
+        enableUnlimitedAttempts();
+        return true;
+      }
+      
+      // Check for payment verification in cookies
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(`${PAYMENT_VERIFIED_KEY}=true`)) {
+          console.log('Unlimited attempts should be enabled: payment verified in cookie');
+          enableUnlimitedAttempts();
+          return true;
+        }
+      }
     } catch (e) {
-      console.error('Error checking unlimited attempts in sessionStorage:', e);
+      console.error('Error checking payment verification status:', e);
+    }
+    
+    console.log('Unlimited attempts not enabled in any storage');
+    return false;
+    
+  } catch (error) {
+    console.error('Error checking unlimited attempts status:', error);
+    
+    // Try fallback methods if primary check fails
+    try {
+      // Check sessionStorage
+      if (sessionStorage.getItem(UNLIMITED_ATTEMPTS_KEY) === 'true') {
+        return true;
+      }
+      
+      // Check cookies
+      return checkUnlimitedCookie();
+    } catch (e) {
+      console.error('Error in fallback unlimited attempts check:', e);
       return false;
     }
   }
 };
 
-// Enable unlimited attempts - сохраняем в нескольких местах для надежности
+// Enable unlimited attempts with improved reliability
 export const enableUnlimitedAttempts = (): void => {
+  console.log('Enabling unlimited attempts - start');
+  
+  // Array to track success of each storage method
+  const storageResults = {
+    localStorage: false,
+    sessionStorage: false,
+    cookieStorage: false,
+    localStorageRetry1: false,
+    localStorageRetry2: false
+  };
+  
+  // Function to log status
+  const logStatus = () => {
+    console.log('Unlimited attempts status:', storageResults);
+  };
+  
+  // Try localStorage
   try {
     localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+    storageResults.localStorage = true;
     console.log('Unlimited attempts enabled in localStorage');
-    
-    // Для большей надежности сделаем несколько дополнительных попыток сохранения
-    setTimeout(() => {
-      try {
-        if (localStorage.getItem(UNLIMITED_ATTEMPTS_KEY) !== 'true') {
-          localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
-          console.log('Unlimited mode retry 1 completed');
-        }
-      } catch (e) {
-        console.error('Error in unlimited mode retry 1:', e);
-      }
-    }, 300);
-    
-    setTimeout(() => {
-      try {
-        if (localStorage.getItem(UNLIMITED_ATTEMPTS_KEY) !== 'true') {
-          localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
-          console.log('Unlimited mode retry 2 completed');
-        }
-      } catch (e) {
-        console.error('Error in unlimited mode retry 2:', e);
-      }
-    }, 1000);
-    
-    // Также сохраняем в sessionStorage для резервного варианта
-    try {
-      sessionStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
-      console.log('Unlimited attempts enabled in sessionStorage (backup)');
-    } catch (e) {
-      console.error('Error enabling unlimited attempts in sessionStorage:', e);
-    }
   } catch (error) {
     console.error('Error enabling unlimited attempts in localStorage:', error);
-    
-    // Пробуем использовать sessionStorage как запасной вариант
-    try {
-      sessionStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
-      console.log('Unlimited attempts enabled in sessionStorage (fallback)');
-    } catch (e) {
-      console.error('Error enabling unlimited attempts in sessionStorage:', e);
-    }
   }
+  
+  // Try sessionStorage
+  try {
+    sessionStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+    storageResults.sessionStorage = true;
+    console.log('Unlimited attempts enabled in sessionStorage');
+  } catch (error) {
+    console.error('Error enabling unlimited attempts in sessionStorage:', error);
+  }
+  
+  // Try cookie storage
+  try {
+    document.cookie = `${UNLIMITED_ATTEMPTS_KEY}=true; max-age=31536000; path=/`;
+    storageResults.cookieStorage = true;
+    console.log('Unlimited attempts enabled in cookie');
+  } catch (error) {
+    console.error('Error enabling unlimited attempts in cookie:', error);
+  }
+  
+  // First retry for localStorage
+  setTimeout(() => {
+    try {
+      if (localStorage.getItem(UNLIMITED_ATTEMPTS_KEY) !== 'true') {
+        localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+        storageResults.localStorageRetry1 = true;
+        console.log('Unlimited attempts localStorage retry 1 completed');
+      } else {
+        storageResults.localStorageRetry1 = 'already-set';
+      }
+      logStatus();
+    } catch (e) {
+      console.error('Error in unlimited attempts localStorage retry 1:', e);
+    }
+  }, 300);
+  
+  // Second retry for localStorage
+  setTimeout(() => {
+    try {
+      if (localStorage.getItem(UNLIMITED_ATTEMPTS_KEY) !== 'true') {
+        localStorage.setItem(UNLIMITED_ATTEMPTS_KEY, 'true');
+        storageResults.localStorageRetry2 = true;
+        console.log('Unlimited attempts localStorage retry 2 completed');
+      } else {
+        storageResults.localStorageRetry2 = 'already-set';
+      }
+      logStatus();
+      
+      // Final check
+      const enabled = hasUnlimitedAttempts();
+      console.log('Final unlimited attempts check:', enabled);
+    } catch (e) {
+      console.error('Error in unlimited attempts localStorage retry 2:', e);
+    }
+  }, 1000);
+  
+  // Check for initial success
+  const initialSuccess = storageResults.localStorage || storageResults.sessionStorage || storageResults.cookieStorage;
+  console.log('Initial unlimited attempts enabling success:', initialSuccess);
 };
 
-// Disable unlimited attempts - удаляем из всех хранилищ
+// Disable unlimited attempts - remove from all storage locations
 export const disableUnlimitedAttempts = (): void => {
   try {
     localStorage.removeItem(UNLIMITED_ATTEMPTS_KEY);
     console.log('Unlimited attempts disabled in localStorage');
     
-    // Также удаляем из sessionStorage
     try {
       sessionStorage.removeItem(UNLIMITED_ATTEMPTS_KEY);
       console.log('Unlimited attempts disabled in sessionStorage');
     } catch (e) {
       console.error('Error disabling unlimited attempts in sessionStorage:', e);
     }
+    
+    try {
+      document.cookie = `${UNLIMITED_ATTEMPTS_KEY}=; max-age=0; path=/`;
+      console.log('Unlimited attempts disabled in cookie');
+    } catch (e) {
+      console.error('Error disabling unlimited attempts in cookie:', e);
+    }
   } catch (error) {
-    console.error('Error disabling unlimited attempts in localStorage:', error);
+    console.error('Error disabling unlimited attempts:', error);
   }
 };
 

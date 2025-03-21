@@ -6,7 +6,7 @@ import Leaderboard from '@/components/Leaderboard';
 import Achievements from '@/components/Achievements';
 import Scripts from '@/components/Scripts';
 import { toast } from "sonner";
-import { saveScore, getScores, isPaymentVerified, setPaymentVerified } from '@/utils/storageUtils';
+import { saveScore, getScores, isPaymentVerified, setPaymentVerified, readPaymentVerification } from '@/utils/storageUtils';
 import { PlayerSkin } from '@/utils/types';
 import { getSelectedSkin, saveSelectedSkin } from '@/utils/skinsUtils';
 import { 
@@ -281,6 +281,10 @@ const Index = () => {
   
   // Buy unlimited attempts
   const handleBuyUnlimited = () => {
+    // Log the current payment verification and unlimited mode status
+    console.log("Current payment verification status:", isPaymentVerified());
+    console.log("Current unlimited mode status:", hasUnlimitedAttempts());
+    
     // If unlimited mode is already active or payment is already verified,
     // show a message and exit early to avoid making unnecessary API calls
     if (hasUnlimitedMode) {
@@ -294,6 +298,7 @@ const Index = () => {
     
     // Check if payment was already verified
     if (isPaymentVerified()) {
+      console.log("Payment was previously verified, activating unlimited mode");
       // If payment was verified but unlimited mode isn't active yet, activate it
       enableUnlimitedAttempts();
       setHasUnlimitedMode(true);
@@ -317,6 +322,8 @@ const Index = () => {
 
         // Create a function to make the API call
         const createInvoice = () => {
+          console.log("Creating invoice with Telegram WebApp initData:", !!window.Telegram?.WebApp.initData);
+          
           // Make API call to create invoice
           return fetch('https://autobrain.ai/api/v1/invoice', {
             method: 'POST',
@@ -336,7 +343,10 @@ const Index = () => {
         
         // Execute the API call
         createInvoice()
-        .then(response => response.json())
+        .then(response => {
+          console.log("Invoice API response status:", response.status);
+          return response.json();
+        })
         .then(responseData => {
           console.log("Invoice response:", responseData);
 
@@ -370,11 +380,17 @@ const Index = () => {
               
               // Fix: Create a wrapper function without parameters
               const handleInvoiceClosed = () => {
-                console.log('Invoice closed');
+                console.log('Invoice closed, checking payment status');
                 
                 // Prevent multiple status checks
                 if (paymentStatusChecked) return;
                 paymentStatusChecked = true;
+                
+                // Show a loading toast while checking payment status
+                toast.loading("Проверка платежа...", {
+                  description: "Пожалуйста, подождите...",
+                  id: "payment-check",
+                });
                 
                 // Check payment status after invoice is closed
                 fetch('https://autobrain.ai/api/v1/payment/status', {
@@ -386,22 +402,46 @@ const Index = () => {
                     'hash': '820d7678089ba5ecfcdd146a2ebb9b5cadc4b74d6655d824ee2ec30f867736b9'
                   }
                 })
-                .then(response => response.json())
+                .then(response => {
+                  console.log('Payment status API response status:', response.status);
+                  return response.json();
+                })
                 .then(data => {
-                  console.log('Payment status:', data);
+                  console.log('Payment status response:', data);
+                  
+                  // Dismiss the loading toast
+                  toast.dismiss("payment-check");
+                  
                   if (data && data.status === 'paid') {
                     console.log('Payment successful!');
                     // Mark payment as verified in local storage
                     setPaymentVerified();
-                    // Enable unlimited attempts
-                    enableUnlimitedAttempts();
-                    setHasUnlimitedMode(true);
-                    setAttemptsLeft(Infinity);
-                    setDailyAttemptsLeft(Infinity);
                     
-                    toast.success("Покупка успешна", {
-                      description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
-                    });
+                    // Wait a bit to ensure storage is updated
+                    setTimeout(() => {
+                      // Double-check payment verification
+                      const verified = readPaymentVerification();
+                      console.log('Payment verification after setting:', verified);
+                      
+                      // Enable unlimited attempts
+                      enableUnlimitedAttempts();
+                      
+                      // Wait a bit more to ensure unlimited attempts are enabled
+                      setTimeout(() => {
+                        // Double-check unlimited attempts
+                        const unlimited = hasUnlimitedAttempts();
+                        console.log('Unlimited attempts after enabling:', unlimited);
+                        
+                        // Update state
+                        setHasUnlimitedMode(true);
+                        setAttemptsLeft(Infinity);
+                        setDailyAttemptsLeft(Infinity);
+                        
+                        toast.success("Покупка успешна", {
+                          description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
+                        });
+                      }, 300);
+                    }, 300);
                   } else {
                     toast.error("Оплата не прошла", {
                       description: "Пожалуйста, попробуйте ещё раз позже."
@@ -410,16 +450,24 @@ const Index = () => {
                 })
                 .catch(error => {
                   console.error('Error checking payment status:', error);
+                  toast.dismiss("payment-check");
                   toast.error("Ошибка проверки статуса оплаты", {
                     description: "Пожалуйста, попробуйте ещё раз позже."
                   });
                 });
+                
+                // Clean up event listener after use
+                if (window.Telegram?.WebApp) {
+                  window.Telegram.WebApp.onEvent('invoice_closed', () => {});
+                }
               };
 
-              // Listen for the invoice closed event - Using a wrapper function with no parameters
+              // Add event listener with the wrapper function
+              console.log('Adding invoice_closed event listener');
               window.Telegram.WebApp.onEvent('invoice_closed', handleInvoiceClosed);
 
               // Open the invoice
+              console.log('Opening invoice with URL:', invoiceUrl);
               window.Telegram.WebApp.openInvoice(invoiceUrl);
             }
           } else {
