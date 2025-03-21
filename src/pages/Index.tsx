@@ -365,25 +365,59 @@ const Index = () => {
 
             // Set up event handler for successful payment before opening invoice
             if (window.Telegram?.WebApp) {
-              // Listen for the payment event
-              window.Telegram.WebApp.onEvent('invoice_closed', (data) => {
-                console.log('Invoice closed with data:', data);
-                // Check if payment was successful
-                if (data && data.status === 'paid') {
-                  console.log('Payment successful!');
-                  // Mark payment as verified in local storage
-                  setPaymentVerified();
-                  // Enable unlimited attempts
-                  enableUnlimitedAttempts();
-                  setHasUnlimitedMode(true);
-                  setAttemptsLeft(Infinity);
-                  setDailyAttemptsLeft(Infinity);
-                  
-                  toast.success("Покупка успешна", {
-                    description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
+              // Store payment status check in a variable to use in the event listener
+              let paymentStatusChecked = false;
+              
+              // Fix: Create a wrapper function without parameters
+              const handleInvoiceClosed = () => {
+                console.log('Invoice closed');
+                
+                // Prevent multiple status checks
+                if (paymentStatusChecked) return;
+                paymentStatusChecked = true;
+                
+                // Check payment status after invoice is closed
+                fetch('https://autobrain.ai/api/v1/payment/status', {
+                  method: 'GET',
+                  headers: {
+                    'accept': 'application/json',
+                    'token': window.Telegram.WebApp.initData,
+                    'Content-Type': 'application/json',
+                    'hash': '820d7678089ba5ecfcdd146a2ebb9b5cadc4b74d6655d824ee2ec30f867736b9'
+                  }
+                })
+                .then(response => response.json())
+                .then(data => {
+                  console.log('Payment status:', data);
+                  if (data && data.status === 'paid') {
+                    console.log('Payment successful!');
+                    // Mark payment as verified in local storage
+                    setPaymentVerified();
+                    // Enable unlimited attempts
+                    enableUnlimitedAttempts();
+                    setHasUnlimitedMode(true);
+                    setAttemptsLeft(Infinity);
+                    setDailyAttemptsLeft(Infinity);
+                    
+                    toast.success("Покупка успешна", {
+                      description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
+                    });
+                  } else {
+                    toast.error("Оплата не прошла", {
+                      description: "Пожалуйста, попробуйте ещё раз позже."
+                    });
+                  }
+                })
+                .catch(error => {
+                  console.error('Error checking payment status:', error);
+                  toast.error("Ошибка проверки статуса оплаты", {
+                    description: "Пожалуйста, попробуйте ещё раз позже."
                   });
-                }
-              });
+                });
+              };
+
+              // Listen for the invoice closed event - Using a wrapper function with no parameters
+              window.Telegram.WebApp.onEvent('invoice_closed', handleInvoiceClosed);
 
               // Open the invoice
               window.Telegram.WebApp.openInvoice(invoiceUrl);
