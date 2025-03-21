@@ -99,3 +99,36 @@ export const setTestHighScore = (score: number): void => {
     console.error('Error setting test score:', error);
   }
 };
+
+// Payment verification storage
+export const PAYMENT_VERIFIED_KEY = 'netrunner_payment_verified';
+
+// Check if payment has been verified
+export const isPaymentVerified = (): boolean => {
+  try {
+    return localStorage.getItem(PAYMENT_VERIFIED_KEY) === 'true';
+  } catch (error) {
+    console.error('Error checking payment verification:', error);
+    return false;
+  }
+};
+
+// Set payment as verified
+export const setPaymentVerified = (): void => {
+  try {
+    localStorage.setItem(PAYMENT_VERIFIED_KEY, 'true');
+    console.log('Payment marked as verified');
+  } catch (error) {
+    console.error('Error setting payment verification:', error);
+  }
+};
+
+// Clear payment verification (for testing)
+export const clearPaymentVerification = (): void => {
+  try {
+    localStorage.removeItem(PAYMENT_VERIFIED_KEY);
+    console.log('Payment verification cleared');
+  } catch (error) {
+    console.error('Error clearing payment verification:', error);
+  }
+};

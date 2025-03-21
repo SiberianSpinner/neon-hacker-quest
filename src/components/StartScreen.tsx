@@ -6,6 +6,7 @@ import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
 import { Trophy, Microchip, Cable, Code, Clock } from 'lucide-react';
 import { formatTimeRemaining, getMillisecondsUntilReset, getRandomAttemptsNumber } from '@/utils/attemptsUtils';
+import { isPaymentVerified } from '@/utils/storageUtils';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -39,6 +40,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
   const [menuLoaded, setMenuLoaded] = useState(false);
   const [timeUntilReset, setTimeUntilReset] = useState('');
   const [unlimitedAttemptsDisplay, setUnlimitedAttemptsDisplay] = useState(3);
+  const [paymentVerified, setPaymentVerified] = useState(false);
   
   // Initialize menu load effect
   React.useEffect(() => {
@@ -47,6 +49,11 @@ const StartScreen: React.FC<StartScreenProps> = ({
     }, 500);
     
     return () => clearTimeout(timer);
+  }, []);
+  
+  // Check payment verification on load
+  React.useEffect(() => {
+    setPaymentVerified(isPaymentVerified());
   }, []);
   
   // Timer for reset countdown
@@ -92,6 +99,15 @@ const StartScreen: React.FC<StartScreenProps> = ({
   const attemptsTextColor = hasUnlimitedMode 
     ? "text-red-500 font-bold animate-pulse" 
     : "text-cyber-primary font-bold";
+    
+  // Check if payment button should be disabled
+  const isPaymentButtonDisabled = hasUnlimitedMode || paymentVerified;
+  // Determine payment button tooltip text
+  const paymentButtonTooltip = hasUnlimitedMode 
+    ? (isTelegramWebApp ? 'Протокол "Демон" уже активен' : 'Daemon Protocol already active')
+    : paymentVerified 
+      ? (isTelegramWebApp ? 'Вы уже совершили покупку' : 'You have already purchased this')
+      : '';
   
   return (
     <div
@@ -231,13 +247,22 @@ const StartScreen: React.FC<StartScreenProps> = ({
             transition={{ delay: 0.8, duration: 0.3 }}
           >
             <CustomButton
-              className={`w-full uppercase ${hasUnlimitedMode ? 'bg-red-900/60 hover:bg-red-900/80' : ''}`}
-              variant={hasUnlimitedMode ? "destructive" : "tertiary"}
+              className={`w-full uppercase ${isPaymentButtonDisabled ? 'bg-red-900/60 hover:bg-red-900/80' : ''}`}
+              variant={isPaymentButtonDisabled ? "destructive" : "tertiary"}
               onClick={onBuyUnlimited}
-              disabled={hasUnlimitedMode} // Disable the button when unlimited mode is active
-              title={hasUnlimitedMode ? (isTelegramWebApp ? 'Протокол "Демон" уже активен' : 'Daemon Protocol already active') : ''}
+              disabled={isPaymentButtonDisabled} // Disable if unlimited mode is active OR payment is verified
+              title={paymentButtonTooltip}
             >
-              {isTelegramWebApp ? (hasUnlimitedMode ? 'ПРОТОКОЛ "ДЕМОН" АКТИВЕН' : 'ПРОТОКОЛ "ДЕМОН"') : (hasUnlimitedMode ? 'DAEMON PROTOCOL ACTIVE' : 'DAEMON PROTOCOL')}
+              {isTelegramWebApp ? 
+                (hasUnlimitedMode ? 
+                  'ПРОТОКОЛ "ДЕМОН" АКТИВЕН' : 
+                  (paymentVerified ? 'ПОКУПКА ВЫПОЛНЕНА' : 'ПРОТОКОЛ "ДЕМОН"')
+                ) : 
+                (hasUnlimitedMode ? 
+                  'DAEMON PROTOCOL ACTIVE' : 
+                  (paymentVerified ? 'PURCHASE COMPLETED' : 'DAEMON PROTOCOL')
+                )
+              }
             </CustomButton>
           </motion.div>
           

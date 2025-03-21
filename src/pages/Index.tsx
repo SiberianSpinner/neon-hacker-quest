@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import GameCanvas from '@/components/GameCanvas';
@@ -7,7 +6,7 @@ import Leaderboard from '@/components/Leaderboard';
 import Achievements from '@/components/Achievements';
 import Scripts from '@/components/Scripts';
 import { toast } from "sonner";
-import { saveScore, getScores } from '@/utils/gameLogic';
+import { saveScore, getScores, isPaymentVerified, setPaymentVerified } from '@/utils/storageUtils';
 import { PlayerSkin } from '@/utils/types';
 import { getSelectedSkin, saveSelectedSkin } from '@/utils/skinsUtils';
 import { 
@@ -282,8 +281,8 @@ const Index = () => {
   
   // Buy unlimited attempts
   const handleBuyUnlimited = () => {
-    // If unlimited mode is already active, show a message and exit early
-    // to avoid making unnecessary API calls to /api/v1/invoice
+    // If unlimited mode is already active or payment is already verified,
+    // show a message and exit early to avoid making unnecessary API calls
     if (hasUnlimitedMode) {
       toast.info(isTelegramWebApp ? "Протокол 'Демон' уже активен" : "Daemon Protocol already active", {
         description: isTelegramWebApp
@@ -292,32 +291,32 @@ const Index = () => {
       });
       return;
     }
+    
+    // Check if payment was already verified
+    if (isPaymentVerified()) {
+      // If payment was verified but unlimited mode isn't active yet, activate it
+      enableUnlimitedAttempts();
+      setHasUnlimitedMode(true);
+      setAttemptsLeft(Infinity);
+      setDailyAttemptsLeft(Infinity);
+      
+      toast.success(isTelegramWebApp ? "Протокол 'Демон' активирован" : "Daemon Protocol activated", {
+        description: isTelegramWebApp
+          ? "Покупка подтверждена. У вас теперь безлимитные попытки!"
+          : "Purchase confirmed. You now have unlimited attempts!"
+      });
+      return;
+    }
 
     // If in Telegram, send event to process payment
     if (isTelegramWebApp && window.Telegram?.WebApp) {
       try {
-        // Double-check unlimited mode status before proceeding
-        // This ensures we don't make the API call if unlimited mode was activated
-        // between the initial check and this point
-        if (hasUnlimitedAttempts()) {
-          console.log("Unlimited mode activated during processing, aborting invoice creation");
-          setHasUnlimitedMode(true);
-          return;
-        }
-        
         toast.info("Создание счета...", {
           description: "Пожалуйста, подождите...",
         });
 
-        // Create a function to make the API call, so we can add a final check
+        // Create a function to make the API call
         const createInvoice = () => {
-          // Final check before making the API call
-          if (hasUnlimitedAttempts()) {
-            console.log("Unlimited mode detected right before API call, aborting");
-            setHasUnlimitedMode(true);
-            return Promise.reject(new Error("Unlimited mode already active"));
-          }
-          
           // Make API call to create invoice
           return fetch('https://autobrain.ai/api/v1/invoice', {
             method: 'POST',
@@ -364,27 +363,37 @@ const Index = () => {
 
             console.log("Using invoice URL:", invoiceUrl);
 
-            // Open the invoice
-            window.Telegram.WebApp.openInvoice(invoiceUrl);
+            // Set up event handler for successful payment before opening invoice
+            if (window.Telegram?.WebApp) {
+              // Listen for the payment event
+              window.Telegram.WebApp.onEvent('invoice_closed', (data) => {
+                console.log('Invoice closed with data:', data);
+                // Check if payment was successful
+                if (data && data.status === 'paid') {
+                  console.log('Payment successful!');
+                  // Mark payment as verified in local storage
+                  setPaymentVerified();
+                  // Enable unlimited attempts
+                  enableUnlimitedAttempts();
+                  setHasUnlimitedMode(true);
+                  setAttemptsLeft(Infinity);
+                  setDailyAttemptsLeft(Infinity);
+                  
+                  toast.success("Покупка успешна", {
+                    description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
+                  });
+                }
+              });
+
+              // Open the invoice
+              window.Telegram.WebApp.openInvoice(invoiceUrl);
+            }
           } else {
             throw new Error('Invalid URL format');
           }
         })
         .catch(error => {
           console.error('Error creating invoice:', error);
-          
-          // Check if the error was due to unlimited mode being active
-          if (error.message === "Unlimited mode already active" || hasUnlimitedAttempts()) {
-            // Update UI to reflect unlimited mode
-            setHasUnlimitedMode(true);
-            toast.info(isTelegramWebApp ? "Протокол 'Демон' уже активен" : "Daemon Protocol already active", {
-              description: isTelegramWebApp
-                ? "У вас уже есть безлимитные попытки."
-                : "You already have unlimited attempts."
-            });
-            return;
-          }
-          
           toast.error("Ошибка создания счета", {
             description: "Пожалуйста, попробуйте позже.",
           });
@@ -406,6 +415,8 @@ const Index = () => {
     });
     
     setTimeout(() => {
+      // Mark payment as verified
+      setPaymentVerified();
       // Enable unlimited mode
       enableUnlimitedAttempts();
       setHasUnlimitedMode(true);
@@ -443,12 +454,29 @@ const Index = () => {
     if (isTelegramWebApp) {
       (window as any).addAttempts = addAttempts;
       (window as any).activateUnlimited = activateUnlimited;
+      
+      // Add handler for successful payments directly from Telegram
+      const handleTelegramPaymentSuccess = () => {
+        console.log("Payment success callback from Telegram");
+        setPaymentVerified();
+        enableUnlimitedAttempts();
+        setHasUnlimitedMode(true);
+        setAttemptsLeft(Infinity);
+        setDailyAttemptsLeft(Infinity);
+        
+        toast.success("Покупка успешна", {
+          description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
+        });
+      };
+      
+      (window as any).handleTelegramPaymentSuccess = handleTelegramPaymentSuccess;
     }
     
     return () => {
       if (isTelegramWebApp) {
         delete (window as any).addAttempts;
         delete (window as any).activateUnlimited;
+        delete (window as any).handleTelegramPaymentSuccess;
       }
     };
   }, [isTelegramWebApp]);
@@ -565,7 +593,7 @@ const Index = () => {
 
       {/* Version tag */}
       <div className="absolute bottom-2 right-2 text-xs text-cyber-foreground/30">
-        v1.6.0
+        v1.6.1
       </div>
     </div>
   );
