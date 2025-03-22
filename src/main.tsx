@@ -10,6 +10,7 @@ const gaSecret = import.meta.env.VITE_GA_SECRET || "83c228a69c2164e87c985610d661
 
 if (gaKey && gaSecret) {
   // Initialize analytics
+  console.log("Initializing GameAnalytics with key:", gaKey);
   initializeGameAnalytics(gaKey, gaSecret);
 } else {
   console.warn('GameAnalytics environment variables not found. Analytics will not be initialized.');

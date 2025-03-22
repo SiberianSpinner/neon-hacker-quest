@@ -1,26 +1,51 @@
-
 // Game Analytics utility functions
 
 /**
- * Initializes GameAnalytics with the provided key and secret
- * @param gameKey The GameAnalytics game key
- * @param secretKey The GameAnalytics secret key
+ * Проверяет загружен ли SDK GameAnalytics
+ * @returns boolean True если SDK загружен, false в противном случае
+ */
+export const isGameAnalyticsLoaded = (): boolean => {
+  return typeof window.gameanalytics !== 'undefined' && 
+         typeof window.gameanalytics.GameAnalytics === 'function' &&
+         window.gameanalytics.GameAnalytics.toString().indexOf('not loaded') === -1;
+};
+
+/**
+ * Инициализирует GameAnalytics с предоставленными ключами
+ * @param gameKey Ключ игры GameAnalytics
+ * @param secretKey Секретный ключ GameAnalytics
  */
 export const initializeGameAnalytics = (gameKey: string, secretKey: string): void => {
   try {
-    if (!window.gameanalytics) {
-      console.error('GameAnalytics SDK not loaded');
-      return;
-    }
-    
-    // Enable info logs for debugging in development
-    if (import.meta.env.DEV) {
-      window.gameanalytics.GameAnalytics("setEnabledInfoLog", true);
-    }
-    
-    // Initialize the SDK
-    window.gameanalytics.GameAnalytics("initialize", gameKey, secretKey);
-    console.log('GameAnalytics initialized successfully');
+    // Создаем таймаут для проверки загрузки SDK
+    let attempts = 0;
+    const maxAttempts = 5;
+    const checkInterval = 1000; // 1 секунда
+
+    const initializeGA = () => {
+      if (isGameAnalyticsLoaded()) {
+        // Включить логи для отладки в режиме разработки
+        if (import.meta.env.DEV) {
+          window.gameanalytics.GameAnalytics("setEnabledInfoLog", true);
+          window.gameanalytics.GameAnalytics("setEnabledVerboseLog", true);
+        }
+        
+        // Инициализация SDK
+        window.gameanalytics.GameAnalytics("initialize", gameKey, secretKey);
+        console.log('GameAnalytics initialized successfully');
+      } else {
+        attempts++;
+        if (attempts < maxAttempts) {
+          console.log(`GameAnalytics SDK not ready, retrying in ${checkInterval/1000}s (attempt ${attempts}/${maxAttempts})...`);
+          setTimeout(initializeGA, checkInterval);
+        } else {
+          console.error('Failed to initialize GameAnalytics: SDK not loaded after multiple attempts');
+        }
+      }
+    };
+
+    // Начать попытки инициализации
+    initializeGA();
   } catch (error) {
     console.error('Failed to initialize GameAnalytics:', error);
   }
@@ -31,7 +56,7 @@ export const initializeGameAnalytics = (gameKey: string, secretKey: string): voi
  */
 export const trackGameStart = (): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     window.gameanalytics.GameAnalytics("addDesignEvent", "Game:Start");
   } catch (error) {
     console.error('Failed to track game start:', error);
@@ -45,7 +70,7 @@ export const trackGameStart = (): void => {
  */
 export const trackGameEnd = (score: number, bossDefeats: number = 0): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     window.gameanalytics.GameAnalytics("addDesignEvent", "Game:End", { score });
   } catch (error) {
     console.error('Failed to track game end:', error);
@@ -60,7 +85,7 @@ export const trackGameEnd = (score: number, bossDefeats: number = 0): void => {
  */
 export const trackPurchase = (itemId: string, price: number, currency: string = "USD"): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     
     // Special case for unlimited mode purchase to match exact format from the image
     if (itemId === "UnlimitedMode") {
@@ -79,7 +104,7 @@ export const trackPurchase = (itemId: string, price: number, currency: string = 
  */
 export const trackAchievement = (achievementId: string): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     window.gameanalytics.GameAnalytics("addDesignEvent", `Achievement:${achievementId}`);
   } catch (error) {
     console.error('Failed to track achievement:', error);
@@ -93,7 +118,7 @@ export const trackAchievement = (achievementId: string): void => {
  */
 export const trackBossFight = (bossLevel: number, action: 'started' | 'defeated' | 'failed'): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     window.gameanalytics.GameAnalytics("addDesignEvent", `Boss:${action}`, { 
       level: bossLevel 
     });
@@ -108,7 +133,7 @@ export const trackBossFight = (bossLevel: number, action: 'started' | 'defeated'
  */
 export const trackAdView = (action: 'started' | 'completed' | 'failed'): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     window.gameanalytics.GameAnalytics("addDesignEvent", `Ad:${action}`);
   } catch (error) {
     console.error('Failed to track ad view:', error);
@@ -122,7 +147,7 @@ export const trackAdView = (action: 'started' | 'completed' | 'failed'): void =>
  */
 export const trackPlayerDeath = (reason: string, score: number): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     window.gameanalytics.GameAnalytics("addDesignEvent", "Player:Death", {
       reason,
       score
@@ -139,7 +164,7 @@ export const trackPlayerDeath = (reason: string, score: number): void => {
  */
 export const trackBoosterCollected = (boosterType: string, gameTime: number): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     window.gameanalytics.GameAnalytics("addDesignEvent", "Booster:Collected", {
       type: boosterType,
       time: gameTime
@@ -156,7 +181,7 @@ export const trackBoosterCollected = (boosterType: string, gameTime: number): vo
  */
 export const trackSession = (actionType: 'start' | 'resume' | 'pause' | 'end', sessionDuration?: number): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     const params: {[key: string]: any} = {};
     
     if (sessionDuration && actionType === 'end') {
@@ -176,7 +201,7 @@ export const trackSession = (actionType: 'start' | 'resume' | 'pause' | 'end', s
  */
 export const trackProgressionMilestone = (milestone: number, timeToReach: number): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     window.gameanalytics.GameAnalytics("addDesignEvent", "Progression:Milestone", {
       score: milestone,
       time: timeToReach
@@ -193,7 +218,7 @@ export const trackProgressionMilestone = (milestone: number, timeToReach: number
  */
 export const trackError = (errorType: string, errorDetails: string): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     window.gameanalytics.GameAnalytics("addErrorEvent", "Error:Gameplay", {
       type: errorType,
       details: errorDetails
@@ -209,7 +234,7 @@ export const trackError = (errorType: string, errorDetails: string): void => {
  */
 export const trackSkinSelection = (skinId: string): void => {
   try {
-    if (!window.gameanalytics) return;
+    if (!isGameAnalyticsLoaded()) return;
     window.gameanalytics.GameAnalytics("addDesignEvent", "Skin:Selected", {
       id: skinId
     });
@@ -217,4 +242,3 @@ export const trackSkinSelection = (skinId: string): void => {
     console.error('Failed to track skin selection:', error);
   }
 };
-
