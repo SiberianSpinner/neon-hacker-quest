@@ -35,4 +35,4 @@ jobs:
         run: |
           npm install
           CI=false && npm run build
-          rsync -za -e "ssh -i ~/.ssh/id_rsa" ./build/* $(echo $SSH_URL):$PROJECT_PATH
+          rsync -za -e "ssh -i ~/.ssh/id_rsa" ./dist/* $(echo $SSH_URL):$PROJECT_PATH
