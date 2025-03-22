@@ -6,7 +6,15 @@ import { saveScore, getScores } from './storageUtils';
 import { updateAchievements } from './achievementsUtils';
 import { getSelectedSkin } from './skinsUtils';
 import { getRemainingDailyAttempts, hasUnlimitedAttempts } from './attemptsUtils';
-import { trackGameStart, trackGameEnd, trackBossFight } from './analyticsUtils';
+import { 
+  trackGameStart, 
+  trackGameEnd, 
+  trackBossFight, 
+  trackPlayerDeath, 
+  trackBoosterCollected,
+  trackProgressionMilestone,
+  trackSession
+} from './analyticsUtils';
 
 // Initialize game state
 export const initGameState = (canvasWidth: number, canvasHeight: number): GameState => {
@@ -401,6 +409,10 @@ export const updateGameState = (
       booster.active = false;
       collectedBooster = true;
       
+      // Track booster collection
+      const gameTime = state.score / 1.33; // Approximate game time in seconds
+      trackBoosterCollected(BoosterType[booster.type], gameTime);
+      
       if (booster.type === BoosterType.SAFETY_KEY) {
         newPlayer.invulnerable = true;
         newPlayer.invulnerableTimer = 1800;
@@ -441,6 +453,19 @@ export const updateGameState = (
   // Add fixed 2000 points bonus when boss is defeated
   const bonusPoints = bossDefeated ? 2000 : 0;
   const newScore = shouldUpdateScore || bossDefeated ? state.score + (1.33 * timeScale) + scoreBoost + bonusPoints : state.score;
+  
+  // Track progression milestones
+  const previousScore = state.score;
+  
+  // Check for crossing score milestones (every 5000 points)
+  const milestones = [1000, 5000, 10000, 25000, 50000, 75000, 100000];
+  for (const milestone of milestones) {
+    if (previousScore < milestone && newScore >= milestone) {
+      const timeToReach = newScore / 1.33; // Approximate time in seconds
+      trackProgressionMilestone(milestone, timeToReach);
+      console.log(`Milestone reached: ${milestone} points`);
+    }
+  }
   
   const newColorPhase = Math.floor(newScore / 5000);
   
@@ -497,8 +522,9 @@ export const startGame = (state: GameState): GameState => {
   console.log("Запуск игры с состоянием:", state);
   updateDailyGameStats();
   
-  // Track game start in analytics
+  // Track game start and session start in analytics
   trackGameStart();
+  trackSession('start');
   
   // Check first run achievement immediately on game start
   const newState = {
@@ -567,8 +593,10 @@ export const endGame = (state: GameState): GameState => {
   console.log("Конец игры, сохранение счета:", state.score);
   saveScore(state.score);
   
-  // Track game end in analytics
+  // Track game end and player death in analytics
   trackGameEnd(state.score, state.bossDefeatsCount);
+  trackPlayerDeath("collision", state.score);
+  trackSession('end', state.score / 1.33); // Approximate session duration in seconds
   
   console.log("Игра окончена, обновление достижений");
   updateAchievements(state);

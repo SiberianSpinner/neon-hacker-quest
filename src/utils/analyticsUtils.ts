@@ -111,3 +111,106 @@ export const trackAdView = (action: 'started' | 'completed' | 'failed'): void =>
     console.error('Failed to track ad view:', error);
   }
 };
+
+/**
+ * Track player death events with reason
+ * @param reason Reason for player death
+ * @param score Score at time of death
+ */
+export const trackPlayerDeath = (reason: string, score: number): void => {
+  try {
+    if (!window.gameanalytics) return;
+    window.gameanalytics.GameAnalytics("addDesignEvent", "Player:Death", {
+      reason,
+      score
+    });
+  } catch (error) {
+    console.error('Failed to track player death:', error);
+  }
+};
+
+/**
+ * Track booster pickup events
+ * @param boosterType Type of booster collected
+ * @param gameTime Time in seconds since game start
+ */
+export const trackBoosterCollected = (boosterType: string, gameTime: number): void => {
+  try {
+    if (!window.gameanalytics) return;
+    window.gameanalytics.GameAnalytics("addDesignEvent", "Booster:Collected", {
+      type: boosterType,
+      time: gameTime
+    });
+  } catch (error) {
+    console.error('Failed to track booster collection:', error);
+  }
+};
+
+/**
+ * Track game session events
+ * @param actionType Type of session action (start, resume, pause, end)
+ * @param sessionDuration Duration of session in seconds (for end events)
+ */
+export const trackSession = (actionType: 'start' | 'resume' | 'pause' | 'end', sessionDuration?: number): void => {
+  try {
+    if (!window.gameanalytics) return;
+    const params: {[key: string]: any} = {};
+    
+    if (sessionDuration && actionType === 'end') {
+      params.duration = sessionDuration;
+    }
+    
+    window.gameanalytics.GameAnalytics("addDesignEvent", `Session:${actionType}`, params);
+  } catch (error) {
+    console.error(`Failed to track session ${actionType}:`, error);
+  }
+};
+
+/**
+ * Track player progression through score milestones
+ * @param milestone Score milestone reached (e.g., 1000, 5000, etc.)
+ * @param timeToReach Time in seconds to reach this milestone
+ */
+export const trackProgressionMilestone = (milestone: number, timeToReach: number): void => {
+  try {
+    if (!window.gameanalytics) return;
+    window.gameanalytics.GameAnalytics("addDesignEvent", "Progression:Milestone", {
+      score: milestone,
+      time: timeToReach
+    });
+  } catch (error) {
+    console.error('Failed to track progression milestone:', error);
+  }
+};
+
+/**
+ * Track error events during gameplay
+ * @param errorType Type of error
+ * @param errorDetails Additional error details
+ */
+export const trackError = (errorType: string, errorDetails: string): void => {
+  try {
+    if (!window.gameanalytics) return;
+    window.gameanalytics.GameAnalytics("addErrorEvent", "Error:Gameplay", {
+      type: errorType,
+      details: errorDetails
+    });
+  } catch (error) {
+    console.error('Failed to track error event:', error);
+  }
+};
+
+/**
+ * Track player skin selection
+ * @param skinId ID of the selected skin
+ */
+export const trackSkinSelection = (skinId: string): void => {
+  try {
+    if (!window.gameanalytics) return;
+    window.gameanalytics.GameAnalytics("addDesignEvent", "Skin:Selected", {
+      id: skinId
+    });
+  } catch (error) {
+    console.error('Failed to track skin selection:', error);
+  }
+};
