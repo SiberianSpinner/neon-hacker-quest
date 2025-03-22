@@ -46,10 +46,7 @@ export const trackGameStart = (): void => {
 export const trackGameEnd = (score: number, bossDefeats: number = 0): void => {
   try {
     if (!window.gameanalytics) return;
-    window.gameanalytics.GameAnalytics("addDesignEvent", "Game:End", { 
-      score, 
-      bossDefeats 
-    });
+    window.gameanalytics.GameAnalytics("addDesignEvent", "Game:End", { score });
   } catch (error) {
     console.error('Failed to track game end:', error);
   }
@@ -64,7 +61,13 @@ export const trackGameEnd = (score: number, bossDefeats: number = 0): void => {
 export const trackPurchase = (itemId: string, price: number, currency: string = "USD"): void => {
   try {
     if (!window.gameanalytics) return;
-    window.gameanalytics.GameAnalytics("addBusinessEvent", `Purchase:${itemId}`, price, currency);
+    
+    // Special case for unlimited mode purchase to match exact format from the image
+    if (itemId === "UnlimitedMode") {
+      window.gameanalytics.GameAnalytics("addBusinessEvent", "Purchase:Unlimited", 100, "XTR");
+    } else {
+      window.gameanalytics.GameAnalytics("addBusinessEvent", `Purchase:${itemId}`, price, currency);
+    }
   } catch (error) {
     console.error('Failed to track purchase:', error);
   }
@@ -214,3 +217,4 @@ export const trackSkinSelection = (skinId: string): void => {
     console.error('Failed to track skin selection:', error);
   }
 };
+
