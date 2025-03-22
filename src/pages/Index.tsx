@@ -15,6 +15,7 @@ import {
   enableUnlimitedAttempts,
   hasUnlimitedAttempts
 } from '@/utils/attemptsUtils';
+import { trackPurchase, trackAdView } from '@/utils/analyticsUtils';
 
 declare global {
   interface Window {
@@ -77,6 +78,9 @@ const Index = () => {
             description: "Обработка платежа...",
             id: "payment-processing"
           });
+          
+          // Track purchase in analytics
+          trackPurchase("UnlimitedMode", 1, "USD");
           
           // Mark payment as verified
           setPaymentVerified();
@@ -324,6 +328,9 @@ const Index = () => {
   
   // Watch ad for attempts
   const handleWatchAd = () => {
+    // Track ad view started
+    trackAdView('started');
+    
     // Call p_adextra function if it exists
     try {
       window.p_adextra(
@@ -331,6 +338,10 @@ const Index = () => {
         () => {
           console.log("Ad displayed successfully");
           setAttemptsLeft(prev => prev + 1);
+          
+          // Track ad view completed
+          trackAdView('completed');
+          
           toast.success("Реклама завершена", {
             description: "Вы получили дополнительную попытку!"
           });
@@ -338,6 +349,10 @@ const Index = () => {
         // Error callback
         () => {
           console.log("Ad failed to display");
+          
+          // Track ad view failed
+          trackAdView('failed');
+          
           toast.error("Ошибка показа рекламы", {
             description: "Попробуйте еще раз позже."
           });
@@ -370,19 +385,25 @@ const Index = () => {
   
   // Simulate ad viewing (fallback for non-Telegram environment)
   const simulateAdView = () => {
+    trackAdView('started');
+    
     toast.info("Загрузка рекламы...", {
       description: "Симуляция просмотра рекламы.",
     });
     
     setTimeout(() => {
       setAttemptsLeft(prev => prev + 1);
+      
+      // Track ad view completed
+      trackAdView('completed');
+      
       toast.success("Реклама завершена", {
         description: "Вы получили дополнительную попытку!"
       });
     }, 2000);
   };
   
-  // Buy unlimited attempts
+  // Update handleBuyUnlimited to include analytics for the simulation case
   const handleBuyUnlimited = () => {
     // Prevent multiple payments by checking paymentProcessing flag
     if (paymentProcessing) {
@@ -520,7 +541,7 @@ const Index = () => {
     }
   };
   
-  // Simulate purchase (fallback for non-Telegram environment)
+  // Update simulatePurchase to include analytics
   const simulatePurchase = () => {
     toast.info("Обработка платежа...", {
       description: "Симуляция платежа.",
@@ -530,6 +551,9 @@ const Index = () => {
     setPaymentProcessing(true);
     
     setTimeout(() => {
+      // Track purchase in analytics
+      trackPurchase("UnlimitedMode", 1, "USD");
+      
       // Mark payment as verified
       setPaymentVerified();
       // Enable unlimited mode
@@ -614,6 +638,7 @@ const Index = () => {
     };
   }, []);
 
+  // Loading sequence
   if (isLoading) {
     return (
       <div className="min-h-screen bg-cyber-background flex items-center justify-center flex-col gap-4">
