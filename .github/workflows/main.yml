@@ -1,3 +1,4 @@
+
 name: deploy-main
 
 on:
@@ -14,6 +15,8 @@ jobs:
       SSH_KEY: ${{ secrets.SSH_KEY_PROD }}
       SSH_URL: ${{ vars.SSH_URL_PROD }}  # root@ip
       PROJECT_PATH: "/opt/netrunner-front"
+      VITE_GA_KEY: ${{ secrets.VITE_GA_KEY }}
+      VITE_GA_SECRET: ${{ secrets.VITE_GA_SECRET }}
     steps:
       - uses: actions/checkout@v3
       - name: Preparing deploy
