@@ -21,6 +21,7 @@ interface StartScreenProps {
   isTelegramWebApp?: boolean;
   dailyAttemptsLeft: number;
   hasUnlimitedMode: boolean;
+  paymentProcessing?: boolean;
 }
 
 const StartScreen: React.FC<StartScreenProps> = ({
@@ -30,12 +31,13 @@ const StartScreen: React.FC<StartScreenProps> = ({
   onWatchAd,
   onBuyUnlimited,
   onShowAchievements,
-  onShowScripts, // New prop
+  onShowScripts,
   attemptsLeft,
   lastScore,
   isTelegramWebApp = false,
   dailyAttemptsLeft,
-  hasUnlimitedMode
+  hasUnlimitedMode,
+  paymentProcessing = false
 }) => {
   const [menuLoaded, setMenuLoaded] = useState(false);
   const [timeUntilReset, setTimeUntilReset] = useState('');
@@ -101,13 +103,35 @@ const StartScreen: React.FC<StartScreenProps> = ({
     : "text-cyber-primary font-bold";
     
   // Check if payment button should be disabled
-  const isPaymentButtonDisabled = hasUnlimitedMode || paymentVerified;
+  const isPaymentButtonDisabled = hasUnlimitedMode || paymentVerified || paymentProcessing;
+  
   // Determine payment button tooltip text
   const paymentButtonTooltip = hasUnlimitedMode 
     ? (isTelegramWebApp ? 'Протокол "Демон" уже активен' : 'Daemon Protocol already active')
     : paymentVerified 
       ? (isTelegramWebApp ? 'Вы уже совершили покупку' : 'You have already purchased this')
-      : '';
+      : paymentProcessing
+        ? (isTelegramWebApp ? 'Обработка платежа' : 'Processing payment')
+        : '';
+  
+  // Determine payment button text
+  const paymentButtonText = isTelegramWebApp ? 
+    (hasUnlimitedMode ? 
+      'ПРОТОКОЛ "ДЕМОН" АКТИВЕН' : 
+      paymentVerified ? 
+        'ПОКУПКА ВЫПОЛНЕНА' : 
+        paymentProcessing ?
+          'ОБРАБОТКА ПЛАТЕЖА...' :
+          'ПРОТОКОЛ "ДЕМОН"'
+    ) : 
+    (hasUnlimitedMode ? 
+      'DAEMON PROTOCOL ACTIVE' : 
+      paymentVerified ? 
+        'PURCHASE COMPLETED' : 
+        paymentProcessing ?
+          'PROCESSING PAYMENT...' :
+          'DAEMON PROTOCOL'
+    );
   
   return (
     <div
@@ -247,22 +271,25 @@ const StartScreen: React.FC<StartScreenProps> = ({
             transition={{ delay: 0.8, duration: 0.3 }}
           >
             <CustomButton
-              className={`w-full uppercase ${isPaymentButtonDisabled ? 'bg-red-900/60 hover:bg-red-900/80' : ''}`}
-              variant={isPaymentButtonDisabled ? "destructive" : "tertiary"}
+              className={`w-full uppercase ${
+                paymentProcessing 
+                  ? 'bg-yellow-900/60 hover:bg-yellow-900/80 animate-pulse' 
+                  : isPaymentButtonDisabled 
+                    ? 'bg-red-900/60 hover:bg-red-900/80' 
+                    : ''
+              }`}
+              variant={
+                paymentProcessing 
+                  ? "secondary" 
+                  : isPaymentButtonDisabled 
+                    ? "destructive" 
+                    : "tertiary"
+              }
               onClick={onBuyUnlimited}
-              disabled={isPaymentButtonDisabled} // Disable if unlimited mode is active OR payment is verified
+              disabled={isPaymentButtonDisabled} // Disable if unlimited mode is active OR payment is verified OR payment is processing
               title={paymentButtonTooltip}
             >
-              {isTelegramWebApp ? 
-                (hasUnlimitedMode ? 
-                  'ПРОТОКОЛ "ДЕМОН" АКТИВЕН' : 
-                  (paymentVerified ? 'ПОКУПКА ВЫПОЛНЕНА' : 'ПРОТОКОЛ "ДЕМОН"')
-                ) : 
-                (hasUnlimitedMode ? 
-                  'DAEMON PROTOCOL ACTIVE' : 
-                  (paymentVerified ? 'PURCHASE COMPLETED' : 'DAEMON PROTOCOL')
-                )
-              }
+              {paymentButtonText}
             </CustomButton>
           </motion.div>
           

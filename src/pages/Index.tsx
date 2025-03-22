@@ -29,7 +29,8 @@ declare global {
           onClick: (callback: () => void) => void;
           offClick: (callback: () => void) => void;
         };
-        onEvent: (eventType: string, callback: () => void) => void;
+        onEvent: (eventType: string, callback: (eventData?: any) => void) => void;
+        offEvent: (eventType: string, callback: (eventData?: any) => void) => void;
         sendData: (data: string) => void;
         initData: string;
         openInvoice: (url: string) => void;
@@ -38,6 +39,11 @@ declare global {
     // Ad extra function for displaying ads
     p_adextra?: (successCallback: () => void, errorCallback: () => void) => void;
   }
+}
+
+interface InvoiceClosedEvent {
+  url: string;
+  status: 'paid' | 'cancelled' | 'failed' | 'pending';
 }
 
 const Index = () => {
@@ -52,33 +58,99 @@ const Index = () => {
   const [isTelegramWebApp, setIsTelegramWebApp] = useState(false);
   const [selectedSkin, setSelectedSkin] = useState<PlayerSkin>(PlayerSkin.DEFAULT);
   const [hasUnlimitedMode, setHasUnlimitedMode] = useState(false);
-
-
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   useEffect(() => {
     if (!window.Telegram?.WebApp) return;
 
     // The function to be called when Telegram fires "invoice_closed"
-    const handleInvoiceClosed = (eventData:any) => {
+    const handleInvoiceClosed = (eventData: InvoiceClosedEvent) => {
       console.log(`[DEBUG] invoiceClosed event received:`, JSON.stringify(eventData, null, 2));
       console.log(`[DEBUG] Invoice Status: ${eventData.status}`);
-      console.log(`[DEBUG] Invoice Slug: ${eventData.url}`);
+      console.log(`[DEBUG] Invoice URL: ${eventData.url}`);
 
-      toast("Счет закрыт", {
-        description: "Пользователь закрыл окно покупки или оплата завершена.",
-      });
+      // Process based on payment status
+      switch(eventData.status) {
+        case 'paid':
+          console.log('[PAYMENT] Invoice was paid successfully');
+          toast.success("Оплата успешна", {
+            description: "Обработка платежа...",
+            id: "payment-processing"
+          });
+          
+          // Mark payment as verified
+          setPaymentVerified();
+          
+          // Wait a bit to ensure storage is updated
+          setTimeout(() => {
+            // Double-check payment verification
+            const verified = readPaymentVerification();
+            console.log('[PAYMENT] Payment verification after setting:', verified);
+            
+            // Enable unlimited attempts
+            enableUnlimitedAttempts();
+            
+            // Wait a bit more to ensure unlimited attempts are enabled
+            setTimeout(() => {
+              // Double-check unlimited attempts
+              const unlimited = hasUnlimitedAttempts();
+              console.log('[PAYMENT] Unlimited attempts after enabling:', unlimited);
+              
+              // Update state
+              setHasUnlimitedMode(true);
+              setAttemptsLeft(Infinity);
+              setDailyAttemptsLeft(Infinity);
+              
+              toast.success("Покупка успешна", {
+                id: "payment-processing",
+                description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
+              });
+              
+              // Clear payment processing flag
+              setPaymentProcessing(false);
+            }, 500);
+          }, 500);
+          break;
+          
+        case 'cancelled':
+          console.log('[PAYMENT] Invoice was cancelled by user');
+          toast.info("Оплата отменена", {
+            description: "Пользователь отменил платеж."
+          });
+          setPaymentProcessing(false);
+          break;
+          
+        case 'failed':
+          console.log('[PAYMENT] Payment failed');
+          toast.error("Ошибка оплаты", {
+            description: "Не удалось завершить платеж. Пожалуйста, попробуйте позже."
+          });
+          setPaymentProcessing(false);
+          break;
+          
+        case 'pending':
+          console.log('[PAYMENT] Payment is pending');
+          toast.loading("Платеж в обработке", {
+            description: "Ожидание завершения платежа..."
+          });
+          // Keep payment processing flag active while pending
+          break;
+          
+        default:
+          console.log('[PAYMENT] Unknown invoice status:', eventData.status);
+          toast.error("Неизвестный статус платежа", {
+            description: "Пожалуйста, свяжитесь с поддержкой."
+          });
+          setPaymentProcessing(false);
+      }
     };
 
     // Add the event listener
     window.Telegram.WebApp.onEvent("invoiceClosed", handleInvoiceClosed);
 
-    // Clean up: remove listener on unmount, if supported
+    // Clean up: remove listener on unmount
     return () => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-expect-error
       if (window.Telegram?.WebApp?.offEvent) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //@ts-expect-error
         window.Telegram.WebApp.offEvent("invoiceClosed", handleInvoiceClosed);
       }
     };
@@ -312,6 +384,14 @@ const Index = () => {
   
   // Buy unlimited attempts
   const handleBuyUnlimited = () => {
+    // Prevent multiple payments by checking paymentProcessing flag
+    if (paymentProcessing) {
+      toast.info("Обработка платежа уже идет", {
+        description: "Пожалуйста, дождитесь завершения текущего платежа."
+      });
+      return;
+    }
+    
     // Log the current payment verification and unlimited mode status
     console.log("Current payment verification status:", isPaymentVerified());
     console.log("Current unlimited mode status:", hasUnlimitedAttempts());
@@ -344,11 +424,15 @@ const Index = () => {
       return;
     }
 
+    // Set payment processing flag
+    setPaymentProcessing(true);
+
     // If in Telegram, send event to process payment
     if (isTelegramWebApp && window.Telegram?.WebApp) {
       try {
         toast.info("Создание счета...", {
           description: "Пожалуйста, подождите...",
+          id: "invoice-creation"
         });
 
         // Create a function to make the API call
@@ -404,101 +488,13 @@ const Index = () => {
 
             console.log("Using invoice URL:", invoiceUrl);
 
-            // Set up event handler for successful payment before opening invoice
+            toast.success("Счет создан", {
+              id: "invoice-creation",
+              description: "Переход к оплате..."
+            });
+
+            // Open the invoice - the invoiceClosed event handler will take care of processing the result
             if (window.Telegram?.WebApp) {
-              // Store payment status check in a variable to use in the event listener
-              let paymentStatusChecked = false;
-              
-              // Fix: Create a wrapper function without parameters
-              const handleInvoiceClosed = () => {
-                console.log('Invoice closed, checking payment status');
-                
-                // Prevent multiple status checks
-                if (paymentStatusChecked) return;
-                paymentStatusChecked = true;
-                
-                // Show a loading toast while checking payment status
-                toast.loading("Проверка платежа...", {
-                  description: "Пожалуйста, подождите...",
-                  id: "payment-check",
-                });
-                
-                // Check payment status after invoice is closed
-                fetch('https://autobrain.ai/api/v1/payment/status', {
-                  method: 'GET',
-                  headers: {
-                    'accept': 'application/json',
-                    'token': window.Telegram.WebApp.initData,
-                    'Content-Type': 'application/json',
-                    'hash': '820d7678089ba5ecfcdd146a2ebb9b5cadc4b74d6655d824ee2ec30f867736b9'
-                  }
-                })
-                .then(response => {
-                  console.log('Payment status API response status:', response.status);
-                  return response.json();
-                })
-                .then(data => {
-                  console.log('Payment status response:', data);
-                  
-                  // Dismiss the loading toast
-                  toast.dismiss("payment-check");
-                  
-                  if (data && data.status === 'paid') {
-                    console.log('Payment successful!');
-                    // Mark payment as verified in local storage
-                    setPaymentVerified();
-                    
-                    // Wait a bit to ensure storage is updated
-                    setTimeout(() => {
-                      // Double-check payment verification
-                      const verified = readPaymentVerification();
-                      console.log('Payment verification after setting:', verified);
-                      
-                      // Enable unlimited attempts
-                      enableUnlimitedAttempts();
-                      
-                      // Wait a bit more to ensure unlimited attempts are enabled
-                      setTimeout(() => {
-                        // Double-check unlimited attempts
-                        const unlimited = hasUnlimitedAttempts();
-                        console.log('Unlimited attempts after enabling:', unlimited);
-                        
-                        // Update state
-                        setHasUnlimitedMode(true);
-                        setAttemptsLeft(Infinity);
-                        setDailyAttemptsLeft(Infinity);
-                        
-                        toast.success("Покупка успешна", {
-                          description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
-                        });
-                      }, 300);
-                    }, 300);
-                  } else {
-                    toast.error("Оплата не прошла", {
-                      description: "Пожалуйста, попробуйте ещё раз позже."
-                    });
-                  }
-                })
-                .catch(error => {
-                  console.error('Error checking payment status:', error);
-                  toast.dismiss("payment-check");
-                  toast.error("Ошибка проверки статуса оплаты", {
-                    description: "Пожалуйста, попробуйте ещё раз позже."
-                  });
-                });
-                
-                // Clean up event listener after use
-                if (window.Telegram?.WebApp) {
-                  window.Telegram.WebApp.onEvent('invoice_closed', () => {});
-                }
-              };
-
-              // Add event listener with the wrapper function
-              console.log('Adding invoice_closed event listener');
-              window.Telegram.WebApp.onEvent('invoice_closed', handleInvoiceClosed);
-
-              // Open the invoice
-              console.log('Opening invoice with URL:', invoiceUrl);
               window.Telegram.WebApp.openInvoice(invoiceUrl);
             }
           } else {
@@ -508,12 +504,15 @@ const Index = () => {
         .catch(error => {
           console.error('Error creating invoice:', error);
           toast.error("Ошибка создания счета", {
+            id: "invoice-creation",
             description: "Пожалуйста, попробуйте позже.",
           });
-          simulatePurchase(); // Fallback to simulation
+          setPaymentProcessing(false);
+          simulatePurchase(); // Fallback to simulation in development
         });
       } catch (err) {
         console.error('Error in payment process:', err);
+        setPaymentProcessing(false);
         simulatePurchase();
       }
     } else {
@@ -527,6 +526,9 @@ const Index = () => {
       description: "Симуляция платежа.",
     });
     
+    // Set payment processing flag
+    setPaymentProcessing(true);
+    
     setTimeout(() => {
       // Mark payment as verified
       setPaymentVerified();
@@ -539,6 +541,9 @@ const Index = () => {
       toast.success("Покупка успешна", {
         description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
       });
+      
+      // Clear payment processing flag
+      setPaymentProcessing(false);
     }, 2000);
   };
   
@@ -675,6 +680,7 @@ const Index = () => {
         isTelegramWebApp={isTelegramWebApp}
         dailyAttemptsLeft={dailyAttemptsLeft}
         hasUnlimitedMode={hasUnlimitedMode}
+        paymentProcessing={paymentProcessing}
       />
       
       {/* Leaderboard */}
@@ -706,7 +712,7 @@ const Index = () => {
 
       {/* Version tag */}
       <div className="absolute bottom-2 right-2 text-xs text-cyber-foreground/30">
-        v1.6.1
+        v1.6.2
       </div>
     </div>
   );
