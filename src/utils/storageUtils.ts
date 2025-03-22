@@ -1,4 +1,3 @@
-
 // Generic storage utility functions
 export const getItem = (key: string): string | null => {
   try {
@@ -17,7 +16,7 @@ export const setItem = (key: string, value: string): void => {
   }
 };
 
-// Save score to local storage
+// Save score to local storage - Modified to store all player scores
 export const saveScore = (score: number): void => {
   try {
     // Skip saving if score is too small (prevents saving test/debug runs)
@@ -41,19 +40,19 @@ export const saveScore = (score: number): void => {
     // Sort scores in descending order
     scores.sort((a: number, b: number) => b - a);
     
-    // Keep only top 10 scores
-    const topScores = scores.slice(0, 10);
+    // Keep only top 100 scores - changed from 10 to 100
+    const topScores = scores.slice(0, 100);
     
     // Save scores back to localStorage
     localStorage.setItem('netrunner_scores', JSON.stringify(topScores));
     
-    console.log(`Score ${score} saved, current scores:`, topScores);
+    console.log(`Score ${score} saved, current top scores count: ${topScores.length}`);
   } catch (error) {
     console.error('Error saving score:', error);
   }
 };
 
-// Get scores from local storage
+// Get scores from local storage - now will return up to 100 scores
 export const getScores = (): number[] => {
   try {
     const scoresJson = localStorage.getItem('netrunner_scores');
@@ -72,11 +71,17 @@ export const getScores = (): number[] => {
       return [];
     }
     
-    return scores;
+    return scores.slice(0, 100); // Ensure we return at most 100 scores
   } catch (error) {
     console.error('Error loading scores:', error);
     return [];
   }
+};
+
+// Format score as percentage with 3 decimal places
+export const formatScoreAsPercentage = (score: number): string => {
+  const percentage = score / 1000;
+  return percentage.toFixed(3) + '%';
 };
 
 // For debugging: clear all scores
