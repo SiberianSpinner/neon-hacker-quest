@@ -53,6 +53,37 @@ const Index = () => {
   const [selectedSkin, setSelectedSkin] = useState<PlayerSkin>(PlayerSkin.DEFAULT);
   const [hasUnlimitedMode, setHasUnlimitedMode] = useState(false);
 
+
+
+  useEffect(() => {
+    if (!window.Telegram?.WebApp) return;
+
+    // The function to be called when Telegram fires "invoice_closed"
+    const handleInvoiceClosed = (eventData:any) => {
+      console.log(`[DEBUG] invoiceClosed event received:`, JSON.stringify(eventData, null, 2));
+      console.log(`[DEBUG] Invoice Status: ${eventData.status}`);
+      console.log(`[DEBUG] Invoice Slug: ${eventData.url}`);
+
+      toast("Счет закрыт", {
+        description: "Пользователь закрыл окно покупки или оплата завершена.",
+      });
+    };
+
+    // Add the event listener
+    window.Telegram.WebApp.onEvent("invoiceClosed", handleInvoiceClosed);
+
+    // Clean up: remove listener on unmount, if supported
+    return () => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-expect-error
+      if (window.Telegram?.WebApp?.offEvent) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-expect-error
+        window.Telegram.WebApp.offEvent("invoiceClosed", handleInvoiceClosed);
+      }
+    };
+  }, []);
+
   // Check if running in Telegram WebApp
   useEffect(() => {
     if (window.Telegram?.WebApp) {
