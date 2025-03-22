@@ -16,8 +16,15 @@ export const setItem = (key: string, value: string): void => {
   }
 };
 
-// Save score to local storage - Modified to store all player scores
-export const saveScore = (score: number): void => {
+// Interface for score records
+interface ScoreRecord {
+  score: number;
+  username?: string;
+  userId?: string;
+}
+
+// Save score to local storage - Modified to store player info
+export const saveScore = (score: number, username?: string, userId?: string): void => {
   try {
     // Skip saving if score is too small (prevents saving test/debug runs)
     if (score < 10) {
@@ -27,33 +34,37 @@ export const saveScore = (score: number): void => {
 
     // Get existing scores
     const scoresJson = localStorage.getItem('netrunner_scores') || '[]';
-    let scores = JSON.parse(scoresJson);
+    let scores: ScoreRecord[] = JSON.parse(scoresJson);
     
     // Ensure scores is an array
     if (!Array.isArray(scores)) {
       scores = [];
     }
     
-    // Add the new score
-    scores.push(score);
+    // Add the new score with username
+    scores.push({ 
+      score, 
+      username: username || 'Anonymous Runner', 
+      userId 
+    });
     
-    // Sort scores in descending order
-    scores.sort((a: number, b: number) => b - a);
+    // Sort scores in descending order by score
+    scores.sort((a: ScoreRecord, b: ScoreRecord) => b.score - a.score);
     
-    // Keep only top 100 scores - changed from 10 to 100
+    // Keep only top 100 scores
     const topScores = scores.slice(0, 100);
     
     // Save scores back to localStorage
     localStorage.setItem('netrunner_scores', JSON.stringify(topScores));
     
-    console.log(`Score ${score} saved, current top scores count: ${topScores.length}`);
+    console.log(`Score ${score} saved for ${username || 'Anonymous'}, current top scores count: ${topScores.length}`);
   } catch (error) {
     console.error('Error saving score:', error);
   }
 };
 
-// Get scores from local storage - now will return up to 100 scores
-export const getScores = (): number[] => {
+// Get scores from local storage
+export const getScores = (): ScoreRecord[] => {
   try {
     const scoresJson = localStorage.getItem('netrunner_scores');
     
@@ -71,10 +82,40 @@ export const getScores = (): number[] => {
       return [];
     }
     
-    return scores.slice(0, 100); // Ensure we return at most 100 scores
+    // Convert legacy scores (numbers only) to ScoreRecord format
+    const formattedScores = scores.map((item: number | ScoreRecord) => {
+      if (typeof item === 'number') {
+        return { score: item, username: 'Anonymous Runner' };
+      }
+      // Ensure username exists
+      if (!item.username) {
+        item.username = 'Anonymous Runner';
+      }
+      return item;
+    });
+    
+    return formattedScores.slice(0, 100); // Ensure we return at most 100 scores
   } catch (error) {
     console.error('Error loading scores:', error);
     return [];
+  }
+};
+
+// Get current user's highest score (for highlighting in leaderboard)
+export const getCurrentUserScore = (userId?: string): ScoreRecord | null => {
+  if (!userId) return null;
+  
+  try {
+    const scores = getScores();
+    const userScores = scores.filter(record => record.userId === userId);
+    
+    if (userScores.length === 0) return null;
+    
+    // Return the highest score for this user
+    return userScores.sort((a, b) => b.score - a.score)[0];
+  } catch (error) {
+    console.error('Error getting current user score:', error);
+    return null;
   }
 };
 

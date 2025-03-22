@@ -8,10 +8,11 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 interface LeaderboardProps {
   isVisible: boolean;
   onClose: () => void;
+  currentUserId?: string;
 }
 
-const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose }) => {
-  const [scores, setScores] = useState<number[]>([]);
+const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose, currentUserId }) => {
+  const [scores, setScores] = useState<Array<{score: number, username?: string, userId?: string}>>([]);
   const [animationState, setAnimationState] = useState<'entering' | 'entered' | 'exiting' | 'exited'>('exited');
 
   useEffect(() => {
@@ -60,28 +61,37 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose }) => {
               <TableHeader>
                 <TableRow className="border-b border-cyber-primary/30">
                   <TableHead className="p-2 text-cyber-primary">#</TableHead>
+                  <TableHead className="p-2 text-cyber-primary">RUNNER</TableHead>
                   <TableHead className="p-2 text-cyber-primary">HACK RESULT</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {scores.map((score, index) => (
-                  <TableRow 
-                    key={index} 
-                    className={cn(
-                      "border-b border-cyber-primary/10 transition-colors",
-                      index === 0 && "bg-cyber-primary/10"
-                    )}
-                    style={{ 
-                      animationDelay: `${index * 0.05}s`,
-                      animation: "fade-up 0.3s forwards"
-                    }}
-                  >
-                    <TableCell className="p-2">{index + 1}</TableCell>
-                    <TableCell className="p-2 font-mono">
-                      {formatScoreAsPercentage(score)}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {scores.map((scoreRecord, index) => {
+                  const isCurrentUser = currentUserId && scoreRecord.userId === currentUserId;
+                  
+                  return (
+                    <TableRow 
+                      key={index} 
+                      className={cn(
+                        "border-b border-cyber-primary/10 transition-colors",
+                        index === 0 && "bg-cyber-primary/10",
+                        isCurrentUser && "bg-cyber-primary/20 text-glow"
+                      )}
+                      style={{ 
+                        animationDelay: `${index * 0.05}s`,
+                        animation: "fade-up 0.3s forwards"
+                      }}
+                    >
+                      <TableCell className="p-2">{index + 1}</TableCell>
+                      <TableCell className={cn("p-2 font-medium", isCurrentUser && "text-glow")}>
+                        {isCurrentUser ? "◉ " : ""}{scoreRecord.username || 'Anonymous Runner'}
+                      </TableCell>
+                      <TableCell className="p-2 font-mono">
+                        {formatScoreAsPercentage(scoreRecord.score)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           ) : (
