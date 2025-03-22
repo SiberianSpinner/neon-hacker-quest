@@ -22,6 +22,7 @@ import {
   trackSession, 
   trackError 
 } from '@/utils/analyticsUtils';
+import {GameAnalytics} from "gameanalytics";
 
 declare global {
   interface Window {
@@ -80,6 +81,7 @@ const Index = () => {
       switch(eventData.status) {
         case 'paid':
           console.log('[PAYMENT] Invoice was paid successfully');
+          GameAnalytics.addDesignEvent('invoice:success')
           toast.success("Оплата успешна", {
             description: "Обработка платежа...",
             id: "payment-processing"
@@ -339,7 +341,7 @@ const Index = () => {
   const handleWatchAd = () => {
     // Track ad view started
     trackAdView('started');
-    
+    GameAnalytics.addDesignEvent('add:watched')
     // Call p_adextra function if it exists
     try {
       window.p_adextra(
