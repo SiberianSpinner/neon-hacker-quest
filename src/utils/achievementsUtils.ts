@@ -292,5 +292,8 @@ export const updateAchievements = (state: GameState): void => {
 // Get the highest score achieved
 export const getHighestScore = (): number => {
   const scores = getScores();
-  return scores.length > 0 ? Math.max(...scores) : 0;
+  if (scores.length === 0) return 0;
+  
+  // Extract score values from ScoreRecord objects and find maximum
+  return Math.max(...scores.map(record => record.score));
 };

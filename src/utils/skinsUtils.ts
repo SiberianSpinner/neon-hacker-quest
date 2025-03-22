@@ -50,8 +50,8 @@ export const getHighestScore = (): number => {
       return 0;
     }
     
-    // Find maximum score
-    const maxScore = Math.max(...scores);
+    // Extract the score values from ScoreRecord objects and find maximum
+    const maxScore = Math.max(...scores.map(record => record.score));
     console.log("Maximum score found:", maxScore);
     return maxScore;
   } catch (error) {
