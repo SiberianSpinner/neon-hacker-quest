@@ -1,5 +1,4 @@
-
-import { PlayerSkin, PlayerSkinInfo } from './types';
+import { PlayerSkin, PlayerSkinInfo, ScoreRecord } from './types';
 import { getScores } from './storageUtils';
 
 // Get all available player skins with unlock status

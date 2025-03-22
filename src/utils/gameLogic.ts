@@ -6,6 +6,7 @@ import { saveScore, getScores } from './storageUtils';
 import { updateAchievements } from './achievementsUtils';
 import { getSelectedSkin } from './skinsUtils';
 import { getRemainingDailyAttempts, hasUnlimitedAttempts } from './attemptsUtils';
+import { trackGameStart, trackGameEnd, trackBossFight } from './analyticsUtils';
 
 // Initialize game state
 export const initGameState = (canvasWidth: number, canvasHeight: number): GameState => {
@@ -270,6 +271,14 @@ export const updateBossCore = (
     }
   }
   
+  // Add boss defeat tracking and analytics
+  if (bossDefeated && bossCore) {
+    // Track boss defeated in analytics
+    trackBossFight(bossCore.level, 'defeated');
+    
+    // If boss is inactive but in cooldown, update timer
+  }
+  
   // If boss is inactive but in cooldown, update timer
   if (!updatedBoss.active && updatedBoss.cooldownTimer > 0) {
     updatedBoss.cooldownTimer -= deltaTime / 60; // Convert to seconds
@@ -323,6 +332,11 @@ export const updateGameState = (
   if (shouldSpawnBoss(state.score, bossCore)) {
     console.log(`Появляется босс при счете ${state.score}`);
     bossCore = initBossCore(state.score, canvasWidth, canvasHeight);
+    
+    // Track boss spawn in analytics
+    if (bossCore) {
+      trackBossFight(bossCore.level, 'started');
+    }
   }
 
   // Handle boss core updates if it exists
@@ -483,6 +497,9 @@ export const startGame = (state: GameState): GameState => {
   console.log("Запуск игры с состоянием:", state);
   updateDailyGameStats();
   
+  // Track game start in analytics
+  trackGameStart();
+  
   // Check first run achievement immediately on game start
   const newState = {
     ...state,
@@ -549,6 +566,9 @@ export const getDailyGameStats = (): { date: string, gamesPlayed: number } => {
 export const endGame = (state: GameState): GameState => {
   console.log("Конец игры, сохранение счета:", state.score);
   saveScore(state.score);
+  
+  // Track game end in analytics
+  trackGameEnd(state.score, state.bossDefeatsCount);
   
   console.log("Игра окончена, обновление достижений");
   updateAchievements(state);

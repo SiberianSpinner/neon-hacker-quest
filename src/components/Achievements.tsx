@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, X } from 'lucide-react';
 import { Achievement } from '@/utils/types';
-import { loadAchievements } from '@/utils/achievementsUtils';
+import { getAllAchievements } from '@/utils/achievementsUtils';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CustomButton } from './ui/CustomButton';
@@ -26,7 +26,7 @@ const Achievements: React.FC<AchievementsProps> = ({
   useEffect(() => {
     if (isVisible) {
       // Reload fresh achievements data
-      const loadedAchievements = loadAchievements();
+      const loadedAchievements = getAllAchievements();
       console.log('Загруженные достижения:', loadedAchievements);
       setAchievements(loadedAchievements);
     }

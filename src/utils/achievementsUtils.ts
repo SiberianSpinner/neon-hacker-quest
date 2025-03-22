@@ -1,299 +1,312 @@
-
-import { Achievement, GameState } from './types';
+import { Achievement, GameState, ScoreRecord } from './types';
 import { getScores } from './storageUtils';
 import { getDailyGameStats } from './gameLogic';
+import { trackAchievement } from './analyticsUtils';
 
-// Define all achievements with Russian translations
-const ACHIEVEMENTS: Achievement[] = [
+// Define achievement data
+const achievementData: Achievement[] = [
   {
     id: 'first_run',
-    name: 'Первая Загрузка',
-    description: 'Начните свою первую попытку взлома',
+    name: 'Первый запуск',
+    description: 'Запустите игру в первый раз',
     unlocked: false,
-    imageSrc: '/achievements/first-boot.svg',
+    imageSrc: '/achievements/first_run.png'
   },
   {
-    id: 'reach_10percent',
-    name: '10% Доступа',
-    description: 'Достигните 10% завершения взлома',
+    id: 'reach_10k_score',
+    name: '10K Взлом',
+    description: 'Наберите 10,000 очков',
     unlocked: false,
-    imageSrc: '/achievements/ten-percent.svg',
+    imageSrc: '/achievements/10k_score.png'
   },
   {
-    id: 'reach_25percent',
-    name: '25% Доступа',
-    description: 'Достигните 25% завершения взлома',
+    id: 'reach_25k_score',
+    name: '25K Взлом',
+    description: 'Наберите 25,000 очков',
     unlocked: false,
-    imageSrc: '/achievements/twenty-five-percent.svg',
+    imageSrc: '/achievements/25k_score.png'
   },
   {
-    id: 'reach_50percent',
-    name: '50% Доступа',
-    description: 'Достигните 50% завершения взлома',
+    id: 'reach_50k_score',
+    name: '50K Взлом',
+    description: 'Наберите 50,000 очков',
     unlocked: false,
-    imageSrc: '/achievements/fifty-percent.svg',
+    imageSrc: '/achievements/50k_score.png'
   },
   {
-    id: 'reach_75percent',
-    name: '75% Доступа',
-    description: 'Достигните 75% завершения взлома',
+    id: 'reach_75k_score',
+    name: '75K Взлом',
+    description: 'Наберите 75,000 очков',
     unlocked: false,
-    imageSrc: '/achievements/seventy-five-percent.svg',
+    imageSrc: '/achievements/75k_score.png'
   },
   {
-    id: 'reach_100percent',
-    name: '100% Доступа',
-    description: 'Завершите взлом на 100%',
+    id: 'reach_100k_score',
+    name: '100K Взлом',
+    description: 'Наберите 100,000 очков',
     unlocked: false,
-    imageSrc: '/achievements/hundred-percent.svg',
+    imageSrc: '/achievements/100k_score.png'
   },
   {
-    id: 'collect_key',
-    name: 'Обход Защиты',
-    description: 'Соберите свой первый Ключ Безопасности',
+    id: 'collect_10_safety_keys',
+    name: '10 Ключей Безопасности',
+    description: 'Соберите 10 ключей безопасности',
     unlocked: false,
-    imageSrc: '/achievements/security-bypass.svg',
+    imageSrc: '/achievements/10_safety_keys.png'
   },
   {
-    id: 'collect_backdoor',
-    name: 'Бэкдор Найден',
-    description: 'Соберите свой первый Бэкдор',
+    id: 'collect_25_safety_keys',
+    name: '25 Ключей Безопасности',
+    description: 'Соберите 25 ключей безопасности',
     unlocked: false,
-    imageSrc: '/achievements/backdoor.svg',
+    imageSrc: '/achievements/25_safety_keys.png'
   },
   {
-    id: 'play_3_times',
-    name: 'Настойчивость',
-    description: 'Сыграйте в игру 3 раза за один день',
+    id: 'collect_50_safety_keys',
+    name: '50 Ключей Безопасности',
+    description: 'Соберите 50 ключей безопасности',
     unlocked: false,
-    imageSrc: '/achievements/persistence.svg',
+    imageSrc: '/achievements/50_safety_keys.png'
   },
   {
-    id: 'play_10_times',
-    name: 'Целеустремленность',
-    description: 'Сыграйте в игру 10 раз за один день',
+    id: 'collect_10_backdoors',
+    name: '10 Бэкдоров',
+    description: 'Соберите 10 бэкдоров',
     unlocked: false,
-    imageSrc: '/achievements/determination.svg',
-  },
-  // Memory core related achievements with icons
-  {
-    id: 'defeat_first_core',
-    name: 'Взломщик Памяти',
-    description: 'Уничтожьте своё первое Ядро Памяти',
-    unlocked: false,
-    imageSrc: '/achievements/memory-crasher.svg',
+    imageSrc: '/achievements/10_backdoors.png'
   },
   {
-    id: 'defeat_level2_core',
-    name: 'Разрушитель Данных',
-    description: 'Уничтожьте Ядро Памяти 2-го уровня',
+    id: 'collect_25_backdoors',
+    name: '25 Бэкдоров',
+    description: 'Соберите 25 бэкдоров',
     unlocked: false,
-    imageSrc: '/achievements/data-corruptor.svg',
+    imageSrc: '/achievements/25_backdoors.png'
   },
   {
-    id: 'defeat_level3_core',
-    name: 'Системный Аннигилятор',
-    description: 'Уничтожьте Ядро Памяти 3-го уровня',
+    id: 'collect_50_backdoors',
+    name: '50 Бэкдоров',
+    description: 'Соберите 50 бэкдоров',
     unlocked: false,
-    imageSrc: '/achievements/system-annihilator.svg',
+    imageSrc: '/achievements/50_backdoors.png'
+  },
+  {
+    id: 'play_10_games',
+    name: '10 Запусков',
+    description: 'Запустите игру 10 раз',
+    unlocked: false,
+    imageSrc: '/achievements/10_games.png'
+  },
+  {
+    id: 'play_25_games',
+    name: '25 Запусков',
+    description: 'Запустите игру 25 раз',
+    unlocked: false,
+    imageSrc: '/achievements/25_games.png'
+  },
+  {
+    id: 'play_50_games',
+    name: '50 Запусков',
+    description: 'Запустите игру 50 раз',
+    unlocked: false,
+    imageSrc: '/achievements/50_games.png'
+  },
+  {
+    id: 'defeat_1_boss',
+    name: 'Первая победа над боссом',
+    description: 'Победите босса 1 раз',
+    unlocked: false,
+    imageSrc: '/achievements/defeat_1_boss.png'
+  },
+  {
+    id: 'defeat_3_bosses',
+    name: '3 Победы над боссами',
+    description: 'Победите боссов 3 раза',
+    unlocked: false,
+    imageSrc: '/achievements/defeat_3_bosses.png'
+  },
+  {
+    id: 'defeat_5_bosses',
+    name: '5 Побед над боссами',
+    description: 'Победите боссов 5 раз',
+    unlocked: false,
+    imageSrc: '/achievements/defeat_5_bosses.png'
+  },
+  {
+    id: 'defeat_all_boss_levels',
+    name: 'Победа над всеми уровнями боссов',
+    description: 'Победите боссов всех уровней (33k, 66k, 99k)',
+    unlocked: false,
+    imageSrc: '/achievements/defeat_all_boss_levels.png'
   }
 ];
 
-// Load achievements from localStorage, merging with defaults
-export const loadAchievements = (): Achievement[] => {
+// Function to retrieve stored achievements from localStorage
+const getStoredAchievements = (): Achievement[] => {
   try {
-    const savedAchievements = localStorage.getItem('netrunner_achievements');
-    const parsed: Achievement[] = savedAchievements ? JSON.parse(savedAchievements) : [];
-    
-    // Create a map of saved achievements for quick lookup
-    const savedMap = new Map(parsed.map((a: Achievement) => [a.id, a]));
-    
-    // Merge with default achievements
-    return ACHIEVEMENTS.map(defaultAchievement => {
-      const savedAchievement = savedMap.get(defaultAchievement.id);
-      return savedAchievement ? {
-        ...defaultAchievement,
-        unlocked: Boolean(savedAchievement.unlocked)
-      } : defaultAchievement;
-    });
-  } catch (e) {
-    console.error('Ошибка загрузки достижений', e);
-    return [...ACHIEVEMENTS];
+    const storedAchievements = localStorage.getItem('netrunner_achievements');
+    if (storedAchievements) {
+      return JSON.parse(storedAchievements) as Achievement[];
+    }
+    return achievementData; // Return initial data if nothing is stored
+  } catch (error) {
+    console.error("Error retrieving achievements from localStorage:", error);
+    return achievementData; // Return initial data in case of an error
   }
 };
 
-// Save achievements to localStorage
+// Function to save achievements to localStorage
 const saveAchievements = (achievements: Achievement[]): void => {
   try {
     localStorage.setItem('netrunner_achievements', JSON.stringify(achievements));
-    console.log('Достижения сохранены:', achievements);
-  } catch (e) {
-    console.error('Ошибка сохранения достижений', e);
+  } catch (error) {
+    console.error("Error saving achievements to localStorage:", error);
   }
 };
 
-// Check if specific achievement is unlocked
-export const isAchievementUnlocked = (id: string): boolean => {
-  const achievements = loadAchievements();
-  const achievement = achievements.find(a => a.id === id);
-  return achievement ? achievement.unlocked : false;
+// Function to unlock an achievement
+const unlockAchievement = (achievement: Achievement): Achievement => {
+  if (!achievement.unlocked) {
+    console.log(`Достижение разблокировано: ${achievement.name}`);
+    
+    // Track achievement unlock in analytics
+    trackAchievement(achievement.id);
+    
+    return { ...achievement, unlocked: true };
+  }
+  return achievement;
 };
 
-// Update achievements based on game state and current score
+// Function to update achievements based on game state
 export const updateAchievements = (state: GameState): void => {
-  console.log('Обновление достижений с состоянием:', state);
-  const achievements = loadAchievements();
-  let updated = false;
+  const { score, collectedSafetyKeys, collectedBackdoors, bossDefeatsCount, highestBossLevelDefeated } = state;
   
-  // First run achievement - unlocks as soon as the game is played
-  if (!isAchievementUnlocked('first_run')) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'first_run');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: Первая Загрузка');
+  // Retrieve stored achievements or use initial data
+  let achievements = getStoredAchievements();
+  
+  // Achievement unlocking logic
+  achievements = achievements.map(achievement => {
+    switch (achievement.id) {
+      case 'first_run':
+        // Check if the game has been played before by checking daily stats
+        const dailyStats = getDailyGameStats();
+        if (dailyStats && dailyStats.gamesPlayed > 0) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'reach_10k_score':
+        if (score >= 10000 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'reach_25k_score':
+        if (score >= 25000 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'reach_50k_score':
+        if (score >= 50000 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'reach_75k_score':
+        if (score >= 75000 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'reach_100k_score':
+        if (score >= 100000 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'collect_10_safety_keys':
+        if (collectedSafetyKeys >= 10 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'collect_25_safety_keys':
+        if (collectedSafetyKeys >= 25 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'collect_50_safety_keys':
+        if (collectedSafetyKeys >= 50 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'collect_10_backdoors':
+        if (collectedBackdoors >= 10 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'collect_25_backdoors':
+        if (collectedBackdoors >= 25 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'collect_50_backdoors':
+        if (collectedBackdoors >= 50 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'play_10_games':
+        const dailyStats10 = getDailyGameStats();
+        if (dailyStats10 && dailyStats10.gamesPlayed >= 10) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'play_25_games':
+        const dailyStats25 = getDailyGameStats();
+        if (dailyStats25 && dailyStats25.gamesPlayed >= 25) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'play_50_games':
+        const dailyStats50 = getDailyGameStats();
+        if (dailyStats50 && dailyStats50.gamesPlayed >= 50) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'defeat_1_boss':
+        if (bossDefeatsCount >= 1 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'defeat_3_bosses':
+        if (bossDefeatsCount >= 3 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'defeat_5_bosses':
+        if (bossDefeatsCount >= 5 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      case 'defeat_all_boss_levels':
+        if (highestBossLevelDefeated === 3 && !achievement.unlocked) {
+          return unlockAchievement(achievement);
+        }
+        break;
+      default:
+        return achievement;
     }
-  }
+    return achievement;
+  });
   
-  // Check current score for percentage-based achievements
-  const currentScore = state.score;
-  
-  // 10% completion (10,000 points)
-  if (!isAchievementUnlocked('reach_10percent') && currentScore >= 10000) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'reach_10percent');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: 10% Доступа');
-    }
-  }
-  
-  // 25% completion (25,000 points)
-  if (!isAchievementUnlocked('reach_25percent') && currentScore >= 25000) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'reach_25percent');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: 25% Доступа');
-    }
-  }
-  
-  // 50% completion (50,000 points)
-  if (!isAchievementUnlocked('reach_50percent') && currentScore >= 50000) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'reach_50percent');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: 50% Доступа');
-    }
-  }
-  
-  // 75% completion (75,000 points)
-  if (!isAchievementUnlocked('reach_75percent') && currentScore >= 75000) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'reach_75percent');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: 75% Доступа');
-    }
-  }
-  
-  // 100% completion (100,000 points)
-  if (!isAchievementUnlocked('reach_100percent') && currentScore >= 100000) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'reach_100percent');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: 100% Доступа');
-    }
-  }
-  
-  // Collected Safety Key - check the state directly
-  if (!isAchievementUnlocked('collect_key') && state.collectedSafetyKeys > 0) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'collect_key');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: Обход Защиты');
-    }
-  }
-  
-  // Collected Backdoor - check the state directly
-  if (!isAchievementUnlocked('collect_backdoor') && state.collectedBackdoors > 0) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'collect_backdoor');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: Бэкдор Найден');
-    }
-  }
-  
-  // Daily games played - check for play count achievements
-  const dailyStats = getDailyGameStats();
-  console.log('Статистика дня для достижений:', dailyStats);
-  
-  // 3 games in a day
-  if (!isAchievementUnlocked('play_3_times') && dailyStats.gamesPlayed >= 3) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'play_3_times');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: Настойчивость');
-    }
-  }
-  
-  // 10 games in a day
-  if (!isAchievementUnlocked('play_10_times') && dailyStats.gamesPlayed >= 10) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'play_10_times');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: Целеустремленность');
-    }
-  }
+  // Save the updated achievements to localStorage
+  saveAchievements(achievements);
+};
 
-  // Memory Core achievements - track boss defeats by level
-  // First Memory Core defeat
-  if (!isAchievementUnlocked('defeat_first_core') && state.bossDefeatsCount > 0) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'defeat_first_core');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: Взломщик Памяти');
-    }
-  }
-  
-  // Level 2 Memory Core defeat (needs to have defeated a level 2 boss)
-  if (!isAchievementUnlocked('defeat_level2_core') && state.highestBossLevelDefeated >= 2) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'defeat_level2_core');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: Разрушитель Данных');
-    }
-  }
-  
-  // Level 3 Memory Core defeat (needs to have defeated a level 3 boss)
-  if (!isAchievementUnlocked('defeat_level3_core') && state.highestBossLevelDefeated >= 3) {
-    const achievementIndex = achievements.findIndex(a => a.id === 'defeat_level3_core');
-    if (achievementIndex !== -1) {
-      achievements[achievementIndex].unlocked = true;
-      updated = true;
-      console.log('Достижение разблокировано: Системный Аннигилятор');
-    }
-  }
-  
-  // Save if any achievements were updated
-  if (updated) {
-    saveAchievements(achievements);
+// Function to reset achievements (for testing purposes)
+export const resetAchievements = (): void => {
+  try {
+    localStorage.removeItem('netrunner_achievements');
+    console.log('Achievements reset successfully.');
+  } catch (error) {
+    console.error('Error resetting achievements:', error);
   }
 };
 
-// Get the highest score achieved
-export const getHighestScore = (): number => {
-  const scores = getScores();
-  if (scores.length === 0) return 0;
-  
-  // Extract score values from ScoreRecord objects and find maximum
-  return Math.max(...scores.map(record => record.score));
+// Export function to get all achievements
+export const getAllAchievements = (): Achievement[] => {
+  return getStoredAchievements();
 };
