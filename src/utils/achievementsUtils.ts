@@ -1,5 +1,4 @@
-
-import { Achievement, GameState } from './types';
+import { Achievement, GameState, ScoreRecord } from './types';
 import { getScores } from './storageUtils';
 import { getDailyGameStats } from './gameLogic';
 

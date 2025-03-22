@@ -1,4 +1,3 @@
-
 import { PlayerSkin, PlayerSkinInfo, ScoreRecord } from './types';
 import { getScores } from './storageUtils';
 

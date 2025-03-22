@@ -1,4 +1,3 @@
-
 // Core game objects
 export interface Player {
   x: number;
@@ -45,6 +44,14 @@ export interface PlayerSkinInfo {
   description: string;
   color: string | 'rainbow';
   unlocked: boolean;
+}
+
+// Score record interface
+export interface ScoreRecord {
+  score: number;
+  timestamp?: number;
+  username?: string;
+  userId?: string;
 }
 
 // New interface for boss core lines
