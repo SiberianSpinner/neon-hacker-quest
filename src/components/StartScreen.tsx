@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -7,6 +6,7 @@ import MatrixRain from './MatrixRain';
 import { Trophy, Microchip, Cable, Code, Clock } from 'lucide-react';
 import { formatTimeRemaining, getMillisecondsUntilReset, getRandomAttemptsNumber } from '@/utils/attemptsUtils';
 import { isPaymentVerified } from '@/utils/storageUtils';
+import { t } from '@/utils/localizationUtils';
 
 interface StartScreenProps {
   isVisible: boolean;
@@ -107,31 +107,21 @@ const StartScreen: React.FC<StartScreenProps> = ({
   
   // Determine payment button tooltip text
   const paymentButtonTooltip = hasUnlimitedMode 
-    ? (isTelegramWebApp ? 'Протокол "Демон" уже активен' : 'Daemon Protocol already active')
+    ? t('daemonAlreadyActive')
     : paymentVerified 
-      ? (isTelegramWebApp ? 'Вы уже совершили покупку' : 'You have already purchased this')
+      ? t('alreadyPurchased')
       : paymentProcessing
-        ? (isTelegramWebApp ? 'Обработка платежа' : 'Processing payment')
+        ? t('paymentInProgress')
         : '';
   
   // Determine payment button text
-  const paymentButtonText = isTelegramWebApp ? 
-    (hasUnlimitedMode ? 
-      'ПРОТОКОЛ "ДЕМОН" АКТИВЕН' : 
-      paymentVerified ? 
-        'ПОКУПКА ВЫПОЛНЕНА' : 
-        paymentProcessing ?
-          'ОБРАБОТКА ПЛАТЕЖА...' :
-          'ПРОТОКОЛ "ДЕМОН"'
-    ) : 
-    (hasUnlimitedMode ? 
-      'DAEMON PROTOCOL ACTIVE' : 
-      paymentVerified ? 
-        'PURCHASE COMPLETED' : 
-        paymentProcessing ?
-          'PROCESSING PAYMENT...' :
-          'DAEMON PROTOCOL'
-    );
+  const paymentButtonText = hasUnlimitedMode 
+    ? t('daemonProtocolActive') 
+    : paymentVerified 
+      ? t('purchaseCompleted')
+      : paymentProcessing
+        ? t('processingPayment')
+        : t('daemonProtocol');
   
   return (
     <div
@@ -161,7 +151,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               transition={{ delay: 0.2, duration: 0.5 }}
               className="text-xl text-cyber-primary"
             >
-              {isTelegramWebApp ? 'ПОСЛЕДНИЙ ВЗЛОМ: ' : 'LAST HACK: '}{formattedScore}
+              {t('lastHack')} {formattedScore}
             </motion.p>
           )}
           
@@ -172,7 +162,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
             transition={{ delay: 0.3, duration: 0.5 }}
             className={`text-lg ${attemptsTextColor}`}
           >
-            {isTelegramWebApp ? 'НАЙДЕНО УЯЗВИМОСТЕЙ: ' : 'VULNERABILITIES FOUND: '}{attemptsDisplay}
+            {t('vulnerabilitiesFound')} {attemptsDisplay}
           </motion.p>
           
           {/* Timer until next reset - only show if less than 3 daily attempts and not in unlimited mode */}
@@ -185,7 +175,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
             >
               <Clock className="w-4 h-4" />
               <span>
-                {isTelegramWebApp ? 'НОВЫЕ УЯЗВИМОСТИ ЧЕРЕЗ: ' : 'NEW VULNERABILITIES IN: '}{timeUntilReset}
+                {t('newVulnerabilitiesIn')} {timeUntilReset}
               </span>
             </motion.div>
           )}
@@ -206,7 +196,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
                   onClick={onShowAchievements}
                 >
                   <Microchip className="w-12 h-12 mb-1" />
-                  <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ЧИПЫ' : 'CHIPS'}</span>
+                  <span className="text-xs uppercase mt-1">{t('chips')}</span>
                 </CustomButton>
               </div>
             </motion.div>
@@ -225,7 +215,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
                   disabled={!hasUnlimitedMode && (attemptsLeft <= 0 || dailyAttemptsLeft <= 0)}
                   leftIcon={<Cable className="w-12 h-12 mb-1" />}
                 >
-                  <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'ВЗЛОМ' : 'HACK'}</span>
+                  <span className="text-xs uppercase mt-1">{t('hack')}</span>
                 </CustomButton>
               </div>
             </motion.div>
@@ -243,7 +233,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
                   onClick={onShowScripts}
                 >
                   <Code className="w-12 h-12 mb-1" />
-                  <span className="text-xs uppercase mt-1">{isTelegramWebApp ? 'СКРИПТЫ' : 'SCRIPTS'}</span>
+                  <span className="text-xs uppercase mt-1">{t('scripts')}</span>
                 </CustomButton>
               </div>
             </motion.div>
@@ -260,7 +250,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               variant="secondary"
               onClick={onWatchAd}
             >
-              {isTelegramWebApp ? 'ПОИСК УЯЗВИМОСТЕЙ' : 'SEARCH VULNERABILITIES'}
+              {t('searchVulnerabilities')}
             </CustomButton>
           </motion.div>
           
@@ -304,7 +294,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
               variant="ghost" 
               onClick={onShowLeaderboard}
             >
-              {isTelegramWebApp ? 'ЛИДЕРБОРД' : 'LEADERBOARD'}
+              {t('leaderboard')}
             </CustomButton>
           </motion.div>
         </div>
@@ -315,7 +305,7 @@ const StartScreen: React.FC<StartScreenProps> = ({
           transition={{ delay: 1.0, duration: 0.5 }}
           className="text-xs text-cyber-foreground/50 text-center mt-4"
         >
-          {isTelegramWebApp ? 'ВЗЛОМАЙ СИСТЕМУ БЕЗОПАСНОСТИ ОДНОЙ ИЗ КОРПОРАЦИЙ' : 'HACK THE SECURITY SYSTEM OF ONE OF THE CORPORATIONS'}
+          {t('hackSecuritySystem')}
         </motion.div>
       </div>
     </div>
