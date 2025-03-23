@@ -15,7 +15,13 @@ import {
   enableUnlimitedAttempts,
   hasUnlimitedAttempts
 } from '@/utils/attemptsUtils';
-import { trackPurchase, trackAdView } from '@/utils/analyticsUtils';
+import { 
+  trackPurchase, 
+  trackAdView, 
+  trackSkinSelection, 
+  trackSession, 
+  trackError 
+} from '@/utils/analyticsUtils';
 
 declare global {
   interface Window {
@@ -223,10 +229,13 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, []);
   
-  // Handle skin selection
+  // Handle skin selection with analytics tracking
   const handleSelectSkin = (skin: PlayerSkin) => {
     setSelectedSkin(skin);
     saveSelectedSkin(skin);
+    
+    // Track skin selection in analytics
+    trackSkinSelection(PlayerSkin[skin]);
     
     toast.success(isTelegramWebApp ? "Скрипт активирован" : "Script activated", {
       description: isTelegramWebApp ? "Новый скрипт успешно применен" : "New script successfully applied"
@@ -524,6 +533,9 @@ const Index = () => {
         })
         .catch(error => {
           console.error('Error creating invoice:', error);
+          // Track payment error
+          trackError('payment', `Invoice creation failed: ${error.message}`);
+          
           toast.error("Ошибка создания счета", {
             id: "invoice-creation",
             description: "Пожалуйста, попробуйте позже.",
@@ -533,6 +545,9 @@ const Index = () => {
         });
       } catch (err) {
         console.error('Error in payment process:', err);
+        // Track payment error
+        trackError('payment', `Payment process error: ${err instanceof Error ? err.message : String(err)}`);
+        
         setPaymentProcessing(false);
         simulatePurchase();
       }
@@ -590,6 +605,38 @@ const Index = () => {
       description: "Протокол 'Демон' успешно запущен! Теперь у вас безлимитные попытки!"
     });
   };
+
+  // Add session tracking for app visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // App went to background
+        trackSession('pause');
+      } else {
+        // App came to foreground
+        trackSession('resume');
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+  
+  // Track errors globally
+  useEffect(() => {
+    const handleGlobalError = (event: ErrorEvent) => {
+      trackError('runtime', `${event.message} at ${event.filename}:${event.lineno}`);
+    };
+    
+    window.addEventListener('error', handleGlobalError);
+    
+    return () => {
+      window.removeEventListener('error', handleGlobalError);
+    };
+  }, []);
 
   // Expose functions to window for Telegram to call
   useEffect(() => {

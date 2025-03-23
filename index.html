@@ -9,8 +9,31 @@
     <meta name="author" content="Lovable" />
     <meta property="og:image" content="/og-image.png" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- GameAnalytics SDK -->
-    <script src="https://go.gameanalytics.com/js/GameAnalytics-latest.min.js"></script>
+    <!-- GameAnalytics SDK - локальная версия -->
+    <script>
+      // Проверка на существование window.gameanalytics
+      window.gameanalytics = window.gameanalytics || {
+        GameAnalytics: function(method, ...args) {
+          console.log(`GameAnalytics method '${method}' called but SDK not loaded`, args);
+        }
+      };
+      
+      // Асинхронная загрузка скрипта GameAnalytics с обработкой ошибок
+      (function() {
+        var ga = document.createElement('script');
+        ga.type = 'text/javascript';
+        ga.async = true;
+        ga.src = 'https://download.gameanalytics.com/js/GameAnalytics-4.3.6.min.js';
+        ga.onerror = function() {
+          console.error('Failed to load GameAnalytics SDK');
+        };
+        ga.onload = function() {
+          console.log('GameAnalytics SDK loaded successfully');
+        };
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
   </head>
 
   <body>
