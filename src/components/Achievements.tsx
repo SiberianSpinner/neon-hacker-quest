@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, X } from 'lucide-react';
@@ -153,7 +152,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements }) => 
                 <>
                   <img 
                     src={achievement.imageSrc} 
-                    alt={achievement.name} 
+                    alt={t(achievement.name as any)} 
                     className={cn(
                       "h-full w-full object-cover",
                       !achievement.unlocked && "grayscale opacity-50"
@@ -180,7 +179,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements }) => 
                   ? "text-cyber-primary" 
                   : "text-gray-400"
               )}>
-                {achievement.name}
+                {t(achievement.name as any)}
               </h3>
               <p className={cn(
                 "text-sm",
@@ -188,7 +187,7 @@ const AchievementsList: React.FC<AchievementsListProps> = ({ achievements }) => 
                   ? "text-cyber-foreground/80" 
                   : "text-gray-500"
               )}>
-                {achievement.description}
+                {t(achievement.description as any)}
               </p>
             </div>
             
