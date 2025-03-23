@@ -6,6 +6,13 @@ export type Language = 'ru' | 'en';
 export const getSystemLanguage = (): Language => {
   console.log('⚠️ Language detection started');
   
+  // IMPORTANT: For testing during development, force to English
+  // Remove this in production
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🛠️ DEV MODE: Forcing language to English for testing');
+    return 'en';
+  }
+  
   // Check if we're in Telegram Web App
   if (window.Telegram?.WebApp) {
     console.log('🔍 Telegram WebApp detected');
