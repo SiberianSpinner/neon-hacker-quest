@@ -1,3 +1,4 @@
+
 // Define language types
 export type Language = 'ru' | 'en';
 
@@ -13,8 +14,9 @@ export const getSystemLanguage = (): Language => {
       // Check initDataUnsafe first (the most direct path)
       if (webApp.initDataUnsafe?.user?.language_code) {
         const tgLang = webApp.initDataUnsafe.user.language_code;
-        console.log('Using Telegram language:', tgLang);
-        return tgLang === 'ru' ? 'ru' : 'en';
+        console.log('Using Telegram language from initDataUnsafe:', tgLang);
+        // Check if language is Russian, otherwise default to English
+        return tgLang.toLowerCase().startsWith('ru') ? 'ru' : 'en';
       }
       
       // Try to parse initData if available
@@ -24,21 +26,29 @@ export const getSystemLanguage = (): Language => {
           if (parsedData?.user?.language_code) {
             const tgLang = parsedData.user.language_code;
             console.log('Using Telegram language from initData:', tgLang);
-            return tgLang === 'ru' ? 'ru' : 'en';
+            // Check if language is Russian, otherwise default to English
+            return tgLang.toLowerCase().startsWith('ru') ? 'ru' : 'en';
           }
         } catch (e) {
           console.error('Error parsing Telegram initData:', e);
         }
       }
+      
+      // Additional debug logging
+      console.log('Telegram WebApp is present but language detection failed');
+      console.log('WebApp initDataUnsafe:', JSON.stringify(webApp.initDataUnsafe));
+      console.log('WebApp initData available:', !!webApp.initData);
     } catch (e) {
       console.error('Error getting language from Telegram:', e);
     }
+  } else {
+    console.log('Telegram WebApp not detected');
   }
   
   // Fallback to browser language if Telegram language is not available
   const browserLang = navigator.language || (navigator as any).userLanguage;
   console.log('Fallback to browser language:', browserLang);
-  return browserLang?.startsWith('ru') ? 'ru' : 'en';
+  return browserLang?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
 };
 
 // Create translations object

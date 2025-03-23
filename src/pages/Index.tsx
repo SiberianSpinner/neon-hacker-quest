@@ -22,7 +22,7 @@ import {
   trackSession, 
   trackError 
 } from '@/utils/analyticsUtils';
-import { t } from '@/utils/localizationUtils';
+import { t, getSystemLanguage } from '@/utils/localizationUtils';
 
 // Remove the redundant interface declaration and use the one from vite-env.d.ts
 declare global {
@@ -50,6 +50,36 @@ const Index = () => {
   const [selectedSkin, setSelectedSkin] = useState<PlayerSkin>(PlayerSkin.DEFAULT);
   const [hasUnlimitedMode, setHasUnlimitedMode] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+
+  useEffect(() => {
+    // Debug Telegram language information
+    if (window.Telegram?.WebApp) {
+      console.log('Telegram WebApp detected');
+      console.log('Current language detected:', getSystemLanguage());
+      
+      if (window.Telegram.WebApp.initDataUnsafe?.user) {
+        console.log('User info from initDataUnsafe:', 
+          JSON.stringify(window.Telegram.WebApp.initDataUnsafe.user));
+      } else {
+        console.log('No user info in initDataUnsafe');
+      }
+      
+      // Try to access raw initData as well
+      if (window.Telegram.WebApp.initData) {
+        console.log('initData present, length:', window.Telegram.WebApp.initData.length);
+        try {
+          const parsed = JSON.parse(window.Telegram.WebApp.initData);
+          console.log('Parsed initData:', JSON.stringify(parsed));
+        } catch (e) {
+          console.log('Could not parse initData:', e);
+        }
+      } else {
+        console.log('No initData available');
+      }
+    } else {
+      console.log('Not running in Telegram WebApp');
+    }
+  }, []);
 
   useEffect(() => {
     if (!window.Telegram?.WebApp) return;
