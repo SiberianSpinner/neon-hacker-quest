@@ -7,7 +7,28 @@ export const getSystemLanguage = (): Language => {
   // Check if we're in Telegram Web App
   if (window.Telegram?.WebApp) {
     // Get the language code from Telegram
-    const tgLang = window.Telegram.WebApp.initDataUnsafe?.user?.language_code;
+    // Access user language through WebApp object, handling the case where initDataUnsafe might not exist
+    const webApp = window.Telegram.WebApp;
+    
+    // Handle the case where initDataUnsafe might be accessed differently or not be available
+    let tgLang: string | undefined;
+    
+    // Try various ways to access language information from Telegram WebApp
+    try {
+      // Try to access it directly (this was causing the TypeScript error)
+      if ((webApp as any).initDataUnsafe?.user?.language_code) {
+        tgLang = (webApp as any).initDataUnsafe.user.language_code;
+      } 
+      // If available, use the initData property
+      else if (webApp.initData) {
+        // Try to parse initData if it's a string
+        const parsedData = JSON.parse(webApp.initData);
+        tgLang = parsedData?.user?.language_code;
+      }
+    } catch (e) {
+      console.log('Error getting language from Telegram:', e);
+    }
+    
     return tgLang === 'ru' ? 'ru' : 'en';
   }
   
