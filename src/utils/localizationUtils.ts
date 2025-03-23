@@ -1,4 +1,3 @@
-
 // Define language types
 export type Language = 'ru' | 'en';
 
@@ -47,10 +46,41 @@ type TranslationKey =
   | 'gameOver'
   | 'gameOverScore'
   | 'hackComplete'
-  | 'hackCompleteSuccess';
+  | 'hackCompleteSuccess'
+  // Start screen translations
+  | 'lastHack'
+  | 'vulnerabilitiesFound'
+  | 'newVulnerabilitiesIn'
+  | 'chips'
+  | 'hack'
+  | 'scripts'
+  | 'searchVulnerabilities'
+  | 'daemonProtocol'
+  | 'daemonProtocolActive'
+  | 'purchaseCompleted'
+  | 'processingPayment'
+  | 'leaderboard'
+  | 'hackSecuritySystem'
+  // Loading screen
+  | 'initializingHack'
+  // Button tooltips
+  | 'daemonAlreadyActive'
+  | 'alreadyPurchased'
+  | 'paymentInProgress'
+  // Ad related
+  | 'adLoading'
+  | 'adSimulation'
+  | 'adCompleted'
+  | 'adError'
+  // Attempts related
+  | 'noAttemptsLeft'
+  | 'watchAdOrBuy'
+  | 'dailyLimitReached'
+  | 'newAttemptsAvailable';
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {
   ru: {
+    // Existing translations
     hackProgress: 'ВЗЛОМ:',
     invulnerability: 'НЕУЯЗВИМОСТЬ:',
     swipeToMove: 'Проведите пальцем по экрану, чтобы задать направление движения',
@@ -59,9 +89,45 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     gameOver: 'Взлом прерван',
     gameOverScore: 'Ваш счёт:',
     hackComplete: 'Взлом успешно завершен!',
-    hackCompleteSuccess: 'Поздравляем! Вы достигли 100% взлома!'
+    hackCompleteSuccess: 'Поздравляем! Вы достигли 100% взлома!',
+    
+    // Start screen translations
+    lastHack: 'ПОСЛЕДНИЙ ВЗЛОМ:',
+    vulnerabilitiesFound: 'НАЙДЕНО УЯЗВИМОСТЕЙ:',
+    newVulnerabilitiesIn: 'НОВЫЕ УЯЗВИМОСТИ ЧЕРЕЗ:',
+    chips: 'ЧИПЫ',
+    hack: 'ВЗЛОМ',
+    scripts: 'СКРИПТЫ',
+    searchVulnerabilities: 'ПОИСК УЯЗВИМОСТЕЙ',
+    daemonProtocol: 'ПРОТОКОЛ "ДЕМОН"',
+    daemonProtocolActive: 'ПРОТОКОЛ "ДЕМОН" АКТИВЕН',
+    purchaseCompleted: 'ПОКУПКА ВЫПОЛНЕНА',
+    processingPayment: 'ОБРАБОТКА ПЛАТЕЖА...',
+    leaderboard: 'ЛИДЕРБОРД',
+    hackSecuritySystem: 'ВЗЛОМАЙ СИСТЕМУ БЕЗОПАСНОСТИ ОДНОЙ ИЗ КОРПОРАЦИЙ',
+    
+    // Loading screen
+    initializingHack: 'ИНИЦИАЛИЗАЦИЯ ВЗЛОМА...',
+    
+    // Button tooltips
+    daemonAlreadyActive: 'Протокол "Демон" уже активен',
+    alreadyPurchased: 'Вы уже совершили покупку',
+    paymentInProgress: 'Обработка платежа',
+    
+    // Ad related
+    adLoading: 'Загрузка рекламы...',
+    adSimulation: 'Симуляция просмотра рекламы.',
+    adCompleted: 'Реклама завершена',
+    adError: 'Ошибка показа рекламы',
+    
+    // Attempts related
+    noAttemptsLeft: 'Нет попыток!',
+    watchAdOrBuy: 'Посмотрите рекламу или купите безлимитные попытки.',
+    dailyLimitReached: 'Ежедневный лимит исчерпан!',
+    newAttemptsAvailable: 'Новые попытки будут доступны в 00:01.'
   },
   en: {
+    // Existing translations
     hackProgress: 'HACK:',
     invulnerability: 'INVULNERABILITY:',
     swipeToMove: 'Swipe on screen to set movement direction',
@@ -70,7 +136,42 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     gameOver: 'Hack interrupted',
     gameOverScore: 'Your score:',
     hackComplete: 'Hack completed successfully!',
-    hackCompleteSuccess: 'Congratulations! You reached 100% hack!'
+    hackCompleteSuccess: 'Congratulations! You reached 100% hack!',
+    
+    // Start screen translations
+    lastHack: 'LAST HACK:',
+    vulnerabilitiesFound: 'VULNERABILITIES FOUND:',
+    newVulnerabilitiesIn: 'NEW VULNERABILITIES IN:',
+    chips: 'CHIPS',
+    hack: 'HACK',
+    scripts: 'SCRIPTS',
+    searchVulnerabilities: 'SEARCH VULNERABILITIES',
+    daemonProtocol: 'DAEMON PROTOCOL',
+    daemonProtocolActive: 'DAEMON PROTOCOL ACTIVE',
+    purchaseCompleted: 'PURCHASE COMPLETED',
+    processingPayment: 'PROCESSING PAYMENT...',
+    leaderboard: 'LEADERBOARD',
+    hackSecuritySystem: 'HACK THE SECURITY SYSTEM OF ONE OF THE CORPORATIONS',
+    
+    // Loading screen
+    initializingHack: 'INITIALIZING HACK...',
+    
+    // Button tooltips
+    daemonAlreadyActive: 'Daemon Protocol already active',
+    alreadyPurchased: 'You have already purchased this',
+    paymentInProgress: 'Processing payment',
+    
+    // Ad related
+    adLoading: 'Loading advertisement...',
+    adSimulation: 'Simulating ad view.',
+    adCompleted: 'Advertisement completed',
+    adError: 'Error displaying advertisement',
+    
+    // Attempts related
+    noAttemptsLeft: 'No attempts left!',
+    watchAdOrBuy: 'Watch an ad or buy unlimited attempts.',
+    dailyLimitReached: 'Daily limit reached!',
+    newAttemptsAvailable: 'New attempts will be available at 00:01.'
   }
 };
 

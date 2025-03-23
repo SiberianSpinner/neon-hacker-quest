@@ -693,7 +693,7 @@ const Index = () => {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="text-sm text-cyber-foreground/70 mt-2"
         >
-          ИНИЦИАЛИЗАЦИЯ ВЗЛОМА...
+          {t('initializingHack')}
         </motion.div>
       </div>
     );
