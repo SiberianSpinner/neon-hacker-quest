@@ -24,26 +24,9 @@ import {
 } from '@/utils/analyticsUtils';
 import { t } from '@/utils/localizationUtils';
 
+// Remove the redundant interface declaration and use the one from vite-env.d.ts
 declare global {
   interface Window {
-    Telegram?: {
-      WebApp: {
-        ready: () => void;
-        expand: () => void;
-        MainButton: {
-          setText: (text: string) => void;
-          show: () => void;
-          hide: () => void;
-          onClick: (callback: () => void) => void;
-          offClick: (callback: () => void) => void;
-        };
-        onEvent: (eventType: string, callback: (eventData?: any) => void) => void;
-        offEvent: (eventType: string, callback: (eventData?: any) => void) => void;
-        sendData: (data: string) => void;
-        initData: string;
-        openInvoice: (url: string) => void;
-      };
-    };
     // Ad extra function for displaying ads
     p_adextra?: (successCallback: () => void, errorCallback: () => void) => void;
   }
