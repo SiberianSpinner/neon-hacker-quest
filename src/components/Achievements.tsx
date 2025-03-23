@@ -7,7 +7,6 @@ import { getAllAchievements } from '@/utils/achievementsUtils';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CustomButton } from './ui/CustomButton';
-import { t } from '@/utils/localizationUtils';
 
 interface AchievementsProps {
   isVisible: boolean;
@@ -28,7 +27,7 @@ const Achievements: React.FC<AchievementsProps> = ({
     if (isVisible) {
       // Reload fresh achievements data
       const loadedAchievements = getAllAchievements();
-      console.log('Loaded achievements:', loadedAchievements);
+      console.log('Загруженные достижения:', loadedAchievements);
       setAchievements(loadedAchievements);
     }
   }, [isVisible]);
@@ -62,7 +61,7 @@ const Achievements: React.FC<AchievementsProps> = ({
         <div className="flex items-center justify-between border-b border-cyber-primary/20 p-4">
           <h2 className="text-xl font-bold text-cyber-primary flex items-center gap-2">
             <Trophy className="h-5 w-5" />
-            {t('chipsTitle')}
+            ЧИПЫ
             <span className="text-sm text-cyber-foreground/60">
               ({unlockedCount}/{totalCount})
             </span>
@@ -80,13 +79,13 @@ const Achievements: React.FC<AchievementsProps> = ({
           <Tabs defaultValue="all" onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-3 bg-cyber-background border border-cyber-primary/20">
               <TabsTrigger value="all">
-                {t('allChips')}
+                ВСЕ
               </TabsTrigger>
               <TabsTrigger value="unlocked">
-                {t('unlockedChips')}
+                ОТКРЫТЫ
               </TabsTrigger>
               <TabsTrigger value="locked">
-                {t('lockedChips')}
+                ЗАКРЫТЫ
               </TabsTrigger>
             </TabsList>
             
@@ -112,7 +111,7 @@ const Achievements: React.FC<AchievementsProps> = ({
             className="w-full"
             glowEffect
           >
-            {t('close')}
+            ЗАКРЫТЬ
           </CustomButton>
         </div>
       </motion.div>

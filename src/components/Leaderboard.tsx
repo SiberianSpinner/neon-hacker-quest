@@ -4,7 +4,6 @@ import { getScores, formatScoreAsPercentage } from '@/utils/storageUtils';
 import { CustomButton } from './ui/CustomButton';
 import { cn } from '@/lib/utils';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { t } from '@/utils/localizationUtils';
 
 interface LeaderboardProps {
   isVisible: boolean;
@@ -47,7 +46,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose, currentUs
         )}
       >
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-glow">{t('leaderboardTitle')}</h2>
+          <h2 className="text-2xl font-bold text-glow">NETRUNNER LEADERBOARD</h2>
           <button 
             onClick={onClose}
             className="text-cyber-primary hover:text-glow transition-all"
@@ -62,8 +61,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose, currentUs
               <TableHeader>
                 <TableRow className="border-b border-cyber-primary/30">
                   <TableHead className="p-2 text-cyber-primary">#</TableHead>
-                  <TableHead className="p-2 text-cyber-primary">{t('leaderboardRunner')}</TableHead>
-                  <TableHead className="p-2 text-cyber-primary">{t('leaderboardHackResult')}</TableHead>
+                  <TableHead className="p-2 text-cyber-primary">RUNNER</TableHead>
+                  <TableHead className="p-2 text-cyber-primary">HACK RESULT</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -97,13 +96,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose, currentUs
             </Table>
           ) : (
             <div className="text-center py-8 text-cyber-primary/50">
-              {t('leaderboardNoScores')}
+              No scores yet. Start playing to set records!
             </div>
           )}
         </div>
         
         <CustomButton onClick={onClose} className="w-full" variant="ghost">
-          {t('close')}
+          CLOSE
         </CustomButton>
       </div>
     </div>

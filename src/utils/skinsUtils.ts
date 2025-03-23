@@ -1,7 +1,5 @@
-
 import { PlayerSkin, PlayerSkinInfo, ScoreRecord } from './types';
 import { getScores } from './storageUtils';
-import { t } from './localizationUtils';
 
 // Get all available player skins with unlock status
 export const getPlayerSkins = (): PlayerSkinInfo[] => {
@@ -11,29 +9,29 @@ export const getPlayerSkins = (): PlayerSkinInfo[] => {
   return [
     {
       id: PlayerSkin.DEFAULT,
-      name: t('defaultSkinName'),
-      description: t('defaultSkinDescription'),
+      name: "Default",
+      description: "Standard netrunner connection",
       color: "#00ffcc", // Cyber teal
       unlocked: true // Always unlocked
     },
     {
       id: PlayerSkin.PURPLE,
-      name: t('purpleSkinName'),
-      description: t('purpleSkinDescription'),
+      name: "Фиолетовый",
+      description: "Доступен при взломе 25%",
       color: "#b967ff", // Purple
       unlocked: highestScore >= 25000 // 25% hack completion
     },
     {
       id: PlayerSkin.RED,
-      name: t('redSkinName'),
-      description: t('redSkinDescription'),
+      name: "Красный",
+      description: "Доступен при взломе 50%",
       color: "#ff3e3e", // Red
       unlocked: highestScore >= 50000 // 50% hack completion
     },
     {
       id: PlayerSkin.RAINBOW,
-      name: t('rainbowSkinName'),
-      description: t('rainbowSkinDescription'),
+      name: "Перелив",
+      description: "Доступен при взломе 75%",
       color: "rainbow", // Special rainbow effect
       unlocked: highestScore >= 75000 // 75% hack completion
     }
