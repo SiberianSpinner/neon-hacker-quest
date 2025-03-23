@@ -28,7 +28,7 @@ const Achievements: React.FC<AchievementsProps> = ({
     if (isVisible) {
       // Reload fresh achievements data
       const loadedAchievements = getAllAchievements();
-      console.log('Загруженные достижения:', loadedAchievements);
+      console.log('Loaded achievements:', loadedAchievements);
       setAchievements(loadedAchievements);
     }
   }, [isVisible]);
