@@ -1,3 +1,4 @@
+
 // Define language types
 export type Language = 'ru' | 'en';
 
@@ -109,7 +110,29 @@ type TranslationKey =
   | 'additionalAttemptsReceived'
   | 'unlimitedModeActivated'
   | 'unlimitedModeMessage'
-  | 'version';
+  | 'version'
+  // Achievement names and descriptions
+  | 'firstRunName'
+  | 'firstRunDescription'
+  | 'tenPercentName'
+  | 'tenPercentDescription'
+  | 'twentyFivePercentName'
+  | 'twentyFivePercentDescription'
+  | 'fiftyPercentName'
+  | 'fiftyPercentDescription'
+  | 'seventyFivePercentName'
+  | 'seventyFivePercentDescription'
+  | 'hundredPercentName'
+  | 'hundredPercentDescription'
+  // Skin related translations
+  | 'defaultSkinName'
+  | 'defaultSkinDescription'
+  | 'purpleSkinName'
+  | 'purpleSkinDescription'
+  | 'redSkinName'
+  | 'redSkinDescription'
+  | 'rainbowSkinName'
+  | 'rainbowSkinDescription';
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {
   ru: {
@@ -194,7 +217,31 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     additionalAttemptsReceived: 'Вы получили {count} дополнительных попыток!',
     unlimitedModeActivated: 'Безлимитный режим активирован',
     unlimitedModeMessage: 'Теперь у вас неограниченное количество попыток!',
-    version: 'Версия'
+    version: 'Версия',
+    
+    // Achievement names and descriptions
+    firstRunName: 'Первая Загрузка',
+    firstRunDescription: 'Начните свою первую попытку взлома',
+    tenPercentName: '10% Доступа',
+    tenPercentDescription: 'Достигните 10% завершения взлома',
+    twentyFivePercentName: '25% Доступа',
+    twentyFivePercentDescription: 'Достигните 25% завершения взлома',
+    fiftyPercentName: '50% Доступа',
+    fiftyPercentDescription: 'Достигните 50% завершения взлома',
+    seventyFivePercentName: '75% Доступа',
+    seventyFivePercentDescription: 'Достигните 75% завершения взлома',
+    hundredPercentName: '100% Доступа',
+    hundredPercentDescription: 'Достигните 100% завершения взлома',
+    
+    // Skin related translations
+    defaultSkinName: 'Стандартный',
+    defaultSkinDescription: 'Стандартное подключение нетраннера',
+    purpleSkinName: 'Фиолетовый',
+    purpleSkinDescription: 'Доступен при взломе 25%',
+    redSkinName: 'Красный',
+    redSkinDescription: 'Доступен при взломе 50%',
+    rainbowSkinName: 'Перелив',
+    rainbowSkinDescription: 'Доступен при взломе 75%'
   },
   en: {
     // Existing translations
@@ -278,7 +325,31 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     additionalAttemptsReceived: 'You received {count} additional attempts!',
     unlimitedModeActivated: 'Unlimited mode activated',
     unlimitedModeMessage: 'You now have unlimited attempts!',
-    version: 'Version'
+    version: 'Version',
+    
+    // Achievement names and descriptions
+    firstRunName: 'First Boot',
+    firstRunDescription: 'Start your first hack attempt',
+    tenPercentName: '10% Access',
+    tenPercentDescription: 'Reach 10% hack completion',
+    twentyFivePercentName: '25% Access',
+    twentyFivePercentDescription: 'Reach 25% hack completion',
+    fiftyPercentName: '50% Access',
+    fiftyPercentDescription: 'Reach 50% hack completion',
+    seventyFivePercentName: '75% Access',
+    seventyFivePercentDescription: 'Reach 75% hack completion',
+    hundredPercentName: '100% Access',
+    hundredPercentDescription: 'Reach 100% hack completion',
+    
+    // Skin related translations
+    defaultSkinName: 'Default',
+    defaultSkinDescription: 'Standard netrunner connection',
+    purpleSkinName: 'Purple',
+    purpleSkinDescription: 'Available at 25% hack completion',
+    redSkinName: 'Red',
+    redSkinDescription: 'Available at 50% hack completion',
+    rainbowSkinName: 'Rainbow',
+    rainbowSkinDescription: 'Available at 75% hack completion'
   }
 };
 

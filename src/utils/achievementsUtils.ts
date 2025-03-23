@@ -1,49 +1,51 @@
+
 import { Achievement, GameState, ScoreRecord } from './types';
 import { getScores } from './storageUtils';
 import { getDailyGameStats } from './gameLogic';
 import { trackAchievement } from './analyticsUtils';
+import { t } from './localizationUtils';
 
 // Define achievement data
 const achievementData: Achievement[] = [
   {
     id: 'first_run',
-    name: 'Первый запуск',
-    description: 'Запустите игру в первый раз',
+    name: t('firstRunName'),
+    description: t('firstRunDescription'),
     unlocked: false,
     imageSrc: '/achievements/first_run.png'
   },
   {
     id: 'reach_10k_score',
-    name: '10K Взлом',
-    description: 'Наберите 10,000 очков',
+    name: t('tenPercentName'),
+    description: t('tenPercentDescription'),
     unlocked: false,
     imageSrc: '/achievements/10k_score.png'
   },
   {
     id: 'reach_25k_score',
-    name: '25K Взлом',
-    description: 'Наберите 25,000 очков',
+    name: t('twentyFivePercentName'),
+    description: t('twentyFivePercentDescription'),
     unlocked: false,
     imageSrc: '/achievements/25k_score.png'
   },
   {
     id: 'reach_50k_score',
-    name: '50K Взлом',
-    description: 'Наберите 50,000 очков',
+    name: t('fiftyPercentName'),
+    description: t('fiftyPercentDescription'),
     unlocked: false,
     imageSrc: '/achievements/50k_score.png'
   },
   {
     id: 'reach_75k_score',
-    name: '75K Взлом',
-    description: 'Наберите 75,000 очков',
+    name: t('seventyFivePercentName'),
+    description: t('seventyFivePercentDescription'),
     unlocked: false,
     imageSrc: '/achievements/75k_score.png'
   },
   {
     id: 'reach_100k_score',
-    name: '100K Взлом',
-    description: 'Наберите 100,000 очков',
+    name: t('hundredPercentName'),
+    description: t('hundredPercentDescription'),
     unlocked: false,
     imageSrc: '/achievements/100k_score.png'
   },
