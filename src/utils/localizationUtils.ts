@@ -87,7 +87,29 @@ type TranslationKey =
   | 'scriptsTitle'
   | 'highestScore'
   | 'scriptActivated'
-  | 'newScriptApplied';
+  | 'newScriptApplied'
+  // Leaderboard related
+  | 'leaderboardTitle'
+  | 'leaderboardRunner'
+  | 'leaderboardHackResult'
+  | 'leaderboardNoScores'
+  // Payment related
+  | 'paymentSuccess'
+  | 'paymentActivated'
+  | 'paymentCancelled'
+  | 'paymentErrorMessage'
+  | 'paymentFailed'
+  | 'paymentWaiting'
+  | 'paymentUnknownStatus'
+  | 'paymentUnknownMessage'
+  | 'adAttemptReceived'
+  | 'paymentInProgressMessage'
+  | 'alreadyActiveMessage'
+  | 'paymentCreating'
+  | 'additionalAttemptsReceived'
+  | 'unlimitedModeActivated'
+  | 'unlimitedModeMessage'
+  | 'version';
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {
   ru: {
@@ -148,7 +170,31 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     scriptsTitle: 'СКРИПТЫ',
     highestScore: 'Ваш рекорд: {score} ({percent}%)',
     scriptActivated: 'Скрипт активирован',
-    newScriptApplied: 'Новый скрипт успешно применен'
+    newScriptApplied: 'Новый скрипт успешно применен',
+    
+    // Add missing translations for Leaderboard
+    leaderboardTitle: 'ТАБЛИЦА ЛИДЕРОВ',
+    leaderboardRunner: 'ХАКЕР',
+    leaderboardHackResult: 'РЕЗУЛЬТАТ',
+    leaderboardNoScores: 'Пока нет результатов',
+    
+    // Payment related
+    paymentSuccess: 'Оплата успешна',
+    paymentActivated: 'Протокол "Демон" активирован! У вас безлимитные попытки!',
+    paymentCancelled: 'Платеж отменен',
+    paymentErrorMessage: 'Проверьте ваши данные и попробуйте еще раз',
+    paymentFailed: 'Ошибка платежа',
+    paymentWaiting: 'Пожалуйста, подождите...',
+    paymentUnknownStatus: 'Неизвестный статус платежа',
+    paymentUnknownMessage: 'Проверьте статус вашего платежа и попробуйте позже',
+    adAttemptReceived: 'Вы получили дополнительную попытку!',
+    paymentInProgressMessage: 'Дождитесь завершения текущего платежа',
+    alreadyActiveMessage: 'У вас уже активирован протокол "Демон"',
+    paymentCreating: 'Создание счета',
+    additionalAttemptsReceived: 'Вы получили {count} дополнительных попыток!',
+    unlimitedModeActivated: 'Безлимитный режим активирован',
+    unlimitedModeMessage: 'Теперь у вас неограниченное количество попыток!',
+    version: 'Версия'
   },
   en: {
     // Existing translations
@@ -208,7 +254,31 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     scriptsTitle: 'SCRIPTS',
     highestScore: 'Highest score: {score} ({percent}%)',
     scriptActivated: 'Script activated',
-    newScriptApplied: 'New script successfully applied'
+    newScriptApplied: 'New script successfully applied',
+    
+    // Add missing translations for Leaderboard
+    leaderboardTitle: 'LEADERBOARD',
+    leaderboardRunner: 'RUNNER',
+    leaderboardHackResult: 'HACK RESULT',
+    leaderboardNoScores: 'No scores yet',
+    
+    // Payment related
+    paymentSuccess: 'Payment successful',
+    paymentActivated: 'Daemon Protocol activated! You have unlimited attempts!',
+    paymentCancelled: 'Payment cancelled',
+    paymentErrorMessage: 'Check your payment details and try again',
+    paymentFailed: 'Payment failed',
+    paymentWaiting: 'Please wait...',
+    paymentUnknownStatus: 'Unknown payment status',
+    paymentUnknownMessage: 'Check your payment status and try again later',
+    adAttemptReceived: 'You received an additional attempt!',
+    paymentInProgressMessage: 'Wait for the current payment to complete',
+    alreadyActiveMessage: 'You already have the Daemon Protocol active',
+    paymentCreating: 'Creating invoice',
+    additionalAttemptsReceived: 'You received {count} additional attempts!',
+    unlimitedModeActivated: 'Unlimited mode activated',
+    unlimitedModeMessage: 'You now have unlimited attempts!',
+    version: 'Version'
   }
 };
 
