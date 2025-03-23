@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { formatScoreAsPercentage } from '@/utils/gameLogic';
 import { hasUnlimitedAttempts, getRandomAttemptsNumber } from '@/utils/attemptsUtils';
+import { t } from '@/utils/localizationUtils';
 
 interface GameUIProps {
   score: number;
@@ -47,7 +48,7 @@ const GameUI: React.FC<GameUIProps> = ({
         fontFamily='"JetBrains Mono", monospace'
         textAnchor="middle"
       >
-        ВЗЛОМ: {formattedScore}
+        {t('hackProgress')} {formattedScore}
       </text>
       
       {/* Invulnerability timer */}
@@ -60,7 +61,7 @@ const GameUI: React.FC<GameUIProps> = ({
           fontFamily='"JetBrains Mono", monospace'
           textAnchor="middle"
         >
-          НЕУЯЗВИМОСТЬ: {(invulnerableTimer / 60).toFixed(1)}s
+          {t('invulnerability')} {(invulnerableTimer / 60).toFixed(1)}s
         </text>
       )}
     </>

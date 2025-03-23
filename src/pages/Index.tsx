@@ -22,6 +22,7 @@ import {
   trackSession, 
   trackError 
 } from '@/utils/analyticsUtils';
+import { t } from '@/utils/localizationUtils';
 
 declare global {
   interface Window {
@@ -252,8 +253,8 @@ const Index = () => {
     console.log("Game over, saved score:", score);
     
     // Show toast with score
-    toast("Взлом прерван", {
-      description: `Ваш счёт: ${score}`,
+    toast(t('gameOver'), {
+      description: `${t('gameOverScore')} ${score}`,
       position: 'top-center',
     });
     
@@ -277,8 +278,8 @@ const Index = () => {
     console.log("Game won, saved score:", score);
     
     // Show toast with winning message
-    toast.success("Взлом успешно завершен!", {
-      description: `Поздравляем! Вы достигли 100% взлома!`,
+    toast.success(t('hackComplete'), {
+      description: t('hackCompleteSuccess'),
       position: 'top-center',
     });
     

@@ -9,6 +9,7 @@ import {
 import { GameState, PlayerSkin } from '@/utils/types';
 import MatrixRain from './MatrixRain';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { t } from '@/utils/localizationUtils';
 
 // Import our newly created components
 import PlayerEntity from './game/PlayerEntity';
@@ -34,7 +35,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onGameWin,
   attemptsLeft,
   selectedSkin,
-  isTelegramWebApp = false // Default to false
+  isTelegramWebApp = false
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -317,6 +318,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     };
   }, [gameState, keys, onGameOver, onGameWin, cursorPosition, dimensions, isMobile, swipeDirection, isTelegramWebApp]);
 
+  // Handle game over
+  const handleGameOver = (score: number) => {
+    if (onGameOver) {
+      onGameOver(score);
+    }
+  };
+
   return (
     <>
       <div 
@@ -382,7 +390,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             transition: 'opacity 0.5s ease-in-out'
           }}
         >
-          Проведите пальцем по экрану, чтобы задать направление движения
+          {t('swipeToMove')}
         </div>
       )}
       
@@ -395,7 +403,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             transition: 'opacity 0.5s ease-in-out'
           }}
         >
-          Используйте стрелки или WASD для управления
+          {t('useArrowsToMove')}
         </div>
       )}
       
@@ -408,7 +416,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             animation: 'fadeIn 1s ease-in, fadeOut 1s ease-out 3s forwards'
           }}
         >
-          ОБНАРУЖЕНО ИНФОРМАЦИОННОЕ ЯДРО!
+          {t('infoFoundCore')}
         </div>
       )}
       

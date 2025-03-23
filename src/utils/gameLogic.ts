@@ -51,13 +51,13 @@ export const initGameState = (canvasWidth: number, canvasHeight: number): GameSt
 
 // Check if it's time to spawn a boss based on score
 const shouldSpawnBoss = (score: number, currentBoss: BossCore | null): boolean => {
-  // Boss score thresholds
-  const bossThresholds = [3000, 33000, 66000, 99000];
+  // Boss score thresholds - First boss moved from 3000 (3%) to 5000 (5%)
+  const bossThresholds = [5000, 33000, 66000, 99000];
   
   // Check if score has just crossed a threshold and there's no active boss
   for (const threshold of bossThresholds) {
     // Use a range check to avoid missing the exact threshold due to score increments
-    const previousScore = score - 1.33;
+    const previousScore = score - 2.66;
     if (previousScore < threshold && score >= threshold && (!currentBoss || !currentBoss.active)) {
       return true;
     }
@@ -452,7 +452,9 @@ export const updateGameState = (
 
   // Add fixed 2000 points bonus when boss is defeated
   const bonusPoints = bossDefeated ? 2000 : 0;
-  const newScore = shouldUpdateScore || bossDefeated ? state.score + (1.33 * timeScale) + scoreBoost + bonusPoints : state.score;
+  
+  // CHANGED: Doubled score increment from 1.33 to 2.66 (2x faster)
+  const newScore = shouldUpdateScore || bossDefeated ? state.score + (2.66 * timeScale) + scoreBoost + bonusPoints : state.score;
   
   // Track progression milestones
   const previousScore = state.score;
@@ -461,7 +463,7 @@ export const updateGameState = (
   const milestones = [1000, 5000, 10000, 25000, 50000, 75000, 100000];
   for (const milestone of milestones) {
     if (previousScore < milestone && newScore >= milestone) {
-      const timeToReach = newScore / 1.33; // Approximate time in seconds
+      const timeToReach = newScore / 2.66; // Approximate time in seconds
       trackProgressionMilestone(milestone, timeToReach);
       console.log(`Milestone reached: ${milestone} points`);
     }
@@ -478,6 +480,7 @@ export const updateGameState = (
     boosters: [...newBoosters.filter(b => b.active), ...newGeneratedBoosters],
     score: newScore,
     colorPhase: newColorPhase,
+    // CHANGED: Updated gameSpeed calculation based on new score rate
     gameSpeed: Math.min(10, 2.67 + Math.floor(newScore / 2000)),
     gameWon,
     collectedSafetyKeys: newCollectedSafetyKeys,
@@ -596,7 +599,9 @@ export const endGame = (state: GameState): GameState => {
   // Track game end and player death in analytics
   trackGameEnd(state.score, state.bossDefeatsCount);
   trackPlayerDeath("collision", state.score);
-  trackSession('end', state.score / 1.33); // Approximate session duration in seconds
+  
+  // CHANGED: Update session duration calculation to account for 2x score speed
+  trackSession('end', state.score / 2.66); // Approximate session duration in seconds
   
   console.log("Игра окончена, обновление достижений");
   updateAchievements(state);
