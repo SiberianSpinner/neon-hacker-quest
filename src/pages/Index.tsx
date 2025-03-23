@@ -221,8 +221,8 @@ const Index = () => {
     // Track skin selection in analytics
     trackSkinSelection(PlayerSkin[skin]);
     
-    toast.success(isTelegramWebApp ? "Скрипт активирован" : "Script activated", {
-      description: isTelegramWebApp ? "Новый скрипт успешно применен" : "New script successfully applied"
+    toast.success(t('scriptActivated'), {
+      description: t('newScriptApplied')
     });
   };
   

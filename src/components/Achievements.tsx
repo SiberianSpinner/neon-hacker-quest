@@ -7,6 +7,7 @@ import { getAllAchievements } from '@/utils/achievementsUtils';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CustomButton } from './ui/CustomButton';
+import { t } from '@/utils/localizationUtils';
 
 interface AchievementsProps {
   isVisible: boolean;
@@ -61,7 +62,7 @@ const Achievements: React.FC<AchievementsProps> = ({
         <div className="flex items-center justify-between border-b border-cyber-primary/20 p-4">
           <h2 className="text-xl font-bold text-cyber-primary flex items-center gap-2">
             <Trophy className="h-5 w-5" />
-            ЧИПЫ
+            {t('chipsTitle')}
             <span className="text-sm text-cyber-foreground/60">
               ({unlockedCount}/{totalCount})
             </span>
@@ -79,13 +80,13 @@ const Achievements: React.FC<AchievementsProps> = ({
           <Tabs defaultValue="all" onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-3 bg-cyber-background border border-cyber-primary/20">
               <TabsTrigger value="all">
-                ВСЕ
+                {t('allChips')}
               </TabsTrigger>
               <TabsTrigger value="unlocked">
-                ОТКРЫТЫ
+                {t('unlockedChips')}
               </TabsTrigger>
               <TabsTrigger value="locked">
-                ЗАКРЫТЫ
+                {t('lockedChips')}
               </TabsTrigger>
             </TabsList>
             
@@ -111,7 +112,7 @@ const Achievements: React.FC<AchievementsProps> = ({
             className="w-full"
             glowEffect
           >
-            ЗАКРЫТЬ
+            {t('close')}
           </CustomButton>
         </div>
       </motion.div>

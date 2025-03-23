@@ -76,7 +76,18 @@ type TranslationKey =
   | 'noAttemptsLeft'
   | 'watchAdOrBuy'
   | 'dailyLimitReached'
-  | 'newAttemptsAvailable';
+  | 'newAttemptsAvailable'
+  // Achievements (Chips) related
+  | 'chipsTitle'
+  | 'allChips'
+  | 'unlockedChips'
+  | 'lockedChips'
+  | 'close'
+  // Scripts related
+  | 'scriptsTitle'
+  | 'highestScore'
+  | 'scriptActivated'
+  | 'newScriptApplied';
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {
   ru: {
@@ -124,7 +135,20 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     noAttemptsLeft: 'Нет попыток!',
     watchAdOrBuy: 'Посмотрите рекламу или купите безлимитные попытки.',
     dailyLimitReached: 'Ежедневный лимит исчерпан!',
-    newAttemptsAvailable: 'Новые попытки будут доступны в 00:01.'
+    newAttemptsAvailable: 'Новые попытки будут доступны в 00:01.',
+    
+    // Achievements (Chips) related
+    chipsTitle: 'ЧИПЫ',
+    allChips: 'ВСЕ',
+    unlockedChips: 'ОТКРЫТЫ',
+    lockedChips: 'ЗАКРЫТЫ',
+    close: 'ЗАКРЫТЬ',
+    
+    // Scripts related
+    scriptsTitle: 'СКРИПТЫ',
+    highestScore: 'Ваш рекорд: {score} ({percent}%)',
+    scriptActivated: 'Скрипт активирован',
+    newScriptApplied: 'Новый скрипт успешно применен'
   },
   en: {
     // Existing translations
@@ -171,12 +195,34 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     noAttemptsLeft: 'No attempts left!',
     watchAdOrBuy: 'Watch an ad or buy unlimited attempts.',
     dailyLimitReached: 'Daily limit reached!',
-    newAttemptsAvailable: 'New attempts will be available at 00:01.'
+    newAttemptsAvailable: 'New attempts will be available at 00:01.',
+    
+    // Achievements (Chips) related
+    chipsTitle: 'CHIPS',
+    allChips: 'ALL',
+    unlockedChips: 'UNLOCKED',
+    lockedChips: 'LOCKED',
+    close: 'CLOSE',
+    
+    // Scripts related
+    scriptsTitle: 'SCRIPTS',
+    highestScore: 'Highest score: {score} ({percent}%)',
+    scriptActivated: 'Script activated',
+    newScriptApplied: 'New script successfully applied'
   }
 };
 
 // Translation function
-export const t = (key: TranslationKey): string => {
+export const t = (key: TranslationKey, params?: Record<string, string | number>): string => {
   const lang = getSystemLanguage();
-  return translations[lang][key];
+  let translatedText = translations[lang][key];
+  
+  // Replace any parameters in the translation
+  if (params) {
+    Object.entries(params).forEach(([paramKey, paramValue]) => {
+      translatedText = translatedText.replace(`{${paramKey}}`, String(paramValue));
+    });
+  }
+  
+  return translatedText;
 };
