@@ -1,4 +1,3 @@
-
 // Define language types
 export type Language = 'ru' | 'en';
 
@@ -187,6 +186,33 @@ type TranslationKey =
   | 'seventyFivePercentDescription'
   | 'hundredPercentName'
   | 'hundredPercentDescription'
+  // New achievement keys
+  | 'collect10KeysName'
+  | 'collect10KeysDescription'
+  | 'collect25KeysName'
+  | 'collect25KeysDescription'
+  | 'collect50KeysName'
+  | 'collect50KeysDescription'
+  | 'collect10BackdoorsName'
+  | 'collect10BackdoorsDescription'
+  | 'collect25BackdoorsName'
+  | 'collect25BackdoorsDescription'
+  | 'collect50BackdoorsName'
+  | 'collect50BackdoorsDescription'
+  | 'play10GamesName'
+  | 'play10GamesDescription'
+  | 'play25GamesName'
+  | 'play25GamesDescription'
+  | 'play50GamesName'
+  | 'play50GamesDescription'
+  | 'defeat1BossName'
+  | 'defeat1BossDescription'
+  | 'defeat3BossesName'
+  | 'defeat3BossesDescription'
+  | 'defeat5BossesName'
+  | 'defeat5BossesDescription'
+  | 'defeatAllBossLevelsName'
+  | 'defeatAllBossLevelsDescription'
   // Skin related translations
   | 'defaultSkinName'
   | 'defaultSkinDescription'
@@ -296,6 +322,34 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     hundredPercentName: '100% Доступа',
     hundredPercentDescription: 'Достигните 100% завершения взлома',
     
+    // New achievement translations
+    collect10KeysName: '10 Ключей Безопасности',
+    collect10KeysDescription: 'Соберите 10 ключей безопасности',
+    collect25KeysName: '25 Ключей Безопасности',
+    collect25KeysDescription: 'Соберите 25 ключей безопасности',
+    collect50KeysName: '50 Ключей Безопасности',
+    collect50KeysDescription: 'Соберите 50 ключей безопасности',
+    collect10BackdoorsName: '10 Бэкдоров',
+    collect10BackdoorsDescription: 'Соберите 10 бэкдоров',
+    collect25BackdoorsName: '25 Бэкдоров',
+    collect25BackdoorsDescription: 'Соберите 25 бэкдоров',
+    collect50BackdoorsName: '50 Бэкдоров',
+    collect50BackdoorsDescription: 'Соберите 50 бэкдоров',
+    play10GamesName: '10 Запусков',
+    play10GamesDescription: 'Запустите игру 10 раз',
+    play25GamesName: '25 Запусков',
+    play25GamesDescription: 'Запустите игру 25 раз',
+    play50GamesName: '50 Запусков',
+    play50GamesDescription: 'Запустите игру 50 раз',
+    defeat1BossName: 'Первая победа над боссом',
+    defeat1BossDescription: 'Победите босса 1 раз',
+    defeat3BossesName: '3 Победы над боссами',
+    defeat3BossesDescription: 'Победите боссов 3 раза',
+    defeat5BossesName: '5 Побед над боссами',
+    defeat5BossesDescription: 'Победите боссов 5 раз',
+    defeatAllBossLevelsName: 'Победа над всеми уровнями боссов',
+    defeatAllBossLevelsDescription: 'Победите боссов всех уровней (33k, 66k, 99k)',
+    
     // Skin related translations
     defaultSkinName: 'Стандартный',
     defaultSkinDescription: 'Стандартное подключение нетраннера',
@@ -403,6 +457,34 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     seventyFivePercentDescription: 'Reach 75% hack completion',
     hundredPercentName: '100% Access',
     hundredPercentDescription: 'Reach 100% hack completion',
+    
+    // New achievement translations
+    collect10KeysName: '10 Security Keys',
+    collect10KeysDescription: 'Collect 10 security keys',
+    collect25KeysName: '25 Security Keys',
+    collect25KeysDescription: 'Collect 25 security keys',
+    collect50KeysName: '50 Security Keys',
+    collect50KeysDescription: 'Collect 50 security keys',
+    collect10BackdoorsName: '10 Backdoors',
+    collect10BackdoorsDescription: 'Collect 10 backdoors',
+    collect25BackdoorsName: '25 Backdoors',
+    collect25BackdoorsDescription: 'Collect 25 backdoors',
+    collect50BackdoorsName: '50 Backdoors',
+    collect50BackdoorsDescription: 'Collect 50 backdoors',
+    play10GamesName: '10 Runs',
+    play10GamesDescription: 'Launch the game 10 times',
+    play25GamesName: '25 Runs',
+    play25GamesDescription: 'Launch the game 25 times',
+    play50GamesName: '50 Runs',
+    play50GamesDescription: 'Launch the game 50 times',
+    defeat1BossName: 'First Boss Victory',
+    defeat1BossDescription: 'Defeat a boss 1 time',
+    defeat3BossesName: '3 Boss Victories',
+    defeat3BossesDescription: 'Defeat bosses 3 times',
+    defeat5BossesName: '5 Boss Victories',
+    defeat5BossesDescription: 'Defeat bosses 5 times',
+    defeatAllBossLevelsName: 'All Boss Levels Defeated',
+    defeatAllBossLevelsDescription: 'Defeat bosses of all levels (33k, 66k, 99k)',
     
     // Skin related translations
     defaultSkinName: 'Default',

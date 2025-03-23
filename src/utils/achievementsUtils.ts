@@ -1,4 +1,3 @@
-
 import { Achievement, GameState, ScoreRecord } from './types';
 import { getScores } from './storageUtils';
 import { getDailyGameStats } from './gameLogic';
@@ -51,92 +50,92 @@ const achievementData: Achievement[] = [
   },
   {
     id: 'collect_10_safety_keys',
-    name: '10 Ключей Безопасности',
-    description: 'Соберите 10 ключей безопасности',
+    name: t('collect10KeysName'),
+    description: t('collect10KeysDescription'),
     unlocked: false,
     imageSrc: '/achievements/10_safety_keys.png'
   },
   {
     id: 'collect_25_safety_keys',
-    name: '25 Ключей Безопасности',
-    description: 'Соберите 25 ключей безопасности',
+    name: t('collect25KeysName'),
+    description: t('collect25KeysDescription'),
     unlocked: false,
     imageSrc: '/achievements/25_safety_keys.png'
   },
   {
     id: 'collect_50_safety_keys',
-    name: '50 Ключей Безопасности',
-    description: 'Соберите 50 ключей безопасности',
+    name: t('collect50KeysName'),
+    description: t('collect50KeysDescription'),
     unlocked: false,
     imageSrc: '/achievements/50_safety_keys.png'
   },
   {
     id: 'collect_10_backdoors',
-    name: '10 Бэкдоров',
-    description: 'Соберите 10 бэкдоров',
+    name: t('collect10BackdoorsName'),
+    description: t('collect10BackdoorsDescription'),
     unlocked: false,
     imageSrc: '/achievements/10_backdoors.png'
   },
   {
     id: 'collect_25_backdoors',
-    name: '25 Бэкдоров',
-    description: 'Соберите 25 бэкдоров',
+    name: t('collect25BackdoorsName'),
+    description: t('collect25BackdoorsDescription'),
     unlocked: false,
     imageSrc: '/achievements/25_backdoors.png'
   },
   {
     id: 'collect_50_backdoors',
-    name: '50 Бэкдоров',
-    description: 'Соберите 50 бэкдоров',
+    name: t('collect50BackdoorsName'),
+    description: t('collect50BackdoorsDescription'),
     unlocked: false,
     imageSrc: '/achievements/50_backdoors.png'
   },
   {
     id: 'play_10_games',
-    name: '10 Запусков',
-    description: 'Запустите игру 10 раз',
+    name: t('play10GamesName'),
+    description: t('play10GamesDescription'),
     unlocked: false,
     imageSrc: '/achievements/10_games.png'
   },
   {
     id: 'play_25_games',
-    name: '25 Запусков',
-    description: 'Запустите игру 25 раз',
+    name: t('play25GamesName'),
+    description: t('play25GamesDescription'),
     unlocked: false,
     imageSrc: '/achievements/25_games.png'
   },
   {
     id: 'play_50_games',
-    name: '50 Запусков',
-    description: 'Запустите игру 50 раз',
+    name: t('play50GamesName'),
+    description: t('play50GamesDescription'),
     unlocked: false,
     imageSrc: '/achievements/50_games.png'
   },
   {
     id: 'defeat_1_boss',
-    name: 'Первая победа над боссом',
-    description: 'Победите босса 1 раз',
+    name: t('defeat1BossName'),
+    description: t('defeat1BossDescription'),
     unlocked: false,
     imageSrc: '/achievements/defeat_1_boss.png'
   },
   {
     id: 'defeat_3_bosses',
-    name: '3 Победы над боссами',
-    description: 'Победите боссов 3 раза',
+    name: t('defeat3BossesName'),
+    description: t('defeat3BossesDescription'),
     unlocked: false,
     imageSrc: '/achievements/defeat_3_bosses.png'
   },
   {
     id: 'defeat_5_bosses',
-    name: '5 Побед над боссами',
-    description: 'Победите боссов 5 раз',
+    name: t('defeat5BossesName'),
+    description: t('defeat5BossesDescription'),
     unlocked: false,
     imageSrc: '/achievements/defeat_5_bosses.png'
   },
   {
     id: 'defeat_all_boss_levels',
-    name: 'Победа над всеми уровнями боссов',
-    description: 'Победите боссов всех уровней (33k, 66k, 99k)',
+    name: t('defeatAllBossLevelsName'),
+    description: t('defeatAllBossLevelsDescription'),
     unlocked: false,
     imageSrc: '/achievements/defeat_all_boss_levels.png'
   }
