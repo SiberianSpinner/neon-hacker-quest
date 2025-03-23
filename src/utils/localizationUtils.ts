@@ -1,11 +1,14 @@
-
 // Define language types
 export type Language = 'ru' | 'en';
 
 // Get the user's system language from Telegram or browser
 export const getSystemLanguage = (): Language => {
+  console.log('⚠️ Getting system language');
+  
   // Check if we're in Telegram Web App
   if (window.Telegram?.WebApp) {
+    console.log('🔍 Telegram WebApp detected');
+    
     // Get the language code from Telegram
     try {
       // Try to access language from WebApp directly
@@ -14,41 +17,77 @@ export const getSystemLanguage = (): Language => {
       // Check initDataUnsafe first (the most direct path)
       if (webApp.initDataUnsafe?.user?.language_code) {
         const tgLang = webApp.initDataUnsafe.user.language_code;
-        console.log('Using Telegram language from initDataUnsafe:', tgLang);
-        // Check if language is Russian, otherwise default to English
-        return tgLang.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+        console.log('🌐 Using Telegram language from initDataUnsafe:', tgLang);
+        
+        // Force to English unless explicitly Russian ('ru' or 'ru-RU')
+        // This ensures English is the default language
+        const isRussian = tgLang.toLowerCase() === 'ru' || tgLang.toLowerCase() === 'ru-ru';
+        console.log('Is Russian language?', isRussian);
+        
+        return isRussian ? 'ru' : 'en';
+      } else {
+        console.log('❌ No language_code in initDataUnsafe');
       }
       
       // Try to parse initData if available
-      if (webApp.initData) {
+      if (webApp.initData && webApp.initData.length > 0) {
         try {
           const parsedData = JSON.parse(webApp.initData);
+          console.log('📄 Successfully parsed initData');
+          
           if (parsedData?.user?.language_code) {
             const tgLang = parsedData.user.language_code;
-            console.log('Using Telegram language from initData:', tgLang);
-            // Check if language is Russian, otherwise default to English
-            return tgLang.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+            console.log('🌐 Using Telegram language from parsed initData:', tgLang);
+            
+            // Force to English unless explicitly Russian ('ru' or 'ru-RU')
+            const isRussian = tgLang.toLowerCase() === 'ru' || tgLang.toLowerCase() === 'ru-ru';
+            console.log('Is Russian language?', isRussian);
+            
+            return isRussian ? 'ru' : 'en';
+          } else {
+            console.log('❌ No language_code in parsed initData');
           }
         } catch (e) {
-          console.error('Error parsing Telegram initData:', e);
+          console.error('❌ Error parsing Telegram initData:', e);
         }
+      } else {
+        console.log('❌ No initData available or empty string');
       }
       
       // Additional debug logging
-      console.log('Telegram WebApp is present but language detection failed');
-      console.log('WebApp initDataUnsafe:', JSON.stringify(webApp.initDataUnsafe));
+      console.log('⚠️ Telegram WebApp is present but language detection failed');
+      console.log('WebApp initDataUnsafe:', JSON.stringify(webApp.initDataUnsafe, null, 2));
       console.log('WebApp initData available:', !!webApp.initData);
+      
+      // Default to English if we can't determine the language from Telegram
+      console.log('⚠️ Defaulting to English since language detection failed');
+      return 'en';
     } catch (e) {
-      console.error('Error getting language from Telegram:', e);
+      console.error('❌ Error getting language from Telegram:', e);
+      // Default to English on errors
+      return 'en';
     }
   } else {
-    console.log('Telegram WebApp not detected');
+    console.log('❌ Telegram WebApp not detected');
   }
   
   // Fallback to browser language if Telegram language is not available
-  const browserLang = navigator.language || (navigator as any).userLanguage;
-  console.log('Fallback to browser language:', browserLang);
-  return browserLang?.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+  try {
+    const browserLang = navigator.language || (navigator as any).userLanguage;
+    console.log('🌐 Fallback to browser language:', browserLang);
+    
+    // Force to English unless explicitly Russian ('ru' or 'ru-RU')
+    const isRussian = browserLang?.toLowerCase() === 'ru' || 
+                      browserLang?.toLowerCase() === 'ru-ru' ||
+                      browserLang?.toLowerCase().startsWith('ru-');
+    
+    console.log('Is Russian browser language?', isRussian);
+    return isRussian ? 'ru' : 'en';
+  } catch (e) {
+    console.error('❌ Error detecting browser language:', e);
+    // Default to English if all else fails
+    return 'en';
+  }
 };
 
 // Create translations object

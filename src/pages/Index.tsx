@@ -22,7 +22,7 @@ import {
   trackSession, 
   trackError 
 } from '@/utils/analyticsUtils';
-import { t, getSystemLanguage } from '@/utils/localizationUtils';
+import { t, getSystemLanguage, Language } from '@/utils/localizationUtils';
 
 // Remove the redundant interface declaration and use the one from vite-env.d.ts
 declare global {
@@ -50,34 +50,41 @@ const Index = () => {
   const [selectedSkin, setSelectedSkin] = useState<PlayerSkin>(PlayerSkin.DEFAULT);
   const [hasUnlimitedMode, setHasUnlimitedMode] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<Language>('en');
 
+  // Debug language and Telegram info on mount
   useEffect(() => {
+    // Get the detected language immediately
+    const detectedLang = getSystemLanguage();
+    setCurrentLanguage(detectedLang);
+    
+    console.log('🔍 LANGUAGE DEBUG - Current detected language:', detectedLang);
+    
     // Debug Telegram language information
     if (window.Telegram?.WebApp) {
-      console.log('Telegram WebApp detected');
-      console.log('Current language detected:', getSystemLanguage());
+      console.log('✅ LANGUAGE DEBUG - Telegram WebApp detected');
       
       if (window.Telegram.WebApp.initDataUnsafe?.user) {
-        console.log('User info from initDataUnsafe:', 
-          JSON.stringify(window.Telegram.WebApp.initDataUnsafe.user));
+        console.log('👤 LANGUAGE DEBUG - User info from initDataUnsafe:', 
+          JSON.stringify(window.Telegram.WebApp.initDataUnsafe.user, null, 2));
       } else {
-        console.log('No user info in initDataUnsafe');
+        console.log('❌ LANGUAGE DEBUG - No user info in initDataUnsafe');
       }
       
       // Try to access raw initData as well
       if (window.Telegram.WebApp.initData) {
-        console.log('initData present, length:', window.Telegram.WebApp.initData.length);
+        console.log('📄 LANGUAGE DEBUG - initData present, length:', window.Telegram.WebApp.initData.length);
         try {
           const parsed = JSON.parse(window.Telegram.WebApp.initData);
-          console.log('Parsed initData:', JSON.stringify(parsed));
+          console.log('📄 LANGUAGE DEBUG - Parsed initData:', JSON.stringify(parsed, null, 2));
         } catch (e) {
-          console.log('Could not parse initData:', e);
+          console.log('❌ LANGUAGE DEBUG - Could not parse initData:', e);
         }
       } else {
-        console.log('No initData available');
+        console.log('❌ LANGUAGE DEBUG - No initData available');
       }
     } else {
-      console.log('Not running in Telegram WebApp');
+      console.log('❌ LANGUAGE DEBUG - Not running in Telegram WebApp');
     }
   }, []);
 
@@ -689,10 +696,23 @@ const Index = () => {
     };
   }, []);
 
+  // Add language indicator during development
+  const LanguageDebug = () => {
+    if (process.env.NODE_ENV !== 'production') {
+      return (
+        <div className="absolute top-2 left-2 text-xs bg-black/30 text-white px-2 py-1 rounded z-50">
+          Lang: {currentLanguage.toUpperCase()}
+        </div>
+      );
+    }
+    return null;
+  };
+
   // Loading sequence
   if (isLoading) {
     return (
       <div className="min-h-screen bg-cyber-background flex items-center justify-center flex-col gap-4">
+        <LanguageDebug />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -721,6 +741,9 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen bg-cyber-background overflow-hidden">
+      {/* Language Debug Indicator */}
+      <LanguageDebug />
+      
       {/* Background grid effect */}
       <div 
         className="absolute inset-0 z-0 opacity-10" 
