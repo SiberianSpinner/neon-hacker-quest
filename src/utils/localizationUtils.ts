@@ -1,4 +1,3 @@
-
 // Define language types
 export type Language = 'ru' | 'en';
 
@@ -7,33 +6,38 @@ export const getSystemLanguage = (): Language => {
   // Check if we're in Telegram Web App
   if (window.Telegram?.WebApp) {
     // Get the language code from Telegram
-    // Access user language through WebApp object, handling the case where initDataUnsafe might not exist
-    const webApp = window.Telegram.WebApp;
-    
-    // Handle the case where initDataUnsafe might be accessed differently or not be available
-    let tgLang: string | undefined;
-    
-    // Try various ways to access language information from Telegram WebApp
     try {
-      // Try to access it directly (this was causing the TypeScript error)
-      if ((webApp as any).initDataUnsafe?.user?.language_code) {
-        tgLang = (webApp as any).initDataUnsafe.user.language_code;
-      } 
-      // If available, use the initData property
-      else if (webApp.initData) {
-        // Try to parse initData if it's a string
-        const parsedData = JSON.parse(webApp.initData);
-        tgLang = parsedData?.user?.language_code;
+      // Try to access language from WebApp directly
+      const webApp = window.Telegram.WebApp;
+      
+      // Check initDataUnsafe first (the most direct path)
+      if (webApp.initDataUnsafe?.user?.language_code) {
+        const tgLang = webApp.initDataUnsafe.user.language_code;
+        console.log('Using Telegram language:', tgLang);
+        return tgLang === 'ru' ? 'ru' : 'en';
+      }
+      
+      // Try to parse initData if available
+      if (webApp.initData) {
+        try {
+          const parsedData = JSON.parse(webApp.initData);
+          if (parsedData?.user?.language_code) {
+            const tgLang = parsedData.user.language_code;
+            console.log('Using Telegram language from initData:', tgLang);
+            return tgLang === 'ru' ? 'ru' : 'en';
+          }
+        } catch (e) {
+          console.error('Error parsing Telegram initData:', e);
+        }
       }
     } catch (e) {
-      console.log('Error getting language from Telegram:', e);
+      console.error('Error getting language from Telegram:', e);
     }
-    
-    return tgLang === 'ru' ? 'ru' : 'en';
   }
   
-  // Fallback to browser language
+  // Fallback to browser language if Telegram language is not available
   const browserLang = navigator.language || (navigator as any).userLanguage;
+  console.log('Fallback to browser language:', browserLang);
   return browserLang?.startsWith('ru') ? 'ru' : 'en';
 };
 
