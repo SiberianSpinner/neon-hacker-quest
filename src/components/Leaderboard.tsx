@@ -18,7 +18,36 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose, currentUs
 
   useEffect(() => {
     if (isVisible) {
-      setScores(getScores());
+      // Получаем уникальные результаты, чтобы избежать дублирования
+      const allScores = getScores();
+      
+      // Сортируем по убыванию score и убираем дубликаты по userId (оставляем только лучший результат каждого игрока)
+      const uniqueScores = allScores.reduce((unique: typeof allScores, current) => {
+        // Пропускаем записи без userId (считаем их уникальными)
+        if (!current.userId) {
+          unique.push(current);
+          return unique;
+        }
+        
+        // Проверяем, есть ли уже запись с таким userId
+        const existingIndex = unique.findIndex(item => item.userId === current.userId);
+        
+        // Если такого userId еще нет, добавляем запись
+        if (existingIndex === -1) {
+          unique.push(current);
+        } 
+        // Если уже есть, заменяем только если текущий результат выше
+        else if (current.score > unique[existingIndex].score) {
+          unique[existingIndex] = current;
+        }
+        
+        return unique;
+      }, []);
+      
+      // Сортируем результаты по убыванию
+      uniqueScores.sort((a, b) => b.score - a.score);
+      
+      setScores(uniqueScores);
       setAnimationState('entering');
       const timer = setTimeout(() => setAnimationState('entered'), 300);
       return () => clearTimeout(timer);
