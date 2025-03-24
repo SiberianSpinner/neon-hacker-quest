@@ -638,6 +638,38 @@ const Index = () => {
     };
   }, []);
 
+  // Register app open with autobrain.ai
+  useEffect(() => {
+    const registerAppOpen = async () => {
+      try {
+        console.log("Registering app open with autobrain.ai");
+        
+        // Make the POST request to register app open with exact format from curl command
+        const response = await fetch('https://autobrain.ai/api/v1/register', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'token': window.Telegram.WebApp.initData
+          },
+          // Empty body as specified in the curl command
+          body: ''
+        });
+        
+        if (response.ok) {
+          console.log("Successfully registered app open");
+        } else {
+          console.error("Failed to register app open:", await response.text());
+        }
+      } catch (error) {
+        console.error("Error registering app open:", error);
+        // Don't track this error to avoid potential infinite loops
+      }
+    };
+    
+    // Call the registration function
+    registerAppOpen();
+  }, []); // Empty dependency array ensures this runs only once when component mounts
+
   // Expose functions to window for Telegram to call
   useEffect(() => {
     if (isTelegramWebApp) {
