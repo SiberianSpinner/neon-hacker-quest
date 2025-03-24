@@ -23,26 +23,12 @@ import {
   trackError 
 } from '@/utils/analyticsUtils';
 
+import {GameAnalytics} from "gameanalytics";
+import { t, getSystemLanguage, Language } from '@/utils/localizationUtils';
+
+// Remove the redundant interface declaration and use the one from vite-env.d.ts
 declare global {
   interface Window {
-    Telegram?: {
-      WebApp: {
-        ready: () => void;
-        expand: () => void;
-        MainButton: {
-          setText: (text: string) => void;
-          show: () => void;
-          hide: () => void;
-          onClick: (callback: () => void) => void;
-          offClick: (callback: () => void) => void;
-        };
-        onEvent: (eventType: string, callback: (eventData?: any) => void) => void;
-        offEvent: (eventType: string, callback: (eventData?: any) => void) => void;
-        sendData: (data: string) => void;
-        initData: string;
-        openInvoice: (url: string) => void;
-      };
-    };
     // Ad extra function for displaying ads
     p_adextra?: (successCallback: () => void, errorCallback: () => void) => void;
   }
@@ -66,6 +52,43 @@ const Index = () => {
   const [selectedSkin, setSelectedSkin] = useState<PlayerSkin>(PlayerSkin.DEFAULT);
   const [hasUnlimitedMode, setHasUnlimitedMode] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<Language>('en');
+
+  // Debug language and Telegram info on mount
+  useEffect(() => {
+    // Get the detected language immediately
+    const detectedLang = getSystemLanguage();
+    setCurrentLanguage(detectedLang);
+    
+    console.log('🔍 LANGUAGE DEBUG - Current detected language:', detectedLang);
+    
+    // Debug Telegram language information
+    if (window.Telegram?.WebApp) {
+      console.log('✅ LANGUAGE DEBUG - Telegram WebApp detected');
+      
+      if (window.Telegram.WebApp.initDataUnsafe?.user) {
+        console.log('👤 LANGUAGE DEBUG - User info from initDataUnsafe:', 
+          JSON.stringify(window.Telegram.WebApp.initDataUnsafe.user, null, 2));
+      } else {
+        console.log('❌ LANGUAGE DEBUG - No user info in initDataUnsafe');
+      }
+      
+      // Try to access raw initData as well
+      if (window.Telegram.WebApp.initData) {
+        console.log('📄 LANGUAGE DEBUG - initData present, length:', window.Telegram.WebApp.initData.length);
+        try {
+          const parsed = JSON.parse(window.Telegram.WebApp.initData);
+          console.log('📄 LANGUAGE DEBUG - Parsed initData:', JSON.stringify(parsed, null, 2));
+        } catch (e) {
+          console.log('❌ LANGUAGE DEBUG - Could not parse initData:', e);
+        }
+      } else {
+        console.log('❌ LANGUAGE DEBUG - No initData available');
+      }
+    } else {
+      console.log('❌ LANGUAGE DEBUG - Not running in Telegram WebApp');
+    }
+  }, []);
 
   useEffect(() => {
     if (!window.Telegram?.WebApp) return;
@@ -80,8 +103,10 @@ const Index = () => {
       switch(eventData.status) {
         case 'paid':
           console.log('[PAYMENT] Invoice was paid successfully');
-          toast.success("Оплата успешна", {
-            description: "Обработка платежа...",
+          
+          GameAnalytics.addDesignEvent('invoice:success')
+          toast.success(t('paymentSuccess'), {
+            description: t('processingPayment'),
             id: "payment-processing"
           });
           
@@ -111,9 +136,9 @@ const Index = () => {
               setAttemptsLeft(Infinity);
               setDailyAttemptsLeft(Infinity);
               
-              toast.success("Покупка успешна", {
+              toast.success(t('paymentSuccess'), {
                 id: "payment-processing",
-                description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
+                description: t('paymentActivated')
               });
               
               // Clear payment processing flag
@@ -124,32 +149,32 @@ const Index = () => {
           
         case 'cancelled':
           console.log('[PAYMENT] Invoice was cancelled by user');
-          toast.info("Оплата отменена", {
-            description: "Пользователь отменил платеж."
+          toast.info(t('paymentCancelled'), {
+            description: t('paymentErrorMessage')
           });
           setPaymentProcessing(false);
           break;
           
         case 'failed':
           console.log('[PAYMENT] Payment failed');
-          toast.error("Ошибка оплаты", {
-            description: "Не удалось завершить платеж. Пожалуйста, попробуйте позже."
+          toast.error(t('paymentFailed'), {
+            description: t('paymentErrorMessage')
           });
           setPaymentProcessing(false);
           break;
           
         case 'pending':
           console.log('[PAYMENT] Payment is pending');
-          toast.loading("Платеж в обработке", {
-            description: "Ожидание завершения платежа..."
+          toast.loading(t('processingPayment'), {
+            description: t('paymentWaiting')
           });
           // Keep payment processing flag active while pending
           break;
           
         default:
           console.log('[PAYMENT] Unknown invoice status:', eventData.status);
-          toast.error("Неизвестный статус платежа", {
-            description: "Пожалуйста, свяжитесь с поддержкой."
+          toast.error(t('paymentUnknownStatus'), {
+            description: t('paymentUnknownMessage')
           });
           setPaymentProcessing(false);
       }
@@ -237,8 +262,8 @@ const Index = () => {
     // Track skin selection in analytics
     trackSkinSelection(PlayerSkin[skin]);
     
-    toast.success(isTelegramWebApp ? "Скрипт активирован" : "Script activated", {
-      description: isTelegramWebApp ? "Новый скрипт успешно применен" : "New script successfully applied"
+    toast.success(t('scriptActivated'), {
+      description: t('newScriptApplied')
     });
   };
   
@@ -252,8 +277,8 @@ const Index = () => {
     console.log("Game over, saved score:", score);
     
     // Show toast with score
-    toast("Взлом прерван", {
-      description: `Ваш счёт: ${score}`,
+    toast(t('gameOver'), {
+      description: `${t('gameOverScore')} ${score}`,
       position: 'top-center',
     });
     
@@ -277,8 +302,8 @@ const Index = () => {
     console.log("Game won, saved score:", score);
     
     // Show toast with winning message
-    toast.success("Взлом успешно завершен!", {
-      description: `Поздравляем! Вы достигли 100% взлома!`,
+    toast.success(t('hackComplete'), {
+      description: t('hackCompleteSuccess'),
       position: 'top-center',
     });
     
@@ -302,20 +327,16 @@ const Index = () => {
     
     // Check if player has attempts left
     if (attemptsLeft <= 0) {
-      toast.error(isTelegramWebApp ? "Нет попыток!" : "No attempts left!", {
-        description: isTelegramWebApp 
-          ? "Посмотрите рекламу или купите безлимитные попытки."
-          : "Watch an ad or buy unlimited attempts."
+      toast.error(t('noAttemptsLeft'), {
+        description: t('watchAdOrBuy')
       });
       return;
     }
     
     // Check if player has daily attempts left
     if (dailyAttemptsLeft <= 0) {
-      toast.error(isTelegramWebApp ? "Ежедневный лимит исчерпан!" : "Daily limit reached!", {
-        description: isTelegramWebApp 
-          ? "Новые попытки будут доступны в 00:01."
-          : "New attempts will be available at 00:01."
+      toast.error(t('dailyLimitReached'), {
+        description: t('newAttemptsAvailable')
       });
       return;
     }
@@ -327,10 +348,8 @@ const Index = () => {
       setAttemptsLeft(prev => prev - 1);
       setGameActive(true);
     } else {
-      toast.error(isTelegramWebApp ? "Не удалось начать игру" : "Failed to start game", {
-        description: isTelegramWebApp 
-          ? "Произошла ошибка при использовании попытки."
-          : "Error using attempt."
+      toast.error(t('dailyLimitReached'), {
+        description: t('newAttemptsAvailable')
       });
     }
   };
@@ -339,7 +358,7 @@ const Index = () => {
   const handleWatchAd = () => {
     // Track ad view started
     trackAdView('started');
-    
+    GameAnalytics.addDesignEvent('add:watched')
     // Call p_adextra function if it exists
     try {
       window.p_adextra(
@@ -351,8 +370,8 @@ const Index = () => {
           // Track ad view completed
           trackAdView('completed');
           
-          toast.success("Реклама завершена", {
-            description: "Вы получили дополнительную попытку!"
+          toast.success(t('adCompleted'), {
+            description: t('adAttemptReceived')
           });
         },
         // Error callback
@@ -362,14 +381,14 @@ const Index = () => {
           // Track ad view failed
           trackAdView('failed');
           
-          toast.error("Ошибка показа рекламы", {
-            description: "Попробуйте еще раз позже."
+          toast.error(t('adError'), {
+            description: t('paymentErrorMessage')
           });
         }
       );
       
-      toast.info("Загрузка рекламы...", {
-        description: "Пожалуйста, подождите пока реклама загрузится.",
+      toast.info(t('adLoading'), {
+        description: t('paymentWaiting'),
       });
       return;
     } catch (err) {
@@ -380,8 +399,8 @@ const Index = () => {
     if (isTelegramWebApp && window.Telegram?.WebApp) {
       try {
         window.Telegram.WebApp.sendData(JSON.stringify({ action: 'watchAd' }));
-        toast.info("Загрузка рекламы...", {
-          description: "Пожалуйста, подождите пока реклама загрузится.",
+        toast.info(t('adLoading'), {
+          description: t('paymentWaiting'),
         });
       } catch (err) {
         console.error('Error sending data to Telegram:', err);
@@ -396,8 +415,8 @@ const Index = () => {
   const simulateAdView = () => {
     trackAdView('started');
     
-    toast.info("Загрузка рекламы...", {
-      description: "Симуляция просмотра рекламы.",
+    toast.info(t('adLoading'), {
+      description: t('adSimulation'),
     });
     
     setTimeout(() => {
@@ -406,18 +425,18 @@ const Index = () => {
       // Track ad view completed
       trackAdView('completed');
       
-      toast.success("Реклама завершена", {
-        description: "Вы получили дополнительную попытку!"
+      toast.success(t('adCompleted'), {
+        description: t('adAttemptReceived')
       });
     }, 2000);
   };
   
-  // Update handleBuyUnlimited to include analytics for the simulation case
+  // Update handleBuyUnlimited to include translations
   const handleBuyUnlimited = () => {
     // Prevent multiple payments by checking paymentProcessing flag
     if (paymentProcessing) {
-      toast.info("Обработка платежа уже идет", {
-        description: "Пожалуйста, дождитесь завершения текущего платежа."
+      toast.info(t('processingPayment'), {
+        description: t('paymentInProgressMessage')
       });
       return;
     }
@@ -429,10 +448,8 @@ const Index = () => {
     // If unlimited mode is already active or payment is already verified,
     // show a message and exit early to avoid making unnecessary API calls
     if (hasUnlimitedMode) {
-      toast.info(isTelegramWebApp ? "Протокол 'Демон' уже активен" : "Daemon Protocol already active", {
-        description: isTelegramWebApp
-          ? "У вас уже есть безлимитные попытки."
-          : "You already have unlimited attempts."
+      toast.info(t('daemonAlreadyActive'), {
+        description: t('alreadyActiveMessage')
       });
       return;
     }
@@ -446,10 +463,8 @@ const Index = () => {
       setAttemptsLeft(Infinity);
       setDailyAttemptsLeft(Infinity);
       
-      toast.success(isTelegramWebApp ? "Протокол 'Демон' активирован" : "Daemon Protocol activated", {
-        description: isTelegramWebApp
-          ? "Покупка подтверждена. У вас теперь безлимитные попытки!"
-          : "Purchase confirmed. You now have unlimited attempts!"
+      toast.success(t('paymentSuccess'), {
+        description: t('paymentActivated')
       });
       return;
     }
@@ -460,8 +475,8 @@ const Index = () => {
     // If in Telegram, send event to process payment
     if (isTelegramWebApp && window.Telegram?.WebApp) {
       try {
-        toast.info("Создание счета...", {
-          description: "Пожалуйста, подождите...",
+        toast.info(t('paymentCreating'), {
+          description: t('paymentWaiting'),
           id: "invoice-creation"
         });
 
@@ -556,10 +571,10 @@ const Index = () => {
     }
   };
   
-  // Update simulatePurchase to include analytics
+  // Update simulatePurchase to include translations
   const simulatePurchase = () => {
-    toast.info("Обработка платежа...", {
-      description: "Симуляция платежа.",
+    toast.info(t('processingPayment'), {
+      description: t('adSimulation'),
     });
     
     // Set payment processing flag
@@ -577,8 +592,8 @@ const Index = () => {
       setAttemptsLeft(Infinity);
       setDailyAttemptsLeft(Infinity);
       
-      toast.success("Покупка успешна", {
-        description: "Протокол 'Демон' активирован! У вас безлимитные попытки!"
+      toast.success(t('paymentSuccess'), {
+        description: t('paymentActivated')
       });
       
       // Clear payment processing flag
@@ -589,8 +604,8 @@ const Index = () => {
   // Add attempts (can be called from Telegram backend)
   const addAttempts = (count: number) => {
     setAttemptsLeft(prev => prev + count);
-    toast.success("Попытки добавлены", {
-      description: `Вы получили ${count} новых попыток!`
+    toast.success(t('adCompleted'), {
+      description: t('additionalAttemptsReceived', { count: count.toString() })
     });
   };
   
@@ -601,8 +616,8 @@ const Index = () => {
     setAttemptsLeft(Infinity);
     setDailyAttemptsLeft(Infinity);
     
-    toast.success("Безлимитный режим активирован", {
-      description: "Протокол 'Демон' успешно запущен! Теперь у вас безлимитные попытки!"
+    toast.success(t('unlimitedModeActivated'), {
+      description: t('unlimitedModeMessage')
     });
   };
 
@@ -717,10 +732,23 @@ const Index = () => {
     };
   }, []);
 
+  // Add language indicator during development
+  const LanguageDebug = () => {
+    if (process.env.NODE_ENV !== 'production') {
+      return (
+        <div className="absolute top-2 left-2 text-xs bg-black/30 text-white px-2 py-1 rounded z-50">
+          Lang: {currentLanguage.toUpperCase()}
+        </div>
+      );
+    }
+    return null;
+  };
+
   // Loading sequence
   if (isLoading) {
     return (
       <div className="min-h-screen bg-cyber-background flex items-center justify-center flex-col gap-4">
+        <LanguageDebug />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -741,7 +769,7 @@ const Index = () => {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="text-sm text-cyber-foreground/70 mt-2"
         >
-          ИНИЦИАЛИЗАЦИЯ ВЗЛОМА...
+          {t('initializingHack')}
         </motion.div>
       </div>
     );
@@ -749,6 +777,9 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen bg-cyber-background overflow-hidden">
+      {/* Language Debug Indicator */}
+      <LanguageDebug />
+      
       {/* Background grid effect */}
       <div 
         className="absolute inset-0 z-0 opacity-10" 
@@ -816,7 +847,7 @@ const Index = () => {
 
       {/* Version tag */}
       <div className="absolute bottom-2 right-2 text-xs text-cyber-foreground/30">
-        v1.6.2
+        {t('version')} 1.6.2
       </div>
     </div>
   );

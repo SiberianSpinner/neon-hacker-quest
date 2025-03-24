@@ -6,6 +6,7 @@ import { CustomButton } from './ui/CustomButton';
 import MatrixRain from './MatrixRain';
 import { PlayerSkin, PlayerSkinInfo } from '@/utils/types';
 import { getPlayerSkins, saveSelectedSkin, getHighestScore } from '@/utils/skinsUtils';
+import { t } from '@/utils/localizationUtils';
 
 interface ScriptsProps {
   isVisible: boolean;
@@ -73,14 +74,14 @@ const Scripts: React.FC<ScriptsProps> = ({
         className="relative bg-cyber-background border border-cyber-primary/30 rounded-md shadow-xl p-6 max-w-md w-full z-20"
       >
         <h2 className="text-2xl text-center font-bold text-cyber-primary mb-6 uppercase">
-          {isTelegramWebApp ? 'СКРИПТЫ' : 'SCRIPTS'}
+          {t('scriptsTitle')}
         </h2>
         
         <div className="text-center mb-4 text-cyber-foreground/70 text-sm">
-          {isTelegramWebApp 
-            ? `Ваш рекорд: ${highScore.toLocaleString()} (${(highScore / 1000).toFixed(1)}%)`
-            : `Highest score: ${highScore.toLocaleString()} (${(highScore / 1000).toFixed(1)}%)`
-          }
+          {t('highestScore', { 
+            score: highScore.toLocaleString(), 
+            percent: (highScore / 1000).toFixed(1) 
+          })}
         </div>
         
         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -134,7 +135,7 @@ const Scripts: React.FC<ScriptsProps> = ({
         
         <div className="flex justify-center">
           <CustomButton onClick={onClose}>
-            {isTelegramWebApp ? 'ЗАКРЫТЬ' : 'CLOSE'}
+            {t('close')}
           </CustomButton>
         </div>
       </motion.div>

@@ -4,6 +4,7 @@ import { getScores, formatScoreAsPercentage } from '@/utils/storageUtils';
 import { CustomButton } from './ui/CustomButton';
 import { cn } from '@/lib/utils';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { t } from '@/utils/localizationUtils';
 
 interface LeaderboardProps {
   isVisible: boolean;
@@ -17,7 +18,36 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose, currentUs
 
   useEffect(() => {
     if (isVisible) {
-      setScores(getScores());
+      // Получаем уникальные результаты, чтобы избежать дублирования
+      const allScores = getScores();
+      
+      // Сортируем по убыванию score и убираем дубликаты по userId (оставляем только лучший результат каждого игрока)
+      const uniqueScores = allScores.reduce((unique: typeof allScores, current) => {
+        // Пропускаем записи без userId (считаем их уникальными)
+        if (!current.userId) {
+          unique.push(current);
+          return unique;
+        }
+        
+        // Проверяем, есть ли уже запись с таким userId
+        const existingIndex = unique.findIndex(item => item.userId === current.userId);
+        
+        // Если такого userId еще нет, добавляем запись
+        if (existingIndex === -1) {
+          unique.push(current);
+        } 
+        // Если уже есть, заменяем только если текущий результат выше
+        else if (current.score > unique[existingIndex].score) {
+          unique[existingIndex] = current;
+        }
+        
+        return unique;
+      }, []);
+      
+      // Сортируем результаты по убыванию
+      uniqueScores.sort((a, b) => b.score - a.score);
+      
+      setScores(uniqueScores);
       setAnimationState('entering');
       const timer = setTimeout(() => setAnimationState('entered'), 300);
       return () => clearTimeout(timer);
@@ -46,7 +76,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose, currentUs
         )}
       >
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-glow">NETRUNNER LEADERBOARD</h2>
+          <h2 className="text-2xl font-bold text-glow">{t('leaderboardTitle')}</h2>
           <button 
             onClick={onClose}
             className="text-cyber-primary hover:text-glow transition-all"
@@ -61,8 +91,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose, currentUs
               <TableHeader>
                 <TableRow className="border-b border-cyber-primary/30">
                   <TableHead className="p-2 text-cyber-primary">#</TableHead>
-                  <TableHead className="p-2 text-cyber-primary">RUNNER</TableHead>
-                  <TableHead className="p-2 text-cyber-primary">HACK RESULT</TableHead>
+                  <TableHead className="p-2 text-cyber-primary">{t('leaderboardRunner')}</TableHead>
+                  <TableHead className="p-2 text-cyber-primary">{t('leaderboardHackResult')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,13 +126,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isVisible, onClose, currentUs
             </Table>
           ) : (
             <div className="text-center py-8 text-cyber-primary/50">
-              No scores yet. Start playing to set records!
+              {t('leaderboardNoScores')}
             </div>
           )}
         </div>
         
         <CustomButton onClick={onClose} className="w-full" variant="ghost">
-          CLOSE
+          {t('close')}
         </CustomButton>
       </div>
     </div>
