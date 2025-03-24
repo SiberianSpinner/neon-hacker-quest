@@ -22,6 +22,8 @@ import {
   trackSession, 
   trackError 
 } from '@/utils/analyticsUtils';
+
+import {GameAnalytics} from "gameanalytics";
 import { t, getSystemLanguage, Language } from '@/utils/localizationUtils';
 
 // Remove the redundant interface declaration and use the one from vite-env.d.ts
@@ -101,6 +103,8 @@ const Index = () => {
       switch(eventData.status) {
         case 'paid':
           console.log('[PAYMENT] Invoice was paid successfully');
+          
+          GameAnalytics.addDesignEvent('invoice:success')
           toast.success(t('paymentSuccess'), {
             description: t('processingPayment'),
             id: "payment-processing"
@@ -354,7 +358,7 @@ const Index = () => {
   const handleWatchAd = () => {
     // Track ad view started
     trackAdView('started');
-    
+    GameAnalytics.addDesignEvent('add:watched')
     // Call p_adextra function if it exists
     try {
       window.p_adextra(

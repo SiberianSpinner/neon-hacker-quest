@@ -10,46 +10,6 @@ export const isGameAnalyticsLoaded = (): boolean => {
          window.gameanalytics.GameAnalytics.toString().indexOf('not loaded') === -1;
 };
 
-/**
- * Инициализирует GameAnalytics с предоставленными ключами
- * @param gameKey Ключ игры GameAnalytics
- * @param secretKey Секретный ключ GameAnalytics
- */
-export const initializeGameAnalytics = (gameKey: string, secretKey: string): void => {
-  try {
-    // Создаем таймаут для проверки загрузки SDK
-    let attempts = 0;
-    const maxAttempts = 5;
-    const checkInterval = 1000; // 1 секунда
-
-    const initializeGA = () => {
-      if (isGameAnalyticsLoaded()) {
-        // Включить логи для отладки в режиме разработки
-        if (import.meta.env.DEV) {
-          window.gameanalytics.GameAnalytics("setEnabledInfoLog", true);
-          window.gameanalytics.GameAnalytics("setEnabledVerboseLog", true);
-        }
-        
-        // Инициализация SDK
-        window.gameanalytics.GameAnalytics("initialize", gameKey, secretKey);
-        console.log('GameAnalytics initialized successfully');
-      } else {
-        attempts++;
-        if (attempts < maxAttempts) {
-          console.log(`GameAnalytics SDK not ready, retrying in ${checkInterval/1000}s (attempt ${attempts}/${maxAttempts})...`);
-          setTimeout(initializeGA, checkInterval);
-        } else {
-          console.error('Failed to initialize GameAnalytics: SDK not loaded after multiple attempts');
-        }
-      }
-    };
-
-    // Начать попытки инициализации
-    initializeGA();
-  } catch (error) {
-    console.error('Failed to initialize GameAnalytics:', error);
-  }
-};
 
 /**
  * Track game start event
